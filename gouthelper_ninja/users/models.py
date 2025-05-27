@@ -1,20 +1,68 @@
+from django.apps import apps
 from django.contrib.auth.models import AbstractUser
 from django.db.models import CharField
+from django.db.models import CheckConstraint
+from django.db.models import IntegerField
+from django.db.models import Q
 from django.urls import reverse
+from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
+from django_extensions.db.models import TimeStampedModel
+from rules.contrib.models import RulesModelBase
+from rules.contrib.models import RulesModelMixin
+from simple_history.models import HistoricalRecords
+
+from gouthelper_ninja.users.choices import Roles
+from gouthelper_ninja.users.helpers import get_user_change
+from gouthelper_ninja.users.managers import AdminManager
+from gouthelper_ninja.users.managers import GoutHelperUserManager
+from gouthelper_ninja.users.managers import PatientManager
+from gouthelper_ninja.users.managers import ProviderManager
+from gouthelper_ninja.users.rules import change_user
+from gouthelper_ninja.users.rules import delete_user
+from gouthelper_ninja.users.rules import view_user
+from gouthelper_ninja.utils.models import GoutHelperModel
 
 
-class User(AbstractUser):
+class User(
+    RulesModelMixin,
+    GoutHelperModel,
+    TimeStampedModel,
+    AbstractUser,
+    metaclass=RulesModelBase,
+):
     """
-    Default custom user model for gouthelper_ninja.
+    Default custom user model for gouthelper.
     If adding fields that need to be filled at user signup,
     check forms.SignupForm and forms.SocialSignupForms accordingly.
     """
 
-    # First and last name do not cover name patterns around the globe
+    class Meta:
+        constraints = [
+            CheckConstraint(
+                name="%(app_label)s_%(class)s_role_valid",
+                condition=(Q(role__in=Roles.values)),
+            ),
+        ]
+        rules_permissions = {
+            "change": change_user,
+            "delete": delete_user,
+            "view": view_user,
+        }
+
+    Roles = Roles
+
+    # Cookiecutter defaults
     name = CharField(_("Name of User"), blank=True, max_length=255)
     first_name = None  # type: ignore[assignment]
     last_name = None  # type: ignore[assignment]
+    # GoutHelper specific fields
+    role = IntegerField(_("Role"), choices=Roles.choices, default=Roles.PROVIDER)
+    # GoutHelper managers and other attributes
+    objects = GoutHelperUserManager()
+    history = HistoricalRecords(
+        get_user=get_user_change,
+    )
 
     def get_absolute_url(self) -> str:
         """Get URL for user's detail view.
@@ -24,3 +72,68 @@ class User(AbstractUser):
 
         """
         return reverse("users:detail", kwargs={"username": self.username})
+
+    def save(self, *args, **kwargs):
+        # If a new user, set the user's role based off the
+        # base_role property
+        if not self.pk and hasattr(self, "base_role"):
+            self.role = self.base_role
+        self.__class__ = User
+        super().save(*args, **kwargs)
+        self.__class__ = apps.get_model(f"users.{self.Roles(self.role).name.lower()}")
+
+
+class Admin(User):
+    # This sets the user type to ADMIN during record creation
+    base_role = User.Roles.ADMIN
+
+    # Ensures queries on the ADMIN model return only Providers
+    objects = AdminManager()
+
+    class Meta(User.Meta):
+        proxy = True
+        rules_permissions = {
+            "change": change_user,
+            "delete": delete_user,
+            "view": view_user,
+        }
+
+    @cached_property
+    def profile(self):
+        return getattr(self, "adminprofile", None)
+
+
+class Patient(User):
+    # This sets the user type to PSEUDOPATIENT during record creation
+    base_role = User.Roles.PSEUDOPATIENT
+
+    # Ensures queries on the Pseudopatient model return only Pseudopatients
+    objects = PatientManager()
+
+    class Meta(User.Meta):
+        proxy = True
+        rules_permissions = {
+            "change": change_user,
+            "delete": delete_user,
+            "view": view_user,
+        }
+
+
+class Provider(User):
+    # This sets the user type to PROVIDER during record creation
+    base_role = User.Roles.PROVIDER
+
+    # Ensures queries on the Provider model return only Providers
+    objects = ProviderManager()
+
+    class Meta(User.Meta):
+        proxy = True
+        rules_permissions = {
+            "change": change_user,
+            "delete": delete_user,
+            "view": view_user,
+        }
+
+    @cached_property
+    def profile(self):
+        return getattr(self, "providerprofile", None)
