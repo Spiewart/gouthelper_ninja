@@ -1,7 +1,6 @@
 # ruff: noqa: ERA001, E501
 """Base settings to build other settings files upon."""
 
-
 from pathlib import Path
 
 import environ
@@ -83,6 +82,10 @@ THIRD_PARTY_APPS = [
 LOCAL_APPS = [
     "gouthelper_ninja.users",
     # Your stuff: custom apps go here
+    "gouthelper_ninja.profiles",
+    "gouthelper_ninja.dateofbirths",
+    "gouthelper_ninja.ethnicitys",
+    "gouthelper_ninja.genders",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS

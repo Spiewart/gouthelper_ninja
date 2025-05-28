@@ -6,7 +6,7 @@ from .choices import Roles
 @rules.predicate
 def has_no_provider(_, obj):
     """Expects a User object as the second argument."""
-    return obj.pseudopatientprofile.provider is None
+    return obj.patientprofile.provider is None
 
 
 @rules.predicate
@@ -25,10 +25,10 @@ def is_an_admin(user):
 def is_provider(user, obj):
     """Expects User objects for both arguments."""
     try:
-        return getattr(obj.pseudopatientprofile, "provider", None) == user
+        return getattr(obj.patientprofile, "provider", None) == user
     except AttributeError:
         try:
-            return getattr(obj.pseudopatientprofile, "provider", None) == user
+            return getattr(obj.patientprofile, "provider", None) == user
         except AttributeError:
             return False
 

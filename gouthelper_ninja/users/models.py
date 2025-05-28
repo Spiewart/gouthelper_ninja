@@ -1,8 +1,11 @@
+from typing import TYPE_CHECKING
+
 from django.apps import apps
 from django.contrib.auth.models import AbstractUser
 from django.db.models import CharField
 from django.db.models import CheckConstraint
 from django.db.models import IntegerField
+from django.db.models import Model
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -13,7 +16,6 @@ from rules.contrib.models import RulesModelMixin
 from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.users.choices import Roles
-from gouthelper_ninja.users.helpers import get_user_change
 from gouthelper_ninja.users.managers import AdminManager
 from gouthelper_ninja.users.managers import GoutHelperUserManager
 from gouthelper_ninja.users.managers import PatientManager
@@ -21,7 +23,11 @@ from gouthelper_ninja.users.managers import ProviderManager
 from gouthelper_ninja.users.rules import change_user
 from gouthelper_ninja.users.rules import delete_user
 from gouthelper_ninja.users.rules import view_user
+from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperModel
+
+if TYPE_CHECKING:
+    from django.db.models import Field
 
 
 class User(
@@ -80,7 +86,25 @@ class User(
             self.role = self.base_role
         self.__class__ = User
         super().save(*args, **kwargs)
-        self.__class__ = apps.get_model(f"users.{self.Roles(self.role).name.lower()}")
+        role = (
+            Roles.PATIENT.name.lower()
+            if self.role == Roles.PSEUDOPATIENT
+            else (self.Roles(self.role).name.lower())
+        )
+        self.__class__ = apps.get_model(f"users.{role}")
+
+    @cached_property
+    def profile(self):
+        role = (
+            self.Roles.PATIENT
+            if self.role in {self.Roles.PSEUDOPATIENT, self.Roles.PATIENT}
+            else self.Roles(self.role)
+        )
+        return getattr(
+            self,
+            (f"{role.name.lower()}profile"),
+            None,
+        )
 
 
 class Admin(User):
@@ -117,6 +141,29 @@ class Patient(User):
             "delete": delete_user,
             "view": view_user,
         }
+
+    @cached_property
+    def provider(self) -> User | None:
+        return getattr(self.profile, "provider", None)
+
+    def update(self, **kwargs) -> "Patient":
+        """Updates the Patient instance and related models."""
+
+        for key, val in kwargs.items():
+            attr: Model | Field = getattr(self, key)
+            if isinstance(attr, Model):
+                setattr(attr, key, val)
+                attr.full_clean()
+                attr.save()
+            else:
+                setattr(self, key, val)
+                self.save_needed = True
+
+        if self.save_needed:
+            self.full_clean()
+            self.save()
+
+        return self
 
 
 class Provider(User):

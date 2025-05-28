@@ -7,6 +7,10 @@ python_files = [
     "test_*.py",
 ]
 norecursedirs = ["node_modules"]
+filterwarnings = [
+    "ignore::DeprecationWarning:pydantic",
+    "ignore::PendingDeprecationWarning:ninja",
+]
 
 # ==== Coverage ====
 [tool.coverage.run]
