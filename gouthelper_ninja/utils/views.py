@@ -193,14 +193,14 @@ class GoutHelperCreateMixin(GoutHelperEditMixin, CreateView):
 
         return Patient.objects.filter(pk=self.kwargs.get("patient")).get()
 
-    def form_valid(self, schema: "BaseModel") -> "HttpResponse":
+    def form_valid(self, schema: "BaseModel", **kwargs) -> "HttpResponse":
         """Overwritten to turn take a validated pydantic schema to be
         used as args for create/update methods. Returns typical
         HttpResponseRedirect if successful, or HTMX response if
         the request is HTMX."""
 
         self.object = self.model.objects.create(**schema.dict())
-        return super().form_valid(schema=schema)
+        return super().form_valid(schema=schema, **kwargs)
 
 
 class GoutHelperUpdateMixin(GoutHelperEditMixin, UpdateView):
@@ -210,3 +210,12 @@ class GoutHelperUpdateMixin(GoutHelperEditMixin, UpdateView):
     def patient(self) -> "User":
         """Returns the view's object's patient."""
         return self.object.patient
+
+    def form_valid(self, schema: "BaseModel", **kwargs) -> "HttpResponse":
+        """Overwritten to turn take a validated pydantic schema to be
+        used as args for create/update methods. Returns typical
+        HttpResponseRedirect if successful, or HTMX response if
+        the request is HTMX."""
+
+        self.object = self.object.update(**schema.dict())
+        return super().form_valid(schema=schema, **kwargs)

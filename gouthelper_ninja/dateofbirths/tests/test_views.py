@@ -10,6 +10,7 @@ from gouthelper_ninja.dateofbirths.views import DateOfBirthUpdateView
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
 from gouthelper_ninja.utils.helpers import age_calc
+from gouthelper_ninja.utils.helpers import yearsago_date
 from gouthelper_ninja.utils.test_helpers import RESPONSE_REDIRECT_STATUS
 from gouthelper_ninja.utils.test_helpers import dummy_get_response
 
@@ -27,6 +28,8 @@ class TestDateOfBirthUpdateView(TestCase):
         self.get.user = self.provider
         self.get_view = DateOfBirthUpdateView()
         self.get_view.request = self.get
+        self.get_view.object = self.dob
+
         self.post = self.rf.post(
             reverse("dateofbirths:update", kwargs={"pk": self.dob.id}),
             {"dateofbirth": self.new_age},
@@ -36,15 +39,12 @@ class TestDateOfBirthUpdateView(TestCase):
         self.post.htmx = False
         self.post_view = DateOfBirthUpdateView()
         self.post_view.request = self.post
+        self.post_view.object = self.dob
 
     def test__get_permission_object(self):
-        self.get_view.object = self.dob
-
         assert self.get_view.get_permission_object() == self.patient
 
     def test__get_form_kwargs(self):
-        self.get_view.object = self.dob
-
         form_kwargs = self.get_view.get_form_kwargs()
         assert form_kwargs["initial"] == {"dateofbirth": self.dob.dateofbirth}
         assert form_kwargs["patient"] == self.patient
@@ -53,8 +53,6 @@ class TestDateOfBirthUpdateView(TestCase):
         assert isinstance(form_kwargs["str_attrs"], dict)
 
     def test__subform_kwargs(self):
-        self.get_view.object = self.dob
-
         subform_kwargs = self.get_view.subform_kwargs
         assert subform_kwargs["patient"] == self.patient
         assert subform_kwargs["request_user"] == self.provider
@@ -65,8 +63,6 @@ class TestDateOfBirthUpdateView(TestCase):
         assert self.get_view.request_user == self.provider
 
     def test__get_context_data(self):
-        self.get_view.object = self.dob
-
         context = self.get_view.get_context_data()
 
         assert "dateofbirth_form" not in context
@@ -75,8 +71,6 @@ class TestDateOfBirthUpdateView(TestCase):
         assert context["form"].initial == {"dateofbirth": self.dob.dateofbirth}
 
     def test__post(self):
-        self.post_view.object = self.dob
-
         SessionMiddleware(dummy_get_response).process_request(self.post)
         MessageMiddleware(dummy_get_response).process_request(self.post)
 
@@ -92,23 +86,26 @@ class TestDateOfBirthUpdateView(TestCase):
         assert age_calc(self.dob.dateofbirth) == self.new_age
 
     def test__post_init(self):
-        self.post_view.object = self.dob
+        self.post_view.forms = {}
 
         assert hasattr(self.post_view, "form") is False
 
-        self.post_view.post_init(self.post)
+        self.post_view.post_init()
 
-        assert hasattr(self.post_view, "form") is True
-        assert isinstance(self.post_view.form, DateOfBirthForm)
+        assert hasattr(self.post_view, "forms") is True
+        assert isinstance(self.post_view.forms["form"], DateOfBirthForm)
 
     def test__post_forms_valid(self):
-        self.post_view.object = self.dob
-        self.post_view.post_init(self.post)
+        self.post_view.forms = {}
 
-        assert hasattr(self.post_view.form, "cleaned_data") is False
+        self.post_view.post_init()
+
+        assert hasattr(self.post_view.forms["form"], "cleaned_data") is False
 
         assert self.post_view.post_forms_valid() is True
 
-        assert hasattr(self.post_view.form, "cleaned_data") is True
+        assert hasattr(self.post_view.forms["form"], "cleaned_data") is True
 
-        assert self.post_view.form.cleaned_data == {"dateofbirth": self.new_age}
+        assert self.post_view.forms["form"].cleaned_data == {
+            "dateofbirth": yearsago_date(self.new_age),
+        }

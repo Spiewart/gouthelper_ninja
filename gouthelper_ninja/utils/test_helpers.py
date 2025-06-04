@@ -4,13 +4,36 @@ from typing import Union
 
 from django.forms import BaseModelFormSet
 
+from gouthelper_ninja.utils.helpers import get_str_attrs_dict
+
 if TYPE_CHECKING:
     from django.http import HttpRequest
     from django.http import HttpResponse
 
+    from gouthelper_ninja.users.models import Patient
+    from gouthelper_ninja.users.models import User
+
 
 RESPONSE_REDIRECT_STATUS = 302
 RESPONSE_STATUS = 200
+
+
+def create_ghform_kwargs(
+    patient: Union["Patient", "User", None] = None,
+    request_user: Union["User", None] = None,
+    str_attrs: dict[str, str] | None = None,
+) -> dict[str, Union["Patient", "User", dict[str, str]]]:
+    """Create kwargs for GoutHelper forms."""
+    kwargs = {
+        "patient": patient,
+        "request_user": request_user,
+    }
+    if not str_attrs:
+        kwargs["str_attrs"] = get_str_attrs_dict(
+            patient=patient,
+            request_user=request_user,
+        )
+    return kwargs
 
 
 def dummy_get_response(request: "HttpRequest"):

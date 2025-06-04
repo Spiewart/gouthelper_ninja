@@ -6,13 +6,14 @@ from crispy_forms.layout import Layout
 from django.test import TestCase
 
 from gouthelper_ninja.utils.forms import GoutHelperForm
+from gouthelper_ninja.utils.test_helpers import create_ghform_kwargs
 
 
 class TestGoutHelperForm(TestCase):
     """Test the GoutHelperForm class."""
 
     def setUp(self):
-        self.form = GoutHelperForm()
+        self.form = GoutHelperForm(**create_ghform_kwargs())
 
     def test__init__(self):
         assert isinstance(self.form, GoutHelperForm)
@@ -24,7 +25,7 @@ class TestGoutHelperForm(TestCase):
         assert self.form.request_user is None
 
         assert hasattr(self.form, "str_attrs")
-        assert self.form.str_attrs is None
+        assert isinstance(self.form.str_attrs, dict)
 
         assert hasattr(self.form, "sub_form")
         assert self.form.sub_form is False
