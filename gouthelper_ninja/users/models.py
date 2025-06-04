@@ -152,9 +152,10 @@ class Patient(User):
         for key, val in kwargs.items():
             attr: Model | Field = getattr(self, key)
             if isinstance(attr, Model):
-                setattr(attr, key, val)
-                attr.full_clean()
-                attr.save()
+                if getattr(attr, key) != val:
+                    setattr(attr, key, val)
+                    attr.full_clean()
+                    attr.save()
             else:
                 setattr(self, key, val)
                 self.save_needed = True

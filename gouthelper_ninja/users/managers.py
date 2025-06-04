@@ -1,11 +1,14 @@
 from uuid import UUID
+from uuid import uuid4
 
 from django.apps import apps
 from django.contrib.auth.base_user import BaseUserManager
 
+from gouthelper_ninja.profiles.helpers import get_provider_alias
 from gouthelper_ninja.profiles.models import PatientProfile
 from gouthelper_ninja.profiles.models import ProviderProfile
 from gouthelper_ninja.users.choices import Roles
+from gouthelper_ninja.utils.helpers import age_calc
 
 
 class AdminManager(BaseUserManager):
@@ -49,26 +52,39 @@ class PatientManager(BaseUserManager):
         return results.filter(role=Roles.PSEUDOPATIENT)
 
     def create(self, **kwargs):
-        kwargs.update({"role": Roles.PSEUDOPATIENT})
+        kwargs.update(
+            {
+                "role": Roles.PSEUDOPATIENT,
+            },
+        )
 
-        profile_kwargs = {
-            "provider_id": kwargs.pop("provider", None),
-        }
+        if "username" not in kwargs:
+            kwargs["username"] = uuid4().hex[:30]
 
         dateofbirth = kwargs.pop("dateofbirth")
         ethnicity = kwargs.pop("ethnicity")
         gender = kwargs.pop("gender")
+        provider_id = kwargs.pop("provider", None)
 
         patient = super().create(**kwargs)
 
-        profile_kwargs["user"] = patient
+        profile_kwargs = {
+            "provider_id": provider_id,
+            "user": patient,
+            "provider_alias": get_provider_alias(
+                provider=provider_id,
+                age=age_calc(dateofbirth),
+                gender=gender,
+            )
+            if provider_id
+            else None,
+        }
 
         if profile_kwargs["provider_id"] is not None:
             # TODO: implement setting of provider_alias with method
             if isinstance(profile_kwargs["provider_id"], UUID):
                 profile_kwargs["provider_alias"] = 1
             else:
-                profile_kwargs["provider_id"] = profile_kwargs["provider_id"].id
                 profile_kwargs["provider_alias"] = 1
 
         PatientProfile.objects.create(

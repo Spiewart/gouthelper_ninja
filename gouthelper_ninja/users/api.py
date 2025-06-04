@@ -15,17 +15,17 @@ def get_patients(request):
 
 
 @router.get("/patients/{patient_id}/", response=PatientSchema)
-def get_patient(request, patient_id: str):
+def get_patient(request, patient_id: str) -> Patient:
     return Patient.objects.get(id=patient_id)
 
 
 @router.post("/patients/create/", response=PatientSchema)
-def create_patient(request, data: PatientCreateSchema):
+def create_patient(request, data: PatientCreateSchema) -> Patient:
     return Patient.objects.create(**data.dict())
 
 
 @router.post("/patients/update/{patient_id}/", response=PatientUpdateSchema)
-def update_patient(request, patient_id: str, data: PatientUpdateSchema):
-    patient = patient_update_qs(Patient.objects.filter(id=patient_id)).get()
+def update_patient(request, patient_id: str, data: PatientUpdateSchema) -> Patient:
+    patient: Patient = patient_update_qs(Patient.objects.filter(id=patient_id)).get()
     patient.update(**data.dict())
     return patient

@@ -15,6 +15,4 @@ class DateOfBirthSchema(DateOfBirthNestedSchema):
             *DateOfBirthNestedSchema.Meta.fields,
             "patient",
             "id",
-            "created",
-            "modified",
         ]

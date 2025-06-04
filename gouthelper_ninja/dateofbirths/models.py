@@ -52,3 +52,17 @@ class DateOfBirth(
     def __str__(self):
         """Unicode representation of DateOfBirth."""
         return f"{self.dateofbirth}"
+
+    def get_absolute_url(self):
+        """Return the absolute URL for the DateOfBirth instance."""
+        return self.patient.get_absolute_url()
+
+    def update(self, **kwargs) -> "DateOfBirth":
+        """Update the DateOfBirth instance with the given kwargs."""
+
+        dob = kwargs.get("dateofbirth")
+        if dob != self.dateofbirth:
+            self.dateofbirth = dob
+            self.full_clean()
+            self.save()
+        return self

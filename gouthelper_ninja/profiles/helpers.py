@@ -13,4 +13,4 @@ def get_provider_alias(
     age: int,
     gender: "Genders",
 ) -> int | None:
-    pass
+    return 1

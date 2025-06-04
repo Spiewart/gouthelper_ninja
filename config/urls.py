@@ -20,9 +20,12 @@ urlpatterns = [
     # User management
     path("users/", include("gouthelper_ninja.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
-    path("api/", api.urls),
     # Your stuff: custom urls includes go here
-    # ...
+    path("api/", api.urls),
+    path(
+        "dateofbirths/",
+        include("gouthelper_ninja.dateofbirths.urls", namespace="dateofbirths"),
+    ),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

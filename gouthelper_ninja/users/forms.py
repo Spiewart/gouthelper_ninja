@@ -1,9 +1,42 @@
 from allauth.account.forms import SignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
+from crispy_forms.helper import FormHelper
+from crispy_forms.layout import Fieldset
+from crispy_forms.layout import Layout
 from django.contrib.auth import forms as admin_forms
+from django.forms import Form
 from django.utils.translation import gettext_lazy as _
 
-from .models import User
+from gouthelper_ninja.users.models import User
+from gouthelper_ninja.utils.forms import GoutHelperForm
+
+
+class PatientCreateForm(GoutHelperForm, Form):
+    """Model form for creating Patient objects."""
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.helper = FormHelper()
+        self.helper.form_tag = False
+        self.helper.layout = Layout(
+            Fieldset(
+                "",
+            ),
+        )
+        # TODO: Insert demographics Div if required
+        # Dateofbirth and gender forms above menopause form
+        self.insert_extra_form(
+            form_model="dateofbirth",
+        )
+        self.insert_extra_form(
+            form_model="gender",
+        )
+        # TODO: insert menopause form
+        # Insert ethnicity and
+        self.insert_extra_form(
+            form_model="ethnicity",
+        )
+        # TODO: insert gout/detail forms
 
 
 class UserAdminChangeForm(admin_forms.UserChangeForm):
