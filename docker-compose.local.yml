@@ -1,7 +1,6 @@
 volumes:
   gouthelper_ninja_local_postgres_data: {}
   gouthelper_ninja_local_postgres_data_backups: {}
-  
 
 services:
   django:
