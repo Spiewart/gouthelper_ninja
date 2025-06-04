@@ -2,7 +2,6 @@ from typing import Literal
 
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from rules.contrib.models import RulesModelBase
@@ -29,12 +28,7 @@ class Gender(
     gender = models.IntegerField(
         _("Biological Sex"),
         choices=Genders.choices,
-        help_text=format_lazy(
-            # TODO: Add a link to the about page
-            """What is the patient's biological sex? <a href="" target="_next">
-            Why do we need to know?</a>""",
-            # reverse_lazy("genders:about"),  # noqa: ERA001
-        ),
+        help_text="What is the patient's biological sex?",
     )
     patient = models.OneToOneField(User, on_delete=models.CASCADE, editable=False)
     history = HistoricalRecords()

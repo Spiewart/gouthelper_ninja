@@ -2,7 +2,6 @@ from datetime import timedelta
 
 from django.contrib.auth import get_user_model
 from django.db import models
-from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from rules.contrib.models import RulesModelBase
@@ -26,11 +25,7 @@ class DateOfBirth(
     dateofbirth = models.DateField(
         _("Age"),
         # TODO: Add a link to the about page
-        help_text=format_lazy(
-            """How old is the patient (range: 18-120)? <a href="" target="_next">
-            Why do we need to know?</a>""",
-            # reverse_lazy("dateofbirths:about"),  # noqa: ERA001
-        ),
+        help_text="How old is the patient (range: 18-120)?",
     )
     patient = models.OneToOneField(User, on_delete=models.CASCADE, editable=False)
     history = HistoricalRecords()
