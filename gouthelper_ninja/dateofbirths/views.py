@@ -1,10 +1,13 @@
 from typing import Any
 
+from django.views.generic import UpdateView
+
 from gouthelper_ninja.dateofbirths.forms import DateOfBirthForm
 from gouthelper_ninja.dateofbirths.models import DateOfBirth
 from gouthelper_ninja.dateofbirths.schema import DateOfBirthNestedSchema
 from gouthelper_ninja.utils.views import GoutHelperEditMixin
 from gouthelper_ninja.utils.views import GoutHelperUpdateMixin
+from gouthelper_ninja.utils.views import PatientObjectMixin
 
 
 class DateOfBirthEditMixin(GoutHelperEditMixin):
@@ -40,5 +43,10 @@ class DateOfBirthEditMixin(GoutHelperEditMixin):
         super().post_init()
 
 
-class DateOfBirthUpdateView(GoutHelperUpdateMixin, DateOfBirthEditMixin):
+class DateOfBirthUpdateView(
+    GoutHelperUpdateMixin,
+    DateOfBirthEditMixin,
+    PatientObjectMixin,
+    UpdateView,
+):
     """View for updating a Patient's DateOfBirth."""

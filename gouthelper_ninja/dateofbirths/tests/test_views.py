@@ -37,7 +37,7 @@ class TestDateOfBirthUpdateView(TestCase):
         self.post.user = self.provider
         # Set HTMX to False to avoid HTMX-specific behavior in the test
         self.post.htmx = False
-        self.post_view = DateOfBirthUpdateView()
+        self.post_view = DateOfBirthUpdateView(kwargs={"pk": self.dob.id})
         self.post_view.request = self.post
         self.post_view.object = self.dob
 

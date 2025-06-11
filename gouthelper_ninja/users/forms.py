@@ -11,7 +11,7 @@ from gouthelper_ninja.users.models import User
 from gouthelper_ninja.utils.forms import GoutHelperForm
 
 
-class PatientCreateForm(GoutHelperForm, Form):
+class PatientForm(GoutHelperForm, Form):
     """Model form for creating Patient objects."""
 
     def __init__(self, *args, **kwargs):

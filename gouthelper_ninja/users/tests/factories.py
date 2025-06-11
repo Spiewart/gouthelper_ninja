@@ -14,6 +14,7 @@ from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.genders.tests.factories import GenderFactory
 from gouthelper_ninja.profiles.tests.factories import PatientProfileFactory
 from gouthelper_ninja.users.models import User
+from gouthelper_ninja.utils.helpers import yearsago_date
 
 
 class UserFactory(DjangoModelFactory[User]):
@@ -56,11 +57,14 @@ class PatientFactory(UserFactory):
     def dateofbirth(self, create: bool, extracted: date | str | None, **kwargs):  # noqa: FBT001
         if create:
             if extracted:
-                kwargs["dateofbirth"] = (
-                    extracted
-                    if not isinstance(extracted, str)
-                    else date(*map(int, extracted.split("-")))
-                )
+                if isinstance(extracted, int):
+                    # If extracted is an int, assume it's a number of years ago
+                    extracted = yearsago_date(extracted)
+                elif isinstance(extracted, str):
+                    # If extracted is a string,
+                    # assume it's a date in "YYYY-MM-DD" format
+                    extracted = date(*map(int, extracted.split("-")))
+                kwargs["dateofbirth"] = extracted
             DateOfBirthFactory(patient=self, **kwargs)
 
     @post_generation
@@ -87,7 +91,7 @@ class PatientFactory(UserFactory):
             GenderFactory(patient=self, **kwargs)
 
     @post_generation
-    def patientprofile(
+    def provider(
         self,
         create: bool,  # noqa: FBT001
         extracted: User | str | UUID,

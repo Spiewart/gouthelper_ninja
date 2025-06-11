@@ -5,20 +5,18 @@ from gouthelper_ninja.ethnicitys.schema import EthnicityNestedSchema
 from gouthelper_ninja.genders.schema import GenderNestedSchema
 
 
-class PatientCreateSchema(
-    DateOfBirthNestedSchema,
-    EthnicityNestedSchema,
-    GenderNestedSchema,
-):
-    provider: str | None = None
-
-
 class PatientUpdateSchema(
     DateOfBirthNestedSchema,
     EthnicityNestedSchema,
     GenderNestedSchema,
 ):
     pass
+
+
+class PatientCreateSchema(
+    PatientUpdateSchema,
+):
+    provider: str | None = None
 
 
 class PatientSchema(Schema):

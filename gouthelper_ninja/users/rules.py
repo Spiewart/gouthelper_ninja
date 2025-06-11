@@ -1,98 +1,200 @@
-import rules
+from typing import TYPE_CHECKING
 
-from .choices import Roles
+import rules
+from django.apps import apps
+from django.contrib.auth.models import AnonymousUser
+
+from gouthelper_ninja.users.choices import Roles
+
+if TYPE_CHECKING:
+    from gouthelper_ninja.users.models import Patient
+    from gouthelper_ninja.users.models import User
 
 
 @rules.predicate
-def has_no_provider(_, obj):
-    """Expects a User object as the second argument."""
+def obj_without_provider(_, obj: "User") -> bool:
+    """Returns True if the object (Patient) does not have a provider.
+    Need to ensure that the object is a Patient first."""
+
     return obj.patientprofile.provider is None
 
 
 @rules.predicate
-def is_user(obj, user):
-    """Expects a User object."""
-    return obj == user
+def obj_without_creator(_, obj: "User") -> bool:
+    """Returns True if the object (Patient) does not have a creator.
+    Need to ensure that the object is a Patient first."""
+
+    return getattr(obj, "creator", None) is None
 
 
 @rules.predicate
-def is_an_admin(user):
-    """Expects a User object."""
-    return user.role == Roles.ADMIN if hasattr(user, "role") else False
+def obj_is_pseudopatient(user: "User") -> bool:
+    """Returns True if the object is a Pseudopatient."""
+
+    return user_is_anonymous(user) or user.role == Roles.PSEUDOPATIENT
 
 
 @rules.predicate
-def is_provider(user, obj):
-    """Expects User objects for both arguments."""
-    try:
-        return getattr(obj.patientprofile, "provider", None) == user
-    except AttributeError:
-        try:
-            return getattr(obj.patientprofile, "provider", None) == user
-        except AttributeError:
-            return False
+def obj_is_patient_or_pseudopatient(_, obj: "User") -> bool:
+    """Returns True if the object is a Patient or Pseudopatient.
+    Need to ensure that the object is a Patient first."""
+
+    return obj.role in {Roles.PATIENT, Roles.PSEUDOPATIENT}
 
 
 @rules.predicate
-def is_a_provider(user):
-    """Expects a User object."""
-    return user.role == Roles.PROVIDER if hasattr(user, "role") else False
+def obj_username_belongs_to_provider(_, obj: str | None):
+    """Returns True if the User whose username matches the provider kwarg
+    is a Provider."""
+
+    return (
+        apps.get_model(
+            "users.User",
+        )
+        .objects.get(username=obj)
+        .role
+        == Roles.PROVIDER
+        if obj
+        else False
+    )
 
 
 @rules.predicate
-def is_not_patient(user):
-    """Expects a User object."""
-    if user.is_authenticated:
-        return user.role != Roles.PSEUDOPATIENT if user else True
-    return True
+def user_is_anonymous(user: "User") -> bool:
+    """Returns True if the user is an AnonymousUser."""
+
+    return isinstance(user, AnonymousUser)
 
 
 @rules.predicate
-def is_patient(_, obj):
-    """Expects a User object."""
-    return obj.role == Roles.PSEUDOPATIENT
+def user_is_admin(user: "User") -> bool:
+    """Returns True if the user is an admin."""
+
+    return user.role == Roles.ADMIN
 
 
 @rules.predicate
-def provider_kwarg_is_provider(user, obj):
-    """Expects a string or None as obj."""
-    return obj == user.username if obj else True
+def user_is_patient(user: "User") -> bool:
+    """Returns True if the object is a Patient."""
+
+    return user_is_anonymous(user) or user.role == Roles.PATIENT
 
 
 @rules.predicate
-def user_is_provider(user, obj):
-    """Expects a User object and string or None as obj."""
-    return user.username == obj if obj else True
+def user_is_obj_provider(user: "User", obj: "Patient") -> bool:
+    """Returns True if the user is the provider of the patient.
+    Need to ensure that the object is a Patient first."""
+
+    return getattr(obj.patientprofile, "provider", None) == user
 
 
 @rules.predicate
-def list_belongs_to_user(user, obj):
+def user_is_a_provider(user: "User") -> bool:
+    """Returns True if the user is a Provider."""
+
+    return user.role == Roles.PROVIDER
+
+
+@rules.predicate
+def user_username_is_obj(user: "User", obj: str | None):
+    """Returns True if the user's username matches the obj,
+    which should be a provider kwarg."""
+
+    return user.username == obj if obj else False
+
+
+@rules.predicate
+def user_is_obj(user: "User", obj: "User") -> bool:
+    """Returns True if the user is the same as the object."""
+
+    return user == obj
+
+
+@rules.predicate
+def user_is_obj_creator(user: "User", obj: "User") -> bool:
+    """Returns True if the creator of the object (Patient) is the user.
+    Need to ensure that the object is a Patient first."""
+    return getattr(obj, "creator", None) == user
+
+
+@rules.predicate
+def list_belongs_to_user(user: "User", obj: str | None):
     """Expects a User object and string or None as obj."""
     return user.username == obj if obj else False
 
 
-is_providerless_patient = is_patient & has_no_provider
+# Patient predicates
+add_provider_patient = ~user_is_anonymous & (
+    (user_is_admin & obj_username_belongs_to_provider)
+    | (user_is_a_provider & user_username_is_obj)
+)
 
-add_user_with_provider = (is_an_admin | is_a_provider) & provider_kwarg_is_provider
-change_user = is_user | is_provider
-change_patient = is_providerless_patient | is_user | is_provider
-delete_user = is_user | is_provider
-view_user = is_providerless_patient | is_user | is_provider
-view_provider_list = list_belongs_to_user
+change_patient = (
+    ~user_is_anonymous
+    & obj_is_patient_or_pseudopatient
+    & (
+        user_is_admin
+        | user_is_obj
+        | user_is_obj_provider
+        | (obj_without_provider & (obj_without_creator | user_is_obj_creator))
+    )
+) | (
+    user_is_anonymous
+    & obj_is_patient_or_pseudopatient
+    & obj_without_provider
+    & obj_without_creator
+)
 
-rules.add_rule("can_add_user", is_not_patient)
-rules.add_perm("users.can_add_user", is_not_patient)
-rules.add_rule("can_add_user_with_provider", add_user_with_provider)
-rules.add_perm("users.can_add_user_with_provider", add_user_with_provider)
-rules.add_rule("can_add_user_with_specific_provider", provider_kwarg_is_provider)
-rules.add_perm("users.can_add_user_with_specific_provider", provider_kwarg_is_provider)
+delete_patient = (
+    ~user_is_anonymous
+    & obj_is_patient_or_pseudopatient
+    & (user_is_admin | user_is_obj | user_is_obj_provider | user_is_obj_creator)
+)
+
+view_patient = (
+    ~user_is_anonymous
+    & obj_is_patient_or_pseudopatient
+    & (
+        user_is_admin
+        | user_is_obj
+        | user_is_obj_provider
+        | (obj_without_provider & (obj_without_creator | user_is_obj_creator))
+    )
+) | (
+    user_is_anonymous
+    & obj_is_patient_or_pseudopatient
+    & obj_without_provider
+    & obj_without_creator
+)
+
+# Provider predicates
+# Permissions to view the provider list are the same as to add a Patient
+# for a specific provider.
+view_provider_list = add_provider_patient
+
+# User predicates
+change_user = ~user_is_anonymous & (user_is_obj | user_is_admin)
+delete_user = change_user
+view_user = change_user
+
+# Patient rules and permissions
+rules.add_rule("can_add_provider_patient", add_provider_patient)
+rules.add_perm("users.can_add_provider_patient", add_provider_patient)
+rules.add_rule("can_delete_patient", delete_patient)
+rules.add_perm("users.can_delete_patient", delete_patient)
+rules.add_rule("can_edit_patient", change_patient)
+rules.add_perm("users.can_edit_patient", change_patient)
+rules.add_rule("can_view_patient", view_patient)
+rules.add_perm("users.can_view_patient", view_patient)
+
+# Provider rules and permissions
+rules.add_rule("can_view_provider_list", view_provider_list)
+rules.add_perm("users.can_view_provider_list", view_provider_list)
+
+# User rules and permissions
 rules.add_rule("can_delete_user", delete_user)
 rules.add_perm("users.can_delete_user", delete_user)
 rules.add_rule("can_edit_user", change_user)
 rules.add_perm("users.can_edit_user", change_user)
-rules.add_rule("can_edit_patient", change_patient)
-rules.add_perm("users.can_edit_patient", change_patient)
 rules.add_rule("can_view_user", view_user)
 rules.add_perm("users.can_view_user", view_user)
-rules.add_rule("can_view_provider_list", view_provider_list)
-rules.add_perm("users.can_view_provider_list", view_provider_list)

@@ -71,3 +71,14 @@ INSTALLED_APPS += ["django_extensions"]
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+LOGGING.update(  # noqa: F405
+    {
+        "loggers": {
+            "rules": {
+                "handlers": ["console"],
+                "level": "DEBUG",
+                "propagate": True,
+            },
+        },
+    },
+)

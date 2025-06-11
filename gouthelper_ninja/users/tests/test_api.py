@@ -69,7 +69,7 @@ class TestAPI(TestCase):
         assert response.gender.get_gender_display() == "Male"
 
     def test__create_patient_with_provider(self):
-        self.patient_create_schema.provider = self.provider.id
+        self.patient_create_schema.provider = str(self.provider.id)
         response = create_patient(
             data=self.patient_create_schema,
             request=self.request,

@@ -7,8 +7,6 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.utils.functional import cached_property
-from django.views.generic import CreateView
-from django.views.generic import UpdateView
 
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.utils.helpers import get_str_attrs_dict
@@ -33,6 +31,7 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
     def get_permission_object(self):
         """The view's permission_object is the patient, which is either an attribute
         of the view's object or derived from the view's patient kwarg."""
+
         return self.patient
 
     def get_form_kwargs(self):
@@ -185,13 +184,29 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
         return HttpResponseRedirect(self.get_success_url())
 
 
-class GoutHelperCreateMixin(GoutHelperEditMixin, CreateView):
+class PatientKwargMixin:
     @cached_property
     def patient(self) -> "User":
         """Returns the Patient whose pk is equal to the patient kwarg,
         which is passed in the URL."""
 
         return Patient.objects.filter(pk=self.kwargs.get("patient")).get()
+
+
+class PatientObjectMixin:
+    object: Any
+
+    @cached_property
+    def patient(self) -> "User":
+        """Returns the view's object's patient."""
+        return self.object.patient
+
+
+class GoutHelperCreateMixin(GoutHelperEditMixin):
+    def post(self, request, *args, **kwargs):
+        """Overwritten to set the patient attribute on the view."""
+        self.object = None
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, schema: "BaseModel", **kwargs) -> "HttpResponse":
         """Overwritten to turn take a validated pydantic schema to be
@@ -203,13 +218,11 @@ class GoutHelperCreateMixin(GoutHelperEditMixin, CreateView):
         return super().form_valid(schema=schema, **kwargs)
 
 
-class GoutHelperUpdateMixin(GoutHelperEditMixin, UpdateView):
-    object: Any
-
-    @cached_property
-    def patient(self) -> "User":
-        """Returns the view's object's patient."""
-        return self.object.patient
+class GoutHelperUpdateMixin(GoutHelperEditMixin):
+    def post(self, request, *args, **kwargs):
+        """Overwritten to set the patient attribute on the view."""
+        self.object = self.get_object()
+        return super().post(request, *args, **kwargs)
 
     def form_valid(self, schema: "BaseModel", **kwargs) -> "HttpResponse":
         """Overwritten to turn take a validated pydantic schema to be

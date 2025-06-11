@@ -20,8 +20,11 @@ from gouthelper_ninja.users.managers import AdminManager
 from gouthelper_ninja.users.managers import GoutHelperUserManager
 from gouthelper_ninja.users.managers import PatientManager
 from gouthelper_ninja.users.managers import ProviderManager
+from gouthelper_ninja.users.rules import change_patient
 from gouthelper_ninja.users.rules import change_user
+from gouthelper_ninja.users.rules import delete_patient
 from gouthelper_ninja.users.rules import delete_user
+from gouthelper_ninja.users.rules import view_patient
 from gouthelper_ninja.users.rules import view_user
 from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperModel
@@ -137,14 +140,34 @@ class Patient(User):
     class Meta(User.Meta):
         proxy = True
         rules_permissions = {
-            "change": change_user,
-            "delete": delete_user,
-            "view": view_user,
+            "change": change_patient,
+            "delete": delete_patient,
+            "view": view_patient,
         }
 
     @cached_property
     def provider(self) -> User | None:
         return getattr(self.profile, "provider", None)
+
+    @cached_property
+    def editors(self) -> list[User]:
+        """Returns a list of Users who have edited the Patient."""
+
+        return [
+            history.history_user
+            for history in self.history.select_related(
+                "history_user",
+            )
+            .filter(
+                history_user__isnull=False,
+            )
+            .order_by("history_date")
+        ]
+
+    @property
+    def creator(self) -> User | None:
+        """Returns the User who created the Patient, if available."""
+        return self.editors[0] if self.editors else None
 
     def update(self, **kwargs) -> "Patient":
         """Updates the Patient instance and related models."""
@@ -166,6 +189,15 @@ class Patient(User):
 
         return self
 
+    def get_absolute_url(self) -> str:
+        """Get URL for patient's detail view.
+
+        Returns:
+            str: URL for patient detail.
+
+        """
+        return reverse("users:patient-detail", kwargs={"patient": self.pk})
+
 
 class Provider(User):
     # This sets the user type to PROVIDER during record creation
@@ -176,11 +208,6 @@ class Provider(User):
 
     class Meta(User.Meta):
         proxy = True
-        rules_permissions = {
-            "change": change_user,
-            "delete": delete_user,
-            "view": view_user,
-        }
 
     @cached_property
     def profile(self):
