@@ -22,7 +22,7 @@ class TestCreatePatient(TestCase):
         self.anon = AnonymousUser()
         self.provider = UserFactory()
         self.data = {
-            "dateofbirth": {"dateofbirth": "RESPONSE_SUCCESS0-06-12"},
+            "dateofbirth": {"dateofbirth": "2000-06-12"},
             "ethnicity": {"ethnicity": "Caucasian"},
             "gender": {"gender": 0},
         }
@@ -42,10 +42,7 @@ class TestCreatePatient(TestCase):
         assert str(patient.id) == response.json()["id"]
         assert patient.profile.provider is None
         assert patient.profile.provider_alias is None
-        assert (
-            patient.dateofbirth.dateofbirth.strftime("%Y-%m-%d")
-            == "RESPONSE_SUCCESS0-06-12"
-        )
+        assert patient.dateofbirth.dateofbirth.strftime("%Y-%m-%d") == "2000-06-12"
         assert patient.ethnicity.ethnicity == "Caucasian"
         assert patient.gender.gender == 0
 
@@ -61,10 +58,7 @@ class TestCreatePatient(TestCase):
         assert str(patient.id) == response.json()["id"]
         assert patient.profile.provider is None
         assert patient.profile.provider_alias is None
-        assert (
-            patient.dateofbirth.dateofbirth.strftime("%Y-%m-%d")
-            == "RESPONSE_SUCCESS0-06-12"
-        )
+        assert patient.dateofbirth.dateofbirth.strftime("%Y-%m-%d") == "2000-06-12"
         assert patient.ethnicity.ethnicity == "Caucasian"
         assert patient.gender.gender == 0
         assert patient.creator == self.provider
@@ -97,7 +91,7 @@ class TestCreateProviderPatient(TestCase):
         self.provider = UserFactory()
         self.patient = PatientFactory()
         self.data = {
-            "dateofbirth": {"dateofbirth": "RESPONSE_SUCCESS0-06-12"},
+            "dateofbirth": {"dateofbirth": "2000-06-12"},
             "ethnicity": {"ethnicity": "Caucasian"},
             "gender": {"gender": 0},
             "provider_id": str(self.provider.id),
@@ -138,8 +132,8 @@ class TestCreateProviderPatient(TestCase):
         assert response.status_code == RESPONSE_FORBIDDEN
         assert response.json() == {
             "detail": (
-                f"{self.patient} does not have permission to create "
-                "a patient for this provider.",
+                f"{self.patient} does not have permission to create a "
+                "patient for this provider."
             ),
         }
         # TODO: Test other roles, provider, creator combinations for permissions
