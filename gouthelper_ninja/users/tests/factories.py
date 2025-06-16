@@ -12,8 +12,10 @@ from gouthelper_ninja.ethnicitys.choices import Ethnicitys
 from gouthelper_ninja.ethnicitys.tests.factories import EthnicityFactory
 from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.genders.tests.factories import GenderFactory
+from gouthelper_ninja.profiles.helpers import get_provider_alias
 from gouthelper_ninja.profiles.tests.factories import PatientProfileFactory
 from gouthelper_ninja.users.models import User
+from gouthelper_ninja.utils.helpers import age_calc
 from gouthelper_ninja.utils.helpers import yearsago_date
 
 
@@ -84,7 +86,8 @@ class PatientFactory(UserFactory):
     @post_generation
     def gender(self, create: bool, extracted: Genders | str | None, **kwargs) -> None:  # noqa: FBT001
         if not hasattr(self, "gender") and create:
-            if extracted:
+            # Cannot check for Truth because values of Genders include 0
+            if extracted is not None:
                 kwargs["gender"] = (
                     Genders(extracted) if isinstance(extracted, str) else extracted
                 )
@@ -104,6 +107,12 @@ class PatientFactory(UserFactory):
                     if isinstance(extracted, User)
                     else User.objects.get(username=extracted)
                 )
-                # TODO: compute the correct provider_alias based on the provider
-                kwargs["provider_alias"] = 1  # Default alias for the provider
+                kwargs["provider_alias"] = get_provider_alias(
+                    provider_id=kwargs["provider"].id,
+                    age=kwargs.get(
+                        "dateofbirth",
+                        age_calc(self.dateofbirth.dateofbirth),
+                    ),
+                    gender=kwargs.get("gender", self.gender.gender),
+                )
             PatientProfileFactory(user=self, **kwargs)

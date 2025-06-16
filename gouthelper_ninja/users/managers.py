@@ -1,4 +1,3 @@
-from uuid import UUID
 from uuid import uuid4
 
 from django.apps import apps
@@ -71,20 +70,13 @@ class PatientManager(BaseUserManager):
             "provider_id": provider_id,
             "user": patient,
             "provider_alias": get_provider_alias(
-                provider=provider_id,
+                provider_id=provider_id,
                 age=age_calc(dateofbirth),
                 gender=gender,
             )
             if provider_id
             else None,
         }
-
-        if profile_kwargs["provider_id"] is not None:
-            # TODO: implement setting of provider_alias with method
-            if isinstance(profile_kwargs["provider_id"], UUID):
-                profile_kwargs["provider_alias"] = 1
-            else:
-                profile_kwargs["provider_alias"] = 1
 
         PatientProfile.objects.create(
             **profile_kwargs,
