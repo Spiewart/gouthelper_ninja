@@ -1,14 +1,16 @@
 from crispy_forms.helper import FormHelper
 from django.forms import ChoiceField
-from django.forms import Form
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 
 from gouthelper_ninja.ethnicitys.choices import Ethnicitys
+from gouthelper_ninja.ethnicitys.models import Ethnicity
 from gouthelper_ninja.utils.forms import GoutHelperForm
 
 
-class EthnicityForm(GoutHelperForm, Form):
+class EthnicityForm(GoutHelperForm):
+    model = Ethnicity
+
     ethnicity = ChoiceField(
         label=_("Ethnicity"),
         choices=Ethnicitys.choices,

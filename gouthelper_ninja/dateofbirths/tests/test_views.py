@@ -11,7 +11,7 @@ from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
 from gouthelper_ninja.utils.helpers import age_calc
 from gouthelper_ninja.utils.helpers import yearsago_date
-from gouthelper_ninja.utils.test_helpers import RESPONSE_REDIRECT_STATUS
+from gouthelper_ninja.utils.test_helpers import RESPONSE_REDIRECT
 from gouthelper_ninja.utils.test_helpers import dummy_get_response
 
 
@@ -77,7 +77,7 @@ class TestDateOfBirthUpdateView(TestCase):
         response = self.post_view.post(self.post)
 
         assert isinstance(response, HttpResponseRedirect)
-        assert response.status_code == RESPONSE_REDIRECT_STATUS
+        assert response.status_code == RESPONSE_REDIRECT
         assert response.url == reverse(
             "users:detail",
             kwargs={"username": self.patient.username},

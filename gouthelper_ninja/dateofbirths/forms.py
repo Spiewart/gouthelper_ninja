@@ -1,15 +1,17 @@
 from crispy_forms.helper import FormHelper
-from django.forms import Form
 from django.forms import IntegerField
 from django.forms import NumberInput
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 
+from gouthelper_ninja.dateofbirths.models import DateOfBirth
 from gouthelper_ninja.utils.forms import GoutHelperForm
 from gouthelper_ninja.utils.helpers import yearsago_date
 
 
-class DateOfBirthForm(GoutHelperForm, Form):
+class DateOfBirthForm(GoutHelperForm):
+    model = DateOfBirth
+
     dateofbirth = IntegerField(
         label=_("Age"),
         widget=NumberInput(attrs={"min": 18, "max": 120, "step": 1}),
@@ -29,8 +31,10 @@ class DateOfBirthForm(GoutHelperForm, Form):
         self.helper.form_tag = False
 
     def clean_dateofbirth(self):
-        # Overwritten to check if there is an int age and
-        # convert it to a date of birth string
+        """Overwritten to check if there is an int age and
+        convert it to a date of birth string."""
+        # Get the dateofbirth value from cleaned_data
+        # and convert it to a date if it's an int.
         dateofbirth = self.cleaned_data["dateofbirth"]
         if dateofbirth:
             if isinstance(dateofbirth, str):

@@ -1,6 +1,5 @@
 import pytest
 from django.contrib.auth.models import AnonymousUser
-from django.core.exceptions import ObjectDoesNotExist
 from django.test import TestCase
 
 from gouthelper_ninja.users.choices import Roles
@@ -10,9 +9,9 @@ from gouthelper_ninja.users.rules import change_user
 from gouthelper_ninja.users.rules import delete_patient
 from gouthelper_ninja.users.rules import delete_user
 from gouthelper_ninja.users.rules import obj_is_patient_or_pseudopatient
-from gouthelper_ninja.users.rules import obj_username_belongs_to_provider
 from gouthelper_ninja.users.rules import obj_without_creator
 from gouthelper_ninja.users.rules import obj_without_provider
+from gouthelper_ninja.users.rules import user_id_is_obj
 from gouthelper_ninja.users.rules import user_is_a_provider
 from gouthelper_ninja.users.rules import user_is_admin
 from gouthelper_ninja.users.rules import user_is_anonymous
@@ -38,6 +37,26 @@ class TestPatientPredicates(TestCase):
         self.provider_patient = PatientFactory(provider=self.provider)
         self.anon = AnonymousUser()
         self.pseudopatient = PatientFactory(role=Roles.PSEUDOPATIENT)
+
+    def test__user_id_is_obj(self):
+        """Test that user_id_is_obj returns True for Users whose
+        id matches the obj kwarg, and False for all other Users."""
+        assert user_id_is_obj(self.provider, self.provider.id)
+        assert not user_id_is_obj(self.admin, self.provider.id)
+        assert not user_id_is_obj(self.patient, self.provider.id)
+        assert not user_id_is_obj(self.anon, self.provider.id)
+        assert not user_id_is_obj(self.provider, None)
+        assert not user_id_is_obj(self.admin, None)
+        assert not user_id_is_obj(self.patient, None)
+        assert not user_id_is_obj(self.anon, None)
+        assert not user_id_is_obj(self.provider, self.admin.id)
+        assert not user_id_is_obj(self.admin, self.patient.id)
+        assert not user_id_is_obj(self.patient, self.anon.id)
+        assert not user_id_is_obj(self.anon, self.provider.id)
+        assert not user_id_is_obj(self.provider, self.patient.id)
+        assert not user_id_is_obj(self.admin, self.provider.id)
+        assert not user_id_is_obj(self.patient, self.admin.id)
+        assert not user_id_is_obj(self.anon, self.patient.id)
 
     def test__obj_without_creator(self):
         """Test that obj_without_creator returns True for Patients
@@ -154,17 +173,6 @@ class TestPatientPredicates(TestCase):
             # so we expect an AttributeError to be raised
             assert user_is_a_provider(self.anon)
 
-    def test__obj_username_belongs_to_provider(self):
-        """Test that obj_username_belongs_to_provider returns True for Users
-        with the PROVIDER role and False for all other roles."""
-        assert obj_username_belongs_to_provider(None, self.provider)
-        assert not obj_username_belongs_to_provider(None, self.admin)
-        assert not obj_username_belongs_to_provider(None, self.patient)
-        with pytest.raises(ObjectDoesNotExist):
-            # AnonymousUser does not have a username that is expected
-            # to be in the database, so will raise a DoesNotExist exception
-            assert obj_username_belongs_to_provider(None, self.anon)
-
     def test__user_is_anonymous(self):
         """Test that user_is_anonymous returns True for AnonymousUser
         and False for all other Users."""
@@ -180,9 +188,7 @@ class TestPatientPredicates(TestCase):
         assert not user_is_admin(self.provider)
         assert not user_is_admin(self.patient)
         with pytest.raises(AttributeError):
-            # AnonymousUser does not have a role attribute
-            # so we expect an AttributeError to be raised
-            assert user_is_admin(self.anon)
+            user_is_admin(self.anon)
 
     def test__add_provider_patient(self):
         """Test that the add_provider_patient rule returns True for Users
@@ -197,7 +203,7 @@ class TestPatientPredicates(TestCase):
         assert not add_provider_patient(self.provider, None)
         assert not add_provider_patient(self.provider, self.admin.username)
         assert not add_provider_patient(self.patient, self.patient.username)
-        assert not add_provider_patient(self.admin, self.admin.username)
+        assert add_provider_patient(self.admin, self.admin.username)
         assert not add_provider_patient(self.anon, self.anon.username)
 
     def test__change_patient(self):

@@ -21,9 +21,10 @@ from gouthelper_ninja.genders.views import GenderEditMixin
 from gouthelper_ninja.users.forms import PatientForm
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.users.models import User
-from gouthelper_ninja.users.querysets import patient_update_qs
+from gouthelper_ninja.users.querysets import patient_qs
 from gouthelper_ninja.users.schema import PatientCreateSchema
-from gouthelper_ninja.users.schema import PatientUpdateSchema
+from gouthelper_ninja.users.schema import PatientSchema
+from gouthelper_ninja.users.schema import ProviderPatientCreateSchema
 from gouthelper_ninja.utils.views import GoutHelperCreateMixin
 from gouthelper_ninja.utils.views import GoutHelperUpdateMixin
 
@@ -67,23 +68,33 @@ class PatientProviderCreateView(
     PatientCreateView,
 ):
     permission_required = "users.can_add_provider_patient"
+    schema = ProviderPatientCreateSchema
+
+    def dispatch(self, request, *args, **kwargs):
+        """Overwritten to check if the provider kwarg belongs to a
+        User who exists, and if not, raises a 404 error."""
+        try:
+            self.provider  # noqa: B018
+        except User.DoesNotExist as e:
+            raise Http404(
+                _("No provider found with username: %(username)s")
+                % {"username": self.kwargs.get("provider", "unknown")},
+            ) from e
+        return super().dispatch(
+            request,
+            *args,
+            **kwargs,
+        )
 
     @cached_property
-    def provider(self) -> User | None:
-        """Returns the provider User object if the request user is
-        the same as the provider specified in the URL kwargs.
+    def provider(self) -> User:
+        """Returns the provider User object specified by the
+        provider_id URL kwarg. Can be overwritten by child classes
+        to select_related or prefetch_related models required
+        for the view."""
 
-        TODO: If other providers are ever able to create Patients
-        for other providers, this will need to be updated to
-        return the provider specified in the URL kwargs instead of
-        the request user."""
-
-        provider = self.kwargs.get("provider", None)
-
-        return (
-            self.request_user
-            if provider and self.request_user.username == provider
-            else None
+        return User.objects.get(
+            username=self.kwargs.get("provider"),
         )
 
     def get_permission_object(self) -> str | None:
@@ -95,8 +106,7 @@ class PatientProviderCreateView(
 
     def create_schema(self, data: dict[str, Any]) -> "BaseModel":
         """Overwritten to add the provider to the schema."""
-
-        data["provider"] = str(self.provider.id)
+        data["provider_id"] = self.provider.id
         return super().create_schema(data)
 
 
@@ -156,7 +166,7 @@ class PatientMixin:
     def get_queryset(self) -> QuerySet[Patient]:
         """Returns the queryset with the necessary related models
         for updating select_related and prefetch_related."""
-        return patient_update_qs(super().get_queryset())
+        return patient_qs(super().get_queryset())
 
 
 class PatientDetailView(
@@ -182,7 +192,15 @@ class PatientUpdateView(
     TODO: Add required MedHistorys (i.e. menopause as needed) once
     this app is implemented."""
 
-    schema = PatientUpdateSchema
+    schema = PatientSchema
+
+    def create_schema(self, data: dict[str, Any]) -> "BaseModel":
+        """Overwritten to add the Patient's id to the schema data,
+        which is required for the schema validation."""
+        data.update(
+            {"id": str(self.patient.id)},
+        )
+        return super().create_schema(data)
 
 
 # TODO: use Django-rules to prevent accessing User views for Patients

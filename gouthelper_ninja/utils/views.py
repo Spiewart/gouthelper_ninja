@@ -14,16 +14,16 @@ from gouthelper_ninja.utils.models import GetStrAttrsMixin
 
 if TYPE_CHECKING:
     from django.db.models import Model
-    from django.forms import Form
     from django.http import HttpRequest
     from pydantic import BaseModel
 
     from gouthelper_ninja.users.models import User
+    from gouthelper_ninja.utils.forms import GoutHelperForm
 
 
 class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
     request: "HttpRequest"
-    form_class: "Form"
+    form_class: "GoutHelperForm"
     model: "Model"
     patient: Union["User", "Patient", None]
     schema: "BaseModel"
@@ -98,7 +98,7 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
         return self.request.user
 
     def post(self, request, *args, **kwargs):
-        self.forms: dict[str, Form] = {}
+        self.forms: dict[str, GoutHelperForm] = {}
         self.post_init()
         if self.post_forms_valid():
             self.post_process_forms()
@@ -110,12 +110,20 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
 
         data = {}
         for form in self.forms.values():
-            data.update(form.cleaned_data)
+            if form.model != self.model:
+                data.update(
+                    {
+                        form.model.__name__.lower(): form.cleaned_data,
+                    },
+                )
+            else:
+                data.update(form.cleaned_data)
 
         schema = self.create_schema(data)
 
         if self.errors:
             return self.errors
+
         return self.form_valid(schema=schema, **kwargs)
 
     def post_init(self) -> None:
@@ -162,6 +170,7 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
         """Method that creates the View's Pydantic schema from the schema
         attribute using the data passed in. Can be overwritten in child classes
         for additional functionality or processing."""
+
         return self.schema(**data)
 
     def form_valid(

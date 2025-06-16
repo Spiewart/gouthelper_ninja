@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from typing import Any
 
 from crispy_forms.helper import FormHelper
@@ -10,6 +11,9 @@ from django.utils.text import format_lazy
 
 from gouthelper_ninja.utils.helpers import is_iterable
 from gouthelper_ninja.utils.models import GetStrAttrsMixin
+
+if TYPE_CHECKING:
+    from django.db.models import Model
 
 
 class GoutHelperForm(Form, GetStrAttrsMixin):
@@ -26,6 +30,8 @@ class GoutHelperForm(Form, GetStrAttrsMixin):
         sub-form (bool): If True, the form will be rendered as a sub-form
             with a specific CSS class.
     """
+
+    model: type["Model"]
 
     def __init__(self, *args, **kwargs):
         self.patient = kwargs.pop("patient")

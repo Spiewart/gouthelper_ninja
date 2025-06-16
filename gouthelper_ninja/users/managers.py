@@ -60,11 +60,10 @@ class PatientManager(BaseUserManager):
 
         if "username" not in kwargs:
             kwargs["username"] = uuid4().hex[:30]
-
-        dateofbirth = kwargs.pop("dateofbirth")
-        ethnicity = kwargs.pop("ethnicity")
-        gender = kwargs.pop("gender")
-        provider_id = kwargs.pop("provider", None)
+        dateofbirth = kwargs.pop("dateofbirth").get("dateofbirth")
+        ethnicity = kwargs.pop("ethnicity").get("ethnicity")
+        gender = kwargs.pop("gender").get("gender")
+        provider_id = kwargs.pop("provider_id", None)
 
         patient = super().create(**kwargs)
 

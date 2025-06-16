@@ -10,7 +10,7 @@ def patientprofile_qs(qs: "QuerySet") -> "QuerySet":
     return qs.select_related("patientprofile__provider")
 
 
-def patient_and_profile_qs(qs: "QuerySet") -> "QuerySet":
+def patient_patientprofile_provider_qs(qs: "QuerySet") -> "QuerySet":
     """Selects related Patiend, PatientProfile, and Provider."""
 
     return qs.select_related(
@@ -18,7 +18,7 @@ def patient_and_profile_qs(qs: "QuerySet") -> "QuerySet":
     )
 
 
-def patient_update_qs(qs: "QuerySet") -> "QuerySet":
+def patient_qs(qs: "QuerySet") -> "QuerySet":
     """Selects related DateOfBirth, Ethnicity, and Gender models for a
     Patient and PatientProfile queryset."""
 

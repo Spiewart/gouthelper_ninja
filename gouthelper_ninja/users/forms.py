@@ -4,15 +4,17 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Fieldset
 from crispy_forms.layout import Layout
 from django.contrib.auth import forms as admin_forms
-from django.forms import Form
 from django.utils.translation import gettext_lazy as _
 
+from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.users.models import User
 from gouthelper_ninja.utils.forms import GoutHelperForm
 
 
-class PatientForm(GoutHelperForm, Form):
+class PatientForm(GoutHelperForm):
     """Model form for creating Patient objects."""
+
+    model = Patient
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

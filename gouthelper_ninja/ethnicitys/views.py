@@ -30,6 +30,7 @@ class EthnicityEditMixin(GoutHelperEditMixin):
     def post_init(self) -> None:
         """Overwritten to add the EthnicityForm to the kwargs if
         the model is not Ethnicity."""
+
         if self.model is not Ethnicity:
             self.forms["ethnicity_form"] = EthnicityForm(
                 initial={"ethnicity": self.patient.ethnicity.ethnicity}

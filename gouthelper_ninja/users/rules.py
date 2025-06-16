@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 import rules
-from django.apps import apps
 from django.contrib.auth.models import AnonymousUser
 
 from gouthelper_ninja.users.choices import Roles
@@ -40,23 +40,6 @@ def obj_is_patient_or_pseudopatient(_, obj: "User") -> bool:
     Need to ensure that the object is a Patient first."""
 
     return obj.role in {Roles.PATIENT, Roles.PSEUDOPATIENT}
-
-
-@rules.predicate
-def obj_username_belongs_to_provider(_, obj: str | None):
-    """Returns True if the User whose username matches the provider kwarg
-    is a Provider."""
-
-    return (
-        apps.get_model(
-            "users.User",
-        )
-        .objects.get(username=obj)
-        .role
-        == Roles.PROVIDER
-        if obj
-        else False
-    )
 
 
 @rules.predicate
@@ -104,6 +87,18 @@ def user_username_is_obj(user: "User", obj: str | None):
 
 
 @rules.predicate
+def user_id_is_obj(user: "User", obj: str | None):
+    """Returns True if the user's id matches the obj,
+    which should be a provider_id kwarg."""
+
+    return (
+        (user.id == obj if isinstance(obj, UUID) else str(user.id) == obj)
+        if obj
+        else False
+    )
+
+
+@rules.predicate
 def user_is_obj(user: "User", obj: "User") -> bool:
     """Returns True if the user is the same as the object."""
 
@@ -125,8 +120,9 @@ def list_belongs_to_user(user: "User", obj: str | None):
 
 # Patient predicates
 add_provider_patient = ~user_is_anonymous & (
-    (user_is_admin & obj_username_belongs_to_provider)
-    | (user_is_a_provider & user_username_is_obj)
+    # Important: requires checking if the User indicated by the
+    # obj (either username or id) exists in the view or API.
+    user_is_admin | (user_is_a_provider & (user_username_is_obj | user_id_is_obj))
 )
 
 change_patient = (

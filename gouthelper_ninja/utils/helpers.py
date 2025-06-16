@@ -1,6 +1,8 @@
 import datetime
 from typing import TYPE_CHECKING
+from typing import Literal
 from typing import Union
+from uuid import UUID
 
 from django.urls import reverse
 
@@ -39,6 +41,18 @@ def is_iterable(obj) -> bool:
         return False
     else:
         return True
+
+
+def is_valid_uuid(value: str | UUID) -> UUID | Literal[False]:
+    """Check if a value is a valid UUID."""
+    if isinstance(value, str):
+        try:
+            return UUID(value)
+        except ValueError:
+            return False
+    elif isinstance(value, UUID):
+        return value
+    return False
 
 
 def num_years(

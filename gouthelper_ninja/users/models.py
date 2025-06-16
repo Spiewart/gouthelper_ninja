@@ -175,10 +175,15 @@ class Patient(User):
         for key, val in kwargs.items():
             attr: Model | Field = getattr(self, key)
             if isinstance(attr, Model):
-                if getattr(attr, key) != val:
-                    setattr(attr, key, val)
-                    attr.full_clean()
-                    attr.save()
+                # TODO: rewrite this to use the related model's update method
+                for model_field, field_val in val.items():
+                    attr_changed = False
+                    if getattr(attr, model_field) != field_val:
+                        setattr(attr, model_field, field_val)
+                        attr_changed = True
+                    if attr_changed:
+                        attr.full_clean()
+                        attr.save()
             else:
                 setattr(self, key, val)
                 self.save_needed = True

@@ -6,7 +6,7 @@ from gouthelper_ninja.dateofbirths.api import update_dateofbirth
 from gouthelper_ninja.dateofbirths.models import DateOfBirth
 from gouthelper_ninja.dateofbirths.schema import DateOfBirthNestedSchema
 from gouthelper_ninja.users.tests.factories import PatientFactory
-from gouthelper_ninja.utils.test_helpers import RESPONSE_STATUS
+from gouthelper_ninja.utils.test_helpers import RESPONSE_SUCCESS
 
 
 class TestAPI(TestCase):
@@ -39,7 +39,7 @@ class TestAPI(TestCase):
             json={"dateofbirth": new_date},
         )
 
-        assert response.status_code == RESPONSE_STATUS
+        assert response.status_code == RESPONSE_SUCCESS
         assert response.data["dateofbirth"] == new_date
         self.dateofbirth.refresh_from_db()
         assert self.dateofbirth.dateofbirth.strftime("%Y-%m-%d") == new_date

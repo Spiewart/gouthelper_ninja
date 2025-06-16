@@ -14,8 +14,12 @@ if TYPE_CHECKING:
     from gouthelper_ninja.users.models import User
 
 
-RESPONSE_REDIRECT_STATUS = 302
-RESPONSE_STATUS = 200
+RESPONSE_REDIRECT = 302
+RESPONSE_SUCCESS = 200
+RESPONSE_UNAUTHORIZED = 401
+RESPONSE_FORBIDDEN = 403
+RESPONSE_NOT_FOUND = 404
+RESPONSE_UNPROCESSABLE_CONTENT = 422
 
 
 def create_ghform_kwargs(
@@ -48,20 +52,24 @@ def print_response_errors(response: Union["HttpResponse", None] = None) -> None:
         for key, val in response.context_data.items():
             if key.endswith("_form") or key == "form":
                 if getattr(val, "errors", None):
-                    logging.error("printing form errors")
-                    logging.error(key, val.errors)
+                    logging.error("printing form errors: %s - %s", key, val.errors)
             elif val and isinstance(val, BaseModelFormSet):
                 non_form_errors = val.non_form_errors()
                 if non_form_errors:
-                    logging.error("printing non form errors")
-                    logging.error(key, non_form_errors)
+                    logging.error(
+                        "printing non form errors: %s - %s",
+                        key,
+                        non_form_errors,
+                    )
                 # Check if the formset has forms and iterate over them if so
                 if val.forms:
                     for form in val.forms:
                         if getattr(form, "errors", None):
-                            logging.error("printing formset form errors")
-                            logging.error("printing formset form errors")
+                            logging.error(
+                                "printing formset form errors: %s - %s",
+                                key,
+                                form.errors,
+                            )
                             logging.error(form.instance.pk)
                             logging.error(form.instance.date_drawn)
                             logging.error(form.instance.value)
-                            logging.error(key, form.errors)

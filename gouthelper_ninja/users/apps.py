@@ -10,4 +10,4 @@ class UsersConfig(AppConfig):
 
     def ready(self):
         with contextlib.suppress(ImportError):
-            import gouthelper_ninja.users.signals  # noqa: F401
+            pass  # noqa: FRESPONSE_UNAUTHORIZED

@@ -1,14 +1,16 @@
 from crispy_forms.helper import FormHelper
 from django.forms import ChoiceField
-from django.forms import Form
 from django.utils.text import format_lazy
 from django.utils.translation import gettext_lazy as _
 
 from gouthelper_ninja.genders.choices import Genders
+from gouthelper_ninja.genders.models import Gender
 from gouthelper_ninja.utils.forms import GoutHelperForm
 
 
-class GenderForm(GoutHelperForm, Form):
+class GenderForm(GoutHelperForm):
+    model = Gender
+
     gender = ChoiceField(
         label=_("Gender"),
         choices=Genders.choices,

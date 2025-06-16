@@ -35,13 +35,11 @@ from gouthelper_ninja.users.views import UserUpdateView
 from gouthelper_ninja.users.views import user_detail_view
 from gouthelper_ninja.utils.helpers import get_str_attrs_dict
 from gouthelper_ninja.utils.helpers import yearsago_date
+from gouthelper_ninja.utils.test_helpers import RESPONSE_REDIRECT
+from gouthelper_ninja.utils.test_helpers import RESPONSE_SUCCESS
 from gouthelper_ninja.utils.test_helpers import dummy_get_response
 
 pytestmark = pytest.mark.django_db
-
-
-RESPONSE_STATUS = 200
-RESPONSE_REDIRECT_STATUS = 302
 
 
 class TestPatientCreateView(TestCase):
@@ -142,7 +140,7 @@ class TestPatientCreateView(TestCase):
         response = self.post_view.post(self.post)
 
         assert isinstance(response, HttpResponseRedirect)
-        assert response.status_code == RESPONSE_REDIRECT_STATUS
+        assert response.status_code == RESPONSE_REDIRECT
 
         patient = Patient.objects.order_by("created").last()
         assert response.url == reverse(
@@ -164,7 +162,7 @@ class TestPatientCreateView(TestCase):
 
         response = self.post_view.post(self.post)
 
-        assert response.status_code == RESPONSE_STATUS
+        assert response.status_code == RESPONSE_SUCCESS
         assert isinstance(response, HttpResponseRedirect) is False
         assert isinstance(response, HttpResponse)
         assert "form" in response.context_data
@@ -284,7 +282,7 @@ class TestPatientProviderCreateView(TestCase):
         context = self.get_view.get_context_data()
 
         assert "form" in context
-        assert isinstance(context["form"], PatientCreateView.form_class)
+        assert isinstance(context["form"], PatientProviderCreateView.form_class)
         assert context["form"].initial == {}
         assert "patient_form" not in context
         assert "dateofbirth_form" in context
@@ -318,7 +316,7 @@ class TestPatientProviderCreateView(TestCase):
         response = self.post_view.post(self.post)
 
         assert isinstance(response, HttpResponseRedirect)
-        assert response.status_code == RESPONSE_REDIRECT_STATUS
+        assert response.status_code == RESPONSE_REDIRECT
 
         patient = Patient.objects.order_by("created").last()
         assert response.url == reverse(
@@ -341,7 +339,7 @@ class TestPatientProviderCreateView(TestCase):
 
         response = self.post_view.post(self.post)
 
-        assert response.status_code == RESPONSE_STATUS
+        assert response.status_code == RESPONSE_SUCCESS
         assert isinstance(response, HttpResponseRedirect) is False
         assert isinstance(response, HttpResponse)
         assert "form" in response.context_data
@@ -426,7 +424,7 @@ class TestPatientDetailView(TestCase):
     def test__get(self):
         response = self.get_view.get(self.get)
         assert isinstance(response, HttpResponse)
-        assert response.status_code == RESPONSE_STATUS
+        assert response.status_code == RESPONSE_SUCCESS
         assert "object" in response.context_data
         assert response.context_data["object"] == self.patient
 
@@ -483,17 +481,18 @@ class TestPatientUpdateView(TestCase):
     def setUp(self):
         self.provider = UserFactory()
         self.rf = RequestFactory()
-        self.data = {
-            "dateofbirth": 70,
-            "ethnicity": Ethnicitys.CAUCASIAN,
-            "gender": Genders.FEMALE,
-        }
         self.provider = UserFactory()
         self.patient = PatientFactory(
             dateofbirth=50,
             ethnicity=Ethnicitys.AFRICANAMERICAN,
             gender=Genders.MALE,
         )
+        self.data = {
+            "dateofbirth": 70,
+            "ethnicity": Ethnicitys.CAUCASIAN,
+            "gender": Genders.FEMALE,
+            "id": self.patient.id,
+        }
         self.patient_with_provider = PatientFactory(
             dateofbirth=50,
             ethnicity=Ethnicitys.AFRICANAMERICAN,
@@ -526,7 +525,7 @@ class TestPatientUpdateView(TestCase):
     def test__get(self):
         response = self.get_view.get(self.get)
         assert isinstance(response, HttpResponse)
-        assert response.status_code == RESPONSE_STATUS
+        assert response.status_code == RESPONSE_SUCCESS
         assert "form" in response.context_data
         assert isinstance(response.context_data["form"], PatientUpdateView.form_class)
         assert "dateofbirth_form" in response.context_data
@@ -556,7 +555,7 @@ class TestPatientUpdateView(TestCase):
         response = self.post_view.post(self.post)
 
         assert isinstance(response, HttpResponseRedirect)
-        assert response.status_code == RESPONSE_REDIRECT_STATUS
+        assert response.status_code == RESPONSE_REDIRECT
 
         assert response.url == reverse(
             "users:patient-detail",
