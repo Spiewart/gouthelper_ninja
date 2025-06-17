@@ -57,35 +57,24 @@ class PatientManager(BaseUserManager):
         return results.filter(role=Roles.PSEUDOPATIENT)
 
     def create(self, data: PatientEditSchema, provider_id: Union["UUID", None] = None):
-        kwargs = data.dict()
-        kwargs.update(
-            {
-                "role": Roles.PSEUDOPATIENT,
-            },
+        dateofbirth = data.dateofbirth.dateofbirth
+        gender = data.gender.gender
+
+        patient = super().create(
+            role=Roles.PSEUDOPATIENT,
+            username=uuid4().hex[:30],
         )
 
-        if "username" not in kwargs:
-            kwargs["username"] = uuid4().hex[:30]
-        dateofbirth = kwargs.pop("dateofbirth").get("dateofbirth")
-        ethnicity = kwargs.pop("ethnicity").get("ethnicity")
-        gender = kwargs.pop("gender").get("gender")
-
-        patient = super().create(**kwargs)
-
-        profile_kwargs = {
-            "provider_id": provider_id,
-            "user": patient,
-            "provider_alias": get_provider_alias(
+        PatientProfile.objects.create(
+            provider_id=provider_id,
+            user=patient,
+            provider_alias=get_provider_alias(
                 provider_id=provider_id,
                 age=age_calc(dateofbirth),
                 gender=gender,
             )
             if provider_id
             else None,
-        }
-
-        PatientProfile.objects.create(
-            **profile_kwargs,
         )
 
         # Create related models
@@ -95,7 +84,7 @@ class PatientManager(BaseUserManager):
         )
         apps.get_model("ethnicitys.Ethnicity").objects.create(
             patient=patient,
-            ethnicity=ethnicity,
+            ethnicity=data.ethnicity.ethnicity,
         )
         apps.get_model("genders.Gender").objects.create(
             patient=patient,

@@ -20,10 +20,6 @@ class PatientBaseSchema(
         extra="forbid",
     )
 
-    # TODO: Could consider adding custom ValidationError to provide
-    # TODO: more specific error messages for, for instance when provider_id
-    # TODO: is sent to a non-provider endpoint.
-
 
 class PatientSchema(PatientBaseSchema, IdSchema):
     pass

@@ -144,7 +144,58 @@ class TestCreateProviderPatient(TestCase):
                 "patient for this provider."
             ),
         }
-        # TODO: Test other roles, provider, creator combinations for permissions
+
+        # An admin should be able to create a patient for any provider
+        admin_user = UserFactory(role=Roles.ADMIN)
+        self.client.force_login(admin_user)
+        response = self.client.post(
+            reverse(
+                "api-1.0.0:create_provider_patient",
+                kwargs={"provider_id": self.provider.id},
+            ),
+            data=json.dumps(self.data),
+            content_type="application/json",
+        )
+        assert response.status_code == RESPONSE_SUCCESS
+        patient = Patient.objects.get(id=response.json()["id"])
+        assert patient.profile.provider == self.provider
+        # The creator should be the admin user who made the request
+        assert patient.creator == admin_user
+
+        # A provider should not be able to create a patient for another provider
+        other_provider = UserFactory(role=Roles.PROVIDER)
+        self.client.force_login(other_provider)
+        response = self.client.post(
+            reverse(
+                "api-1.0.0:create_provider_patient",
+                kwargs={"provider_id": self.provider.id},
+            ),
+            data=json.dumps(self.data),
+            content_type="application/json",
+        )
+        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.json() == {
+            "detail": (
+                f"{other_provider} does not have permission to create a "
+                "patient for this provider."
+            ),
+        }
+
+    def test__invalid_provider_id(self):
+        self.client.force_login(self.provider)
+        invalid_provider_id = uuid4()
+        response = self.client.post(
+            reverse(
+                "api-1.0.0:create_provider_patient",
+                kwargs={"provider_id": invalid_provider_id},
+            ),
+            data=json.dumps(self.data),
+            content_type="application/json",
+        )
+        assert response.status_code == RESPONSE_NOT_FOUND
+        assert response.json() == {
+            "detail": f"Provider with id: {invalid_provider_id} not found.",
+        }
 
 
 class TestGetPatient(TestCase):
@@ -187,11 +238,76 @@ class TestGetPatient(TestCase):
         }
 
     def test__permissions(self):
+        # Anonymous user trying to access a patient with a provider
         response = self.client.get(
             self.provider_patient_url,
-            {"patient_id": self.patient_with_provider.id},
         )
         assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.json() == {
+            "detail": "AnonymousUser does not have permission to view this patient.",
+        }
+
+        # Anonymous user trying to access a patient without a provider (should succeed)
+        response = self.client.get(self.url)
+        assert response.status_code == RESPONSE_SUCCESS
+        assert response.json()["id"] == str(self.patient.id)
+
+        # Patient trying to access their own details (patient has no provider)
+        self.client.force_login(self.patient)
+        response = self.client.get(self.url)
+        assert response.status_code == RESPONSE_SUCCESS
+        assert response.json()["id"] == str(self.patient.id)
+
+        # Patient trying to access another patient's details
+        # (other patient has a provider)
+        other_patient_with_provider = PatientFactory(provider=UserFactory())
+        other_patient_url = reverse(
+            "api-1.0.0:get_patient",
+            kwargs={"patient_id": other_patient_with_provider.id},
+        )
+        response = self.client.get(other_patient_url)
+        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.json() == {
+            "detail": f"{self.patient} does not have permission to view this patient.",
+        }
+
+        # Provider trying to access their own patient
+        self.client.force_login(self.provider)
+        response = self.client.get(self.provider_patient_url)
+        assert response.status_code == RESPONSE_SUCCESS
+        assert response.json()["id"] == str(self.patient_with_provider.id)
+
+        # Provider trying to access a patient not assigned to them
+        # (but without a provider)
+        response = self.client.get(self.url)
+        assert response.status_code == RESPONSE_SUCCESS
+        assert response.json()["id"] == str(self.patient.id)
+
+        # Admin user trying to access any patient
+        admin_user = UserFactory(role=Roles.ADMIN)
+        self.client.force_login(admin_user)
+        response = self.client.get(self.url)
+        assert response.status_code == RESPONSE_SUCCESS
+        assert response.json()["id"] == str(self.patient.id)
+
+        response = self.client.get(self.provider_patient_url)
+        assert response.status_code == RESPONSE_SUCCESS
+        assert response.json()["id"] == str(self.patient_with_provider.id)
+
+        # Test user who created a patient (but is not their provider)
+        creator_user = UserFactory(role=Roles.PROVIDER)
+        created_patient = PatientFactory()
+        history = created_patient.history.first()
+        history.history_user = creator_user
+        history.save()
+        self.client.force_login(creator_user)
+        created_patient_url = reverse(
+            "api-1.0.0:get_patient",
+            kwargs={"patient_id": created_patient.id},
+        )
+        response = self.client.get(created_patient_url)
+        assert response.status_code == RESPONSE_SUCCESS
+        assert response.json()["id"] == str(created_patient.id)
 
         self.client.force_login(self.provider)
         response = self.client.get(
@@ -200,7 +316,6 @@ class TestGetPatient(TestCase):
         )
         assert response.status_code == RESPONSE_SUCCESS
         assert response.json()["id"] == str(self.patient_with_provider.id)
-        # TODO: Test other roles, provider, creator combinations for permissions
 
 
 class TestGetPatients(TestCase):
