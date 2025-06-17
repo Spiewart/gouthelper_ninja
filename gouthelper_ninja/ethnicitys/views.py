@@ -2,7 +2,7 @@ from typing import Any
 
 from gouthelper_ninja.ethnicitys.forms import EthnicityForm
 from gouthelper_ninja.ethnicitys.models import Ethnicity
-from gouthelper_ninja.ethnicitys.schema import EthnicityNestedSchema
+from gouthelper_ninja.ethnicitys.schema import EthnicityEditSchema
 from gouthelper_ninja.utils.views import GoutHelperEditMixin
 from gouthelper_ninja.utils.views import GoutHelperUpdateMixin
 
@@ -12,7 +12,7 @@ class EthnicityEditMixin(GoutHelperEditMixin):
 
     model = Ethnicity
     form_class = EthnicityForm
-    schema = EthnicityNestedSchema
+    schema = EthnicityEditSchema
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)

@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING
+from typing import Union
 from uuid import uuid4
 
 from django.apps import apps
@@ -7,7 +9,11 @@ from gouthelper_ninja.profiles.helpers import get_provider_alias
 from gouthelper_ninja.profiles.models import PatientProfile
 from gouthelper_ninja.profiles.models import ProviderProfile
 from gouthelper_ninja.users.choices import Roles
+from gouthelper_ninja.users.schema import PatientEditSchema
 from gouthelper_ninja.utils.helpers import age_calc
+
+if TYPE_CHECKING:
+    from uuid import UUID
 
 
 class AdminManager(BaseUserManager):
@@ -50,7 +56,8 @@ class PatientManager(BaseUserManager):
         results = super().get_queryset(*args, **kwargs)
         return results.filter(role=Roles.PSEUDOPATIENT)
 
-    def create(self, **kwargs):
+    def create(self, data: PatientEditSchema, provider_id: Union["UUID", None] = None):
+        kwargs = data.dict()
         kwargs.update(
             {
                 "role": Roles.PSEUDOPATIENT,
@@ -62,7 +69,6 @@ class PatientManager(BaseUserManager):
         dateofbirth = kwargs.pop("dateofbirth").get("dateofbirth")
         ethnicity = kwargs.pop("ethnicity").get("ethnicity")
         gender = kwargs.pop("gender").get("gender")
-        provider_id = kwargs.pop("provider_id", None)
 
         patient = super().create(**kwargs)
 

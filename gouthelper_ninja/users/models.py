@@ -26,6 +26,7 @@ from gouthelper_ninja.users.rules import delete_patient
 from gouthelper_ninja.users.rules import delete_user
 from gouthelper_ninja.users.rules import view_patient
 from gouthelper_ninja.users.rules import view_user
+from gouthelper_ninja.users.schema import PatientEditSchema
 from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperModel
 
@@ -169,23 +170,17 @@ class Patient(User):
         """Returns the User who created the Patient, if available."""
         return self.editors[0] if self.editors else None
 
-    def update(self, **kwargs) -> "Patient":
-        """Updates the Patient instance and related models."""
+    def update(self, data: PatientEditSchema) -> "Patient":
+        """Updates the Patient instance and related models.
+        Schema fields are Patient fields or related models
+        with their respective editing Schema."""
 
-        for key, val in kwargs.items():
-            attr: Model | Field = getattr(self, key)
+        for attr_name, attr_data in data.dict().items():
+            attr: Model | Field = getattr(self, attr_name)
             if isinstance(attr, Model):
-                # TODO: rewrite this to use the related model's update method
-                for model_field, field_val in val.items():
-                    attr_changed = False
-                    if getattr(attr, model_field) != field_val:
-                        setattr(attr, model_field, field_val)
-                        attr_changed = True
-                    if attr_changed:
-                        attr.full_clean()
-                        attr.save()
+                attr.update(data=attr.edit_schema(**attr_data))
             else:
-                setattr(self, key, val)
+                setattr(self, attr_name, attr_data)
                 self.save_needed = True
 
         if self.save_needed:

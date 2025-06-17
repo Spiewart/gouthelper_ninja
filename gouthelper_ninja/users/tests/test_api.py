@@ -94,12 +94,14 @@ class TestCreateProviderPatient(TestCase):
             "dateofbirth": {"dateofbirth": "2000-06-12"},
             "ethnicity": {"ethnicity": "Caucasian"},
             "gender": {"gender": 0},
-            "provider_id": str(self.provider.id),
         }
 
     def test__auth_required(self):
         response = self.client.post(
-            reverse("api-1.0.0:create_provider_patient"),
+            reverse(
+                "api-1.0.0:create_provider_patient",
+                kwargs={"provider_id": self.provider.id},
+            ),
             data=json.dumps(self.data),
             content_type="application/json",
         )
@@ -110,7 +112,10 @@ class TestCreateProviderPatient(TestCase):
     def test__api(self):
         self.client.force_login(self.provider)
         response = self.client.post(
-            reverse("api-1.0.0:create_provider_patient"),
+            reverse(
+                "api-1.0.0:create_provider_patient",
+                kwargs={"provider_id": self.provider.id},
+            ),
             data=json.dumps(self.data),
             content_type="application/json",
         )
@@ -125,7 +130,10 @@ class TestCreateProviderPatient(TestCase):
         # A patient should not be able to create a patient for a provider
         self.client.force_login(self.patient)
         response = self.client.post(
-            reverse("api-1.0.0:create_provider_patient"),
+            reverse(
+                "api-1.0.0:create_provider_patient",
+                kwargs={"provider_id": self.provider.id},
+            ),
             data=json.dumps(self.data),
             content_type="application/json",
         )

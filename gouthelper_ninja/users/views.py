@@ -22,9 +22,8 @@ from gouthelper_ninja.users.forms import PatientForm
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.users.models import User
 from gouthelper_ninja.users.querysets import patient_qs
-from gouthelper_ninja.users.schema import PatientCreateSchema
+from gouthelper_ninja.users.schema import PatientEditSchema
 from gouthelper_ninja.users.schema import PatientSchema
-from gouthelper_ninja.users.schema import ProviderPatientCreateSchema
 from gouthelper_ninja.utils.views import GoutHelperCreateMixin
 from gouthelper_ninja.utils.views import GoutHelperUpdateMixin
 
@@ -55,7 +54,7 @@ class PatientCreateView(
     TODO: Add required MedHistorys (i.e. menopause as needed) once
     this app is implemented."""
 
-    schema = PatientCreateSchema
+    schema = PatientEditSchema
 
     @cached_property
     def patient(self) -> None:
@@ -68,7 +67,7 @@ class PatientProviderCreateView(
     PatientCreateView,
 ):
     permission_required = "users.can_add_provider_patient"
-    schema = ProviderPatientCreateSchema
+    schema = PatientEditSchema
 
     def dispatch(self, request, *args, **kwargs):
         """Overwritten to check if the provider kwarg belongs to a
@@ -104,10 +103,20 @@ class PatientProviderCreateView(
 
         return self.kwargs.get("provider", None)
 
-    def create_schema(self, data: dict[str, Any]) -> "BaseModel":
-        """Overwritten to add the provider to the schema."""
-        data["provider_id"] = self.provider.id
-        return super().create_schema(data)
+    def create_object(
+        self,
+        schema: "BaseModel",
+        **kwargs: dict[str, Any],
+    ) -> Patient:
+        """Overwritten to create a Patient with the provider_id
+        passed in the kwargs, which is required for creating a
+        Patient for a provider."""
+        kwargs.update(
+            {
+                "provider_id": self.provider.id,
+            },
+        )
+        return super().create_object(schema, **kwargs)
 
 
 class PatientMixin:

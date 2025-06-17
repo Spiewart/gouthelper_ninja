@@ -1,6 +1,9 @@
 from django.test import TestCase
 
+from gouthelper_ninja.ethnicitys.choices import Ethnicitys
+from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.users.models import User
+from gouthelper_ninja.users.schema import PatientEditSchema
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
 
@@ -67,6 +70,19 @@ class TestPatient(TestCase):
 
         with self.assertNumQueries(1):
             assert self.patient.creator == self.patient
+
+    def test__update(self):
+        """Tests that the update method updates the patient and its related models."""
+
+        data = PatientEditSchema(
+            dateofbirth={"dateofbirth": "2000-01-01"},
+            ethnicity={"ethnicity": Ethnicitys.KOREAN},
+            gender={"gender": Genders.FEMALE},
+        )
+        patient = self.patient.update(data=data)
+        assert patient.dateofbirth.dateofbirth.strftime("%Y-%m-%d") == "2000-01-01"
+        assert patient.ethnicity.ethnicity == Ethnicitys.KOREAN
+        assert patient.gender.gender == Genders.FEMALE
 
 
 class TestUser(TestCase):

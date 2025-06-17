@@ -1,18 +1,22 @@
-from ninja import ModelSchema
+from datetime import date
+from uuid import UUID
 
-from gouthelper_ninja.dateofbirths.models import DateOfBirth
-
-
-class DateOfBirthNestedSchema(ModelSchema):
-    class Meta:
-        model = DateOfBirth
-        fields = ["dateofbirth"]
+from ninja import Schema
 
 
-class DateOfBirthSchema(DateOfBirthNestedSchema):
-    class Meta(DateOfBirthNestedSchema.Meta):
-        fields = [
-            *DateOfBirthNestedSchema.Meta.fields,
-            "patient",
-            "id",
-        ]
+class DateOfBirthEditSchema(Schema):
+    dateofbirth: date
+
+
+class DateOfBirthSchema(DateOfBirthEditSchema):
+    id: UUID
+    patient_id: UUID
+
+    class Config:
+        schema_extra = {
+            "example": {
+                "dateofbirth": "2000-01-01",
+                "patient_id": "patient_id",
+                "id": "dateofbirth_id",
+            },
+        }

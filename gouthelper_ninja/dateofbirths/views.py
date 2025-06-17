@@ -4,7 +4,7 @@ from django.views.generic import UpdateView
 
 from gouthelper_ninja.dateofbirths.forms import DateOfBirthForm
 from gouthelper_ninja.dateofbirths.models import DateOfBirth
-from gouthelper_ninja.dateofbirths.schema import DateOfBirthNestedSchema
+from gouthelper_ninja.dateofbirths.schema import DateOfBirthEditSchema
 from gouthelper_ninja.utils.views import GoutHelperEditMixin
 from gouthelper_ninja.utils.views import GoutHelperUpdateMixin
 from gouthelper_ninja.utils.views import PatientObjectMixin
@@ -15,7 +15,7 @@ class DateOfBirthEditMixin(GoutHelperEditMixin):
 
     model = DateOfBirth
     form_class = DateOfBirthForm
-    schema = DateOfBirthNestedSchema
+    schema = DateOfBirthEditSchema
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)

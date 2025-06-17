@@ -306,6 +306,23 @@ class TestPatientProviderCreateView(TestCase):
             self.get_view.request_user,
         )
 
+    def test__get(self):
+        response = self.get_view.get(self.get)
+        assert isinstance(response, HttpResponse)
+        assert response.status_code == RESPONSE_SUCCESS
+        assert "form" in response.context_data
+        assert isinstance(
+            response.context_data["form"],
+            PatientProviderCreateView.form_class,
+        )
+        assert "patient_form" not in response.context_data
+        assert "dateofbirth_form" in response.context_data
+        assert isinstance(response.context_data["dateofbirth_form"], DateOfBirthForm)
+        assert "gender_form" in response.context_data
+        assert isinstance(response.context_data["gender_form"], GenderForm)
+        assert "ethnicity_form" in response.context_data
+        assert isinstance(response.context_data["ethnicity_form"], EthnicityForm)
+
     def test__post(self):
         num_patients = Patient.objects.count()
         assert num_patients == 0
@@ -326,6 +343,17 @@ class TestPatientProviderCreateView(TestCase):
 
         assert Patient.objects.count() == num_patients + 1
         assert patient.provider == self.provider
+        assert patient.profile.provider_alias == num_patients + 1
+
+        # Test that calling the view a second time, creating another identifical
+        # patient, increments the provider alias
+        response = self.post_view.post(self.post)
+        assert response.status_code == RESPONSE_REDIRECT
+
+        assert Patient.objects.count() == num_patients + 2
+        new_patient = Patient.objects.order_by("created").last()
+        assert new_patient.provider == self.provider
+        assert new_patient.profile.provider_alias == num_patients + 2
 
     def test__post_with_errors(self):
         # Test with invalid data
@@ -371,7 +399,7 @@ class TestPatientProviderCreateView(TestCase):
 
         assert PatientProviderCreateView.as_view()(self.get, **kwargs)
 
-        # Test POST request with provider
+        # Test POST request with an anonymous user who should not have permission
         self.post.user = self.anon
         self.post.htmx = False
         SessionMiddleware(dummy_get_response).process_request(self.post)
@@ -380,6 +408,8 @@ class TestPatientProviderCreateView(TestCase):
         with pytest.raises(PermissionDenied):
             PatientProviderCreateView.as_view(raise_exception=True)(self.post, **kwargs)
 
+        # Test POST request with a user who is not the provider
+        # but is a Patient, which should not have permission
         self.post.user = PatientFactory()
 
         with pytest.raises(PermissionDenied):

@@ -223,8 +223,14 @@ class GoutHelperCreateMixin(GoutHelperEditMixin):
         HttpResponseRedirect if successful, or HTMX response if
         the request is HTMX."""
 
-        self.object = self.model.objects.create(**schema.dict())
+        self.object = self.create_object(schema)
         return super().form_valid(schema=schema, **kwargs)
+
+    def create_object(self, schema: "BaseModel", **kwargs: dict[str, Any]) -> "Model":
+        """Method to create the object from the validated schema.
+        Can be overwritten in child classes to add additional
+        functionality or processing."""
+        return self.model.objects.create(data=schema, **kwargs)
 
 
 class GoutHelperUpdateMixin(GoutHelperEditMixin):
@@ -239,5 +245,5 @@ class GoutHelperUpdateMixin(GoutHelperEditMixin):
         HttpResponseRedirect if successful, or HTMX response if
         the request is HTMX."""
 
-        self.object = self.object.update(**schema.dict())
+        self.object = self.object.update(data=schema)
         return super().form_valid(schema=schema, **kwargs)

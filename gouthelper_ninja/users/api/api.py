@@ -10,9 +10,8 @@ from gouthelper_ninja.users.models import User
 from gouthelper_ninja.users.querysets import patient_qs
 from gouthelper_ninja.users.rules import add_provider_patient
 from gouthelper_ninja.users.rules import view_patient
-from gouthelper_ninja.users.schema import PatientCreateSchema
+from gouthelper_ninja.users.schema import PatientEditSchema
 from gouthelper_ninja.users.schema import PatientSchema
-from gouthelper_ninja.users.schema import ProviderPatientCreateSchema
 
 router = Router()
 
@@ -23,18 +22,26 @@ def get_patients(request):
 
 
 @router.post("/patients/create", response=PatientSchema)
-def create_patient(request, data: PatientCreateSchema) -> Patient:
-    return Patient.objects.create(**data.dict())
+def create_patient(request, data: PatientEditSchema) -> Patient:
+    return Patient.objects.create(data=data)
 
 
-@router.post("/patients/provider-create/", response=PatientSchema, auth=django_auth)
-def create_provider_patient(request, data: ProviderPatientCreateSchema) -> Patient:
+@router.post(
+    "/patients/provider-create/{uuid:provider_id}",
+    response=PatientSchema,
+    auth=django_auth,
+)
+def create_provider_patient(
+    request,
+    provider_id: UUID,
+    data: PatientEditSchema,
+) -> Patient:
     """
     Create a patient with an associated provider.
     """
-    if not User.objects.filter(id=data.provider_id).exists():
-        raise HttpError(404, f"Provider with id: {data.provider_id} not found.")
-    if not add_provider_patient(request.user, data.provider_id):
+    if not User.objects.filter(id=provider_id).exists():
+        raise HttpError(404, f"Provider with id: {provider_id} not found.")
+    if not add_provider_patient(request.user, provider_id):
         msg = (
             f"{request.user} does not have permission to create a "
             "patient for this provider."
@@ -43,7 +50,7 @@ def create_provider_patient(request, data: ProviderPatientCreateSchema) -> Patie
             403,
             msg,
         )
-    return Patient.objects.create(**data.dict())
+    return Patient.objects.create(data=data, provider_id=provider_id)
 
 
 @router.get("/patients/{uuid:patient_id}", response={200: PatientSchema})

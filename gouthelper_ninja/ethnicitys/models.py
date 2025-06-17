@@ -7,6 +7,7 @@ from rules.contrib.models import RulesModelMixin
 from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.ethnicitys.choices import Ethnicitys
+from gouthelper_ninja.ethnicitys.schema import EthnicityEditSchema
 from gouthelper_ninja.utils.models import GoutHelperModel
 
 User = get_user_model()
@@ -29,6 +30,8 @@ class Ethnicity(
     patient = models.OneToOneField(User, on_delete=models.CASCADE, editable=False)
     history = HistoricalRecords()
 
+    edit_schema = EthnicityEditSchema
+
     class Meta:
         constraints = [
             models.CheckConstraint(
@@ -39,3 +42,13 @@ class Ethnicity(
 
     def __str__(self):
         return self.get_ethnicity_display()
+
+    def update(self, data: EthnicityEditSchema) -> "Ethnicity":
+        """Update the Ethnicity instance with the given kwargs."""
+
+        ethnicity = data.ethnicity
+        if ethnicity != self.ethnicity:
+            self.ethnicity = ethnicity
+            self.full_clean()
+            self.save()
+        return self

@@ -10,6 +10,9 @@ norecursedirs = ["node_modules"]
 filterwarnings = [
     "ignore::DeprecationWarning:pydantic",
     "ignore::PendingDeprecationWarning:ninja",
+    "ignore::DeprecationWarning:freezegun",
+    # Ignore all warnings from freezegun, has impossible to ignore CryptographyDeprecationWarning
+    "ignore:::freezegun",
 ]
 
 # ==== Coverage ====

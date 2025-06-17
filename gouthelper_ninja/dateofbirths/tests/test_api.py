@@ -4,7 +4,7 @@ from ninja.testing import TestClient
 from gouthelper_ninja.dateofbirths.api import router
 from gouthelper_ninja.dateofbirths.api import update_dateofbirth
 from gouthelper_ninja.dateofbirths.models import DateOfBirth
-from gouthelper_ninja.dateofbirths.schema import DateOfBirthNestedSchema
+from gouthelper_ninja.dateofbirths.schema import DateOfBirthEditSchema
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.utils.test_helpers import RESPONSE_SUCCESS
 
@@ -17,7 +17,7 @@ class TestAPI(TestCase):
     def test__update_dateofbirth(self):
         new_date = "1994-01-01"
 
-        data = DateOfBirthNestedSchema(dateofbirth=new_date)
+        data = DateOfBirthEditSchema(dateofbirth=new_date)
         response = update_dateofbirth(
             request=None,  # In a real test, you would mock the request
             dateofbirth_id=self.dateofbirth.id,

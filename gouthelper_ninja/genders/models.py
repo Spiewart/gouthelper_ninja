@@ -9,6 +9,7 @@ from rules.contrib.models import RulesModelMixin
 from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.genders.choices import Genders
+from gouthelper_ninja.genders.schema import GenderEditSchema
 from gouthelper_ninja.utils.models import GoutHelperModel
 
 User = get_user_model()
@@ -33,6 +34,8 @@ class Gender(
     patient = models.OneToOneField(User, on_delete=models.CASCADE, editable=False)
     history = HistoricalRecords()
 
+    edit_schema = GenderEditSchema
+
     class Meta:
         constraints = [
             models.CheckConstraint(
@@ -45,3 +48,13 @@ class Gender(
         if self.gender is not None:
             return self.get_gender_display()
         return "Gender unknown"
+
+    def update(self, data: GenderEditSchema) -> "Gender":
+        """Update the Gender instance with the given kwargs."""
+
+        gender = data.gender
+        if gender != self.gender:
+            self.gender = gender
+            self.full_clean()
+            self.save()
+        return self
