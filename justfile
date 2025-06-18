@@ -40,3 +40,12 @@ manage +args:
 # test: Run tests.
 test +args='':
     @docker compose run --rm django coverage run -m pytest {{args}}
+
+# coverage: Generate coverage report.
+coverage +args='':
+    @docker compose run --rm django coverage report -m {{args}}
+
+# coverage-html: Generate HTML coverage report.
+coverage-html +args='':
+    @docker compose run --rm django coverage html {{args}}
+    @echo "HTML coverage report generated in htmlcov/index.html"
