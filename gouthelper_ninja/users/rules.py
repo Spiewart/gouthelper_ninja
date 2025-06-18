@@ -1,13 +1,16 @@
 from typing import TYPE_CHECKING
-from uuid import UUID
 
 import rules
-from django.contrib.auth.models import AnonymousUser
 
+from gouthelper_ninja.rules import user_id_is_obj
+from gouthelper_ninja.rules import user_is_admin
+from gouthelper_ninja.rules import user_is_anonymous
+from gouthelper_ninja.rules import user_is_obj
+from gouthelper_ninja.rules import user_is_obj_creator
+from gouthelper_ninja.rules import user_is_obj_provider
 from gouthelper_ninja.users.choices import Roles
 
 if TYPE_CHECKING:
-    from gouthelper_ninja.users.models import Patient
     from gouthelper_ninja.users.models import User
 
 
@@ -43,32 +46,10 @@ def obj_is_patient_or_pseudopatient(_, obj: "User") -> bool:
 
 
 @rules.predicate
-def user_is_anonymous(user: "User") -> bool:
-    """Returns True if the user is an AnonymousUser."""
-
-    return isinstance(user, AnonymousUser)
-
-
-@rules.predicate
-def user_is_admin(user: "User") -> bool:
-    """Returns True if the user is an admin."""
-
-    return user.role == Roles.ADMIN
-
-
-@rules.predicate
 def user_is_patient(user: "User") -> bool:
     """Returns True if the object is a Patient."""
 
-    return user_is_anonymous(user) or user.role == Roles.PATIENT
-
-
-@rules.predicate
-def user_is_obj_provider(user: "User", obj: "Patient") -> bool:
-    """Returns True if the user is the provider of the patient.
-    Need to ensure that the object is a Patient first."""
-
-    return getattr(obj.patientprofile, "provider", None) == user
+    return user.role == Roles.PATIENT
 
 
 @rules.predicate
@@ -83,38 +64,6 @@ def user_username_is_obj(user: "User", obj: str | None):
     """Returns True if the user's username matches the obj,
     which should be a provider kwarg."""
 
-    return user.username == obj if obj else False
-
-
-@rules.predicate
-def user_id_is_obj(user: "User", obj: str | None):
-    """Returns True if the user's id matches the obj,
-    which should be a provider_id kwarg."""
-
-    return (
-        (user.id == obj if isinstance(obj, UUID) else str(user.id) == obj)
-        if obj
-        else False
-    )
-
-
-@rules.predicate
-def user_is_obj(user: "User", obj: "User") -> bool:
-    """Returns True if the user is the same as the object."""
-
-    return user == obj
-
-
-@rules.predicate
-def user_is_obj_creator(user: "User", obj: "User") -> bool:
-    """Returns True if the creator of the object (Patient) is the user.
-    Need to ensure that the object is a Patient first."""
-    return getattr(obj, "creator", None) == user
-
-
-@rules.predicate
-def list_belongs_to_user(user: "User", obj: str | None):
-    """Expects a User object and string or None as obj."""
     return user.username == obj if obj else False
 
 
@@ -147,21 +96,7 @@ delete_patient = (
     & (user_is_admin | user_is_obj | user_is_obj_provider | user_is_obj_creator)
 )
 
-view_patient = (
-    ~user_is_anonymous
-    & obj_is_patient_or_pseudopatient
-    & (
-        user_is_admin
-        | user_is_obj
-        | user_is_obj_provider
-        | (obj_without_provider & (obj_without_creator | user_is_obj_creator))
-    )
-) | (
-    user_is_anonymous
-    & obj_is_patient_or_pseudopatient
-    & obj_without_provider
-    & obj_without_creator
-)
+view_patient = change_patient
 
 # Provider predicates
 # Permissions to view the provider list are the same as to add a Patient

@@ -1,6 +1,9 @@
 import pytest
+from django.contrib.auth.models import AnonymousUser
 
+from gouthelper_ninja.users.choices import Roles
 from gouthelper_ninja.users.models import User
+from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
 
 
@@ -12,6 +15,49 @@ def _media_storage(settings, tmpdir) -> None:
 @pytest.fixture
 def user(db) -> User:
     return UserFactory()
+
+
+@pytest.fixture
+def admin(db):
+    return UserFactory(role=Roles.ADMIN, is_staff=True)
+
+
+@pytest.fixture
+def provider(db):
+    return UserFactory()
+
+
+@pytest.fixture
+def another_provider(db):
+    return UserFactory()
+
+
+@pytest.fixture
+def anon(db):
+    return AnonymousUser()
+
+
+@pytest.fixture
+def patient(db):
+    return PatientFactory()
+
+
+@pytest.fixture
+def patient_with_provider(db, provider):
+    """A patient with a provider."""
+    return PatientFactory(provider=provider)
+
+
+@pytest.fixture
+def patient_with_creator(db, provider):
+    """A patient with a creator."""
+    patient = PatientFactory()
+    # Manually set the creator, as PatientFactory
+    # doesn't have a direct 'creator' argument
+    last_history = patient.history.first()
+    last_history.history_user = provider
+    last_history.save()
+    return patient
 
 
 def pytest_addoption(parser):

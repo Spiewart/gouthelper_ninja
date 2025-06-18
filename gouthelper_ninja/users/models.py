@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from typing import Union
 
 from django.apps import apps
 from django.contrib.auth.models import AbstractUser
@@ -79,8 +80,9 @@ class User(
 
         Returns:
             str: URL for user detail.
-
         """
+        if self.role in [Roles.PATIENT, Roles.PSEUDOPATIENT]:
+            return reverse("users:patient-detail", kwargs={"patient": self.id})
         return reverse("users:detail", kwargs={"username": self.username})
 
     def save(self, *args, **kwargs):
@@ -98,17 +100,29 @@ class User(
         self.__class__ = apps.get_model(f"users.{role}")
 
     @cached_property
-    def profile(self):
-        role = (
-            self.Roles.PATIENT
-            if self.role in {self.Roles.PSEUDOPATIENT, self.Roles.PATIENT}
-            else self.Roles(self.role)
-        )
-        return getattr(
-            self,
-            (f"{role.name.lower()}profile"),
-            None,
-        )
+    def editors(self) -> list["User"]:
+        """Returns a list of Users who have edited the User."""
+
+        # TODO: Ideally this would be part of a larger queryset
+        # (i.e. through get_object in the view or similar API methods)
+        # BUT, the history reverse lookup is only available to the parent
+        # model (User), so we need to query the history model directly.
+
+        return [
+            history.history_user
+            for history in self.history.select_related(
+                "history_user",
+            )
+            .filter(
+                history_user__isnull=False,
+            )
+            .order_by("history_date")
+        ]
+
+    @property
+    def creator(self) -> Union["User", None]:
+        """Returns the User who created the User, if available."""
+        return self.editors[0] if self.editors else None
 
 
 class Admin(User):
@@ -126,10 +140,6 @@ class Admin(User):
             "view": view_user,
         }
 
-    @cached_property
-    def profile(self):
-        return getattr(self, "adminprofile", None)
-
 
 class Patient(User):
     # This sets the user type to PSEUDOPATIENT during record creation
@@ -145,30 +155,6 @@ class Patient(User):
             "delete": delete_patient,
             "view": view_patient,
         }
-
-    @cached_property
-    def provider(self) -> User | None:
-        return getattr(self.profile, "provider", None)
-
-    @cached_property
-    def editors(self) -> list[User]:
-        """Returns a list of Users who have edited the Patient."""
-
-        return [
-            history.history_user
-            for history in self.history.select_related(
-                "history_user",
-            )
-            .filter(
-                history_user__isnull=False,
-            )
-            .order_by("history_date")
-        ]
-
-    @property
-    def creator(self) -> User | None:
-        """Returns the User who created the Patient, if available."""
-        return self.editors[0] if self.editors else None
 
     def update(self, data: PatientEditSchema) -> "Patient":
         """Updates the Patient instance and related models.
@@ -188,15 +174,6 @@ class Patient(User):
             self.save()
 
         return self
-
-    def get_absolute_url(self) -> str:
-        """Get URL for patient's detail view.
-
-        Returns:
-            str: URL for patient detail.
-
-        """
-        return reverse("users:patient-detail", kwargs={"patient": self.pk})
 
 
 class Provider(User):

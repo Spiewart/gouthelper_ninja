@@ -342,8 +342,8 @@ class TestPatientProviderCreateView(TestCase):
         )
 
         assert Patient.objects.count() == num_patients + 1
-        assert patient.provider == self.provider
-        assert patient.profile.provider_alias == num_patients + 1
+        assert patient.patientprofile.provider == self.provider
+        assert patient.patientprofile.provider_alias == num_patients + 1
 
         # Test that calling the view a second time, creating another identifical
         # patient, increments the provider alias
@@ -352,8 +352,8 @@ class TestPatientProviderCreateView(TestCase):
 
         assert Patient.objects.count() == num_patients + 2
         new_patient = Patient.objects.order_by("created").last()
-        assert new_patient.provider == self.provider
-        assert new_patient.profile.provider_alias == num_patients + 2
+        assert new_patient.patientprofile.provider == self.provider
+        assert new_patient.patientprofile.provider_alias == num_patients + 2
 
     def test__post_with_errors(self):
         # Test with invalid data

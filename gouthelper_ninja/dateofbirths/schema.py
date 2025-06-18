@@ -13,7 +13,7 @@ class DateOfBirthSchema(DateOfBirthEditSchema):
     patient_id: UUID
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "dateofbirth": "2000-01-01",
                 "patient_id": "patient_id",

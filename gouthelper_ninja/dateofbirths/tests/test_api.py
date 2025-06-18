@@ -1,3 +1,4 @@
+from django.test import RequestFactory
 from django.test import TestCase
 from ninja.testing import TestClient
 
@@ -13,13 +14,19 @@ class TestAPI(TestCase):
     def setUp(self):
         self.patient = PatientFactory()
         self.dateofbirth = self.patient.dateofbirth
+        self.rf = RequestFactory()
 
     def test__update_dateofbirth(self):
         new_date = "1994-01-01"
 
         data = DateOfBirthEditSchema(dateofbirth=new_date)
+        request = self.rf.post(
+            f"/dateofbirths/update/{self.dateofbirth.id}",
+            data=data.dict(),
+        )
+        request.user = self.patient
         response = update_dateofbirth(
-            request=None,  # In a real test, you would mock the request
+            request=request,
             dateofbirth_id=self.dateofbirth.id,
             data=data,
         )

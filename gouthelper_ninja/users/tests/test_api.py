@@ -40,8 +40,8 @@ class TestCreatePatient(TestCase):
         patient = Patient.objects.order_by("-created").first()
         assert isinstance(patient, Patient)
         assert str(patient.id) == response.json()["id"]
-        assert patient.profile.provider is None
-        assert patient.profile.provider_alias is None
+        assert patient.patientprofile.provider is None
+        assert patient.patientprofile.provider_alias is None
         assert patient.dateofbirth.dateofbirth.strftime("%Y-%m-%d") == "2000-06-12"
         assert patient.ethnicity.ethnicity == "Caucasian"
         assert patient.gender.gender == 0
@@ -56,8 +56,8 @@ class TestCreatePatient(TestCase):
         patient = Patient.objects.order_by("-created").first()
         assert isinstance(patient, Patient)
         assert str(patient.id) == response.json()["id"]
-        assert patient.profile.provider is None
-        assert patient.profile.provider_alias is None
+        assert patient.patientprofile.provider is None
+        assert patient.patientprofile.provider_alias is None
         assert patient.dateofbirth.dateofbirth.strftime("%Y-%m-%d") == "2000-06-12"
         assert patient.ethnicity.ethnicity == "Caucasian"
         assert patient.gender.gender == 0
@@ -121,10 +121,10 @@ class TestCreateProviderPatient(TestCase):
         )
         assert response.status_code == RESPONSE_SUCCESS
         patient = Patient.objects.get(id=response.json()["id"])
-        assert patient.profile.provider == self.provider
-        assert patient.profile.provider_alias is not None
-        assert isinstance(patient.profile.provider_alias, int)
-        assert patient.profile.provider_alias == 1
+        assert patient.patientprofile.provider == self.provider
+        assert patient.patientprofile.provider_alias is not None
+        assert isinstance(patient.patientprofile.provider_alias, int)
+        assert patient.patientprofile.provider_alias == 1
 
     def test__permissions(self):
         # A patient should not be able to create a patient for a provider
@@ -158,7 +158,7 @@ class TestCreateProviderPatient(TestCase):
         )
         assert response.status_code == RESPONSE_SUCCESS
         patient = Patient.objects.get(id=response.json()["id"])
-        assert patient.profile.provider == self.provider
+        assert patient.patientprofile.provider == self.provider
         # The creator should be the admin user who made the request
         assert patient.creator == admin_user
 

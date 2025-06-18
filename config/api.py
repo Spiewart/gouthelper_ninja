@@ -1,6 +1,6 @@
 from ninja import NinjaAPI
 
-from gouthelper_ninja.users.api.api import router as users_router
+from gouthelper_ninja.users.api import router as users_router
 
 api = NinjaAPI()
 

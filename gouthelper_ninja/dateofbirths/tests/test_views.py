@@ -79,8 +79,8 @@ class TestDateOfBirthUpdateView(TestCase):
         assert isinstance(response, HttpResponseRedirect)
         assert response.status_code == RESPONSE_REDIRECT
         assert response.url == reverse(
-            "users:detail",
-            kwargs={"username": self.patient.username},
+            "users:patient-detail",
+            kwargs={"patient": self.patient.id},
         )
         self.dob.refresh_from_db()
         assert age_calc(self.dob.dateofbirth) == self.new_age

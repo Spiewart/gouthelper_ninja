@@ -12,7 +12,7 @@ class EthnicitySchema(EthnicityEditSchema):
     id: str
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "ethnicitypatient": "patient_id",
                 "id": "ethnicity_id",

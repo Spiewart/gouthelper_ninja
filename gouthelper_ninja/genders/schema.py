@@ -12,7 +12,7 @@ class GenderSchema(GenderEditSchema):
     patient: str  # Assuming patient is a string, typically a UUID or similar identifier
 
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "gender": "male",
                 "patient": "patient_id",
