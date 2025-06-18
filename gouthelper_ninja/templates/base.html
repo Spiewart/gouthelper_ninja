@@ -1,4 +1,5 @@
 {% load static i18n %}
+{% load django_htmx %}
 
 <!DOCTYPE html>
 {% get_current_language as LANGUAGE_CODE %}
@@ -30,8 +31,10 @@
       <!-- place project specific Javascript in this file -->
       <script defer src="{% static 'js/project.min.js' %}"></script>
     {% endblock javascript %}
+    {% htmx_script %}
   </head>
-  <body class="{% block bodyclass %}{% endblock bodyclass %}">
+  <body class="{% block bodyclass %}{% endblock bodyclass %}"
+        hx-headers='{"x-csrftoken": "{{ csrf_token }}"}'>
     {% block body %}
       <div class="mb-1">
         <nav class="navbar navbar-expand-md navbar-light bg-light">

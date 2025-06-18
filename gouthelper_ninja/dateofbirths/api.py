@@ -1,6 +1,5 @@
 from uuid import UUID
 
-from ninja import Form
 from ninja import Router
 from ninja.errors import AuthorizationError
 from ninja.errors import HttpError
@@ -23,7 +22,7 @@ router = Router()
 def update_dateofbirth(
     request,
     dateofbirth_id: UUID,
-    data: DateOfBirthEditSchema | Form[DateOfBirthEditSchema],
+    data: DateOfBirthEditSchema,
 ) -> DateOfBirth:
     try:
         dob: DateOfBirth = patient_patientprofile_provider_qs(

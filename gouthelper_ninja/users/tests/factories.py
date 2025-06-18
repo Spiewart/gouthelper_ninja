@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from datetime import date
 from typing import Any
+from typing import Literal
 from uuid import UUID
 
 from factory import Faker
@@ -25,7 +26,12 @@ class UserFactory(DjangoModelFactory[User]):
     name = Faker("name")
 
     @post_generation
-    def password(self, create: bool, extracted: Sequence[Any], **kwargs):  # noqa: FBT001
+    def password(
+        self,
+        create: Literal[True, False],
+        extracted: Sequence[Any],
+        **kwargs,
+    ):
         password = (
             extracted
             if extracted
@@ -56,9 +62,18 @@ class PatientFactory(UserFactory):
     role = User.Roles.PSEUDOPATIENT
 
     @post_generation
-    def dateofbirth(self, create: bool, extracted: date | str | None, **kwargs):  # noqa: FBT001
+    def dateofbirth(
+        self,
+        create: Literal[True, False],
+        extracted: date | str | None | Literal[False] = None,
+        **kwargs,
+    ):
         if create:
-            if extracted:
+            if extracted is False:
+                # If extracted is False, do not create a DateOfBirth
+                return
+            # If extracted is not None or True, it must be a date or age
+            if extracted is not None:
                 if isinstance(extracted, int):
                     # If extracted is an int, assume it's a number of years ago
                     extracted = yearsago_date(extracted)
@@ -72,20 +87,31 @@ class PatientFactory(UserFactory):
     @post_generation
     def ethnicity(
         self,
-        create: bool,  # noqa: FBT001
-        extracted: Ethnicitys | str | None,
+        create: Literal[True, False],
+        extracted: Ethnicitys | str | None | Literal[False] = None,
         **kwargs,
     ) -> None:
         if create:
-            if extracted:
+            # If extracted is False, do not create
+            if extracted is False:
+                return
+            if extracted is not None:
                 kwargs["ethnicity"] = (
                     Ethnicitys(extracted) if isinstance(extracted, str) else extracted
                 )
             EthnicityFactory(patient=self, **kwargs)
 
     @post_generation
-    def gender(self, create: bool, extracted: Genders | str | None, **kwargs) -> None:  # noqa: FBT001
+    def gender(
+        self,
+        create: Literal[True, False],
+        extracted: Genders | str | None | Literal[False] = None,
+        **kwargs,
+    ) -> None:
         if not hasattr(self, "gender") and create:
+            if extracted is False:
+                # If extracted is False, do not create
+                return
             # Cannot check for Truth because values of Genders include 0
             if extracted is not None:
                 kwargs["gender"] = (
@@ -96,7 +122,7 @@ class PatientFactory(UserFactory):
     @post_generation
     def provider(
         self,
-        create: bool,  # noqa: FBT001
+        create: Literal[True, False],
         extracted: User | str | UUID,
         **kwargs,
     ) -> None:

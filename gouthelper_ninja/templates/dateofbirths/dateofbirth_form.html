@@ -9,8 +9,7 @@ created during Patient creation/registration.-->
 {% endblock title %}
 {% block content %}
   <h1>Update Date of Birth</h1>
-  <form method="post"
-        action="{% url 'dateofbirths:update' form.instance.id %}">
+  <form method="post" action="{% url 'dateofbirths:update' object.id %}">
     {% csrf_token %}
     {{ form|crispy }}
     <button type="submit" class="btn btn-primary">Update</button>

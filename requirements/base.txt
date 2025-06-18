@@ -16,6 +16,7 @@ crispy-bootstrap5==2025.4  # https://github.com/django-crispy-forms/crispy-boots
 django-redis==5.4.0  # https://github.com/jazzband/django-redis
 django-simple-history==3.8.0 # https://django-simple-history.readthedocs.io/en/stable/quick_start.html
 rules==3.5.0 #https://github.com/dfunckt/django-rules
+django-htmx==1.23.0  #https://django-htmx.readthedocs.io/en/latest/index.html
 
 # Django-ninja
 # ------------------------------------------------------------------------------

@@ -10,4 +10,7 @@ class DateOfBirthFactory(DjangoModelFactory):
         model = DateOfBirth
 
     dateofbirth = Faker("date_of_birth", minimum_age=18, maximum_age=100)
-    patient = SubFactory("apps.gouthelper_ninja.users.tests.factories.PatientFactory")
+    patient = SubFactory(
+        "gouthelper_ninja.users.tests.factories.PatientFactory",
+        dateofbirth=False,
+    )

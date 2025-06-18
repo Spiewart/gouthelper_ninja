@@ -1,9 +1,12 @@
+from datetime import timedelta
+
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpResponseRedirect
 from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
+from django_htmx.http import HttpResponseClientRefresh
 
 from gouthelper_ninja.dateofbirths.forms import DateOfBirthForm
 from gouthelper_ninja.dateofbirths.views import DateOfBirthUpdateView
@@ -12,6 +15,7 @@ from gouthelper_ninja.users.tests.factories import UserFactory
 from gouthelper_ninja.utils.helpers import age_calc
 from gouthelper_ninja.utils.helpers import yearsago_date
 from gouthelper_ninja.utils.test_helpers import RESPONSE_REDIRECT
+from gouthelper_ninja.utils.test_helpers import RESPONSE_SUCCESS
 from gouthelper_ninja.utils.test_helpers import dummy_get_response
 
 
@@ -21,7 +25,8 @@ class TestDateOfBirthUpdateView(TestCase):
         self.patient = PatientFactory()
         self.provider = UserFactory()
         self.dob = self.patient.dateofbirth
-        self.new_age = age_calc(self.dob.dateofbirth) + 10
+        self.new_dob = self.dob.dateofbirth - timedelta(days=365 * 10)  # 10 years ago
+        self.new_age = age_calc(self.new_dob)
         self.get = self.rf.get(
             reverse("dateofbirths:update", kwargs={"pk": self.dob.id}),
         )
@@ -109,3 +114,47 @@ class TestDateOfBirthUpdateView(TestCase):
         assert self.post_view.forms["form"].cleaned_data == {
             "dateofbirth": yearsago_date(self.new_age),
         }
+
+    def test__get_endpoint(self):
+        response = self.client.get(
+            reverse("dateofbirths:update", kwargs={"pk": self.dob.id}),
+        )
+        assert response.status_code == RESPONSE_SUCCESS
+
+    def test__post_endpoint(self):
+        response = self.client.post(
+            reverse("dateofbirths:update", kwargs={"pk": self.dob.id}),
+            {"dateofbirth": self.new_age},
+        )
+        assert response.status_code == RESPONSE_REDIRECT
+        assert response.url == reverse(
+            "users:patient-detail",
+            kwargs={"patient": self.patient.id},
+        )
+        self.dob.refresh_from_db()
+        assert age_calc(self.dob.dateofbirth) == self.new_age
+
+    def test__post_endpoint_errors(self):
+        response = self.client.post(
+            reverse("dateofbirths:update", kwargs={"pk": self.dob.id}),
+            {"dateofbirth": "invalid-date"},
+        )
+        assert response.status_code == RESPONSE_SUCCESS
+        assert "form" in response.context
+        assert isinstance(response.context["form"], DateOfBirthForm)
+        assert not response.context["form"].is_valid()
+        assert "dateofbirth" in response.context["form"].errors
+
+    def test__post_endpoint_htmx(self):
+        """Test that the view returns a django-htmx HttpResponseClientRefresh
+        when the request is an HTMX request."""
+        response = self.client.post(
+            reverse("dateofbirths:update", kwargs={"pk": self.dob.id}),
+            {"dateofbirth": self.new_age},
+            headers={"hx-request": "true"},
+        )
+        assert response.status_code == RESPONSE_SUCCESS
+        assert isinstance(response, HttpResponseClientRefresh)
+
+        self.dob.refresh_from_db()
+        assert age_calc(self.dob.dateofbirth) == self.new_age

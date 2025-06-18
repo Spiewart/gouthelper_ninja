@@ -7,6 +7,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.utils.functional import cached_property
+from django_htmx.http import HttpResponseClientRefresh
 
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.utils.helpers import get_str_attrs_dict
@@ -100,10 +101,11 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
     def post(self, request, *args, **kwargs):
         self.forms: dict[str, GoutHelperForm] = {}
         self.post_init()
+
         if self.post_forms_valid():
             self.post_process_forms()
         else:
-            self.errors = self.render_errors(**kwargs)
+            self.errors = self.render_errors()
 
         if self.errors:
             return self.errors
@@ -189,8 +191,14 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
             self.get_success_message(self.forms["form"].cleaned_data),
         )
         if self.request.htmx:
-            return kwargs.get("htmx")
+            return self.get_htmx_response()
         return HttpResponseRedirect(self.get_success_url())
+
+    def get_htmx_response(self) -> HttpResponseClientRefresh:
+        """Generates an HTMX response. Default is to refresh the page,
+        but can be overwritten in child classes to return a different
+        HTMX response."""
+        return HttpResponseClientRefresh()
 
 
 class PatientKwargMixin:

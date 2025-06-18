@@ -90,8 +90,13 @@ class User(
         # base_role property
         if not self.pk and hasattr(self, "base_role"):
             self.role = self.base_role
+        # Swap the class back to User to trigger saving the
+        # history model correctly (HistoricalUser)
+        # and then change it back to the specific role model
         self.__class__ = User
         super().save(*args, **kwargs)
+        # The Pseudopatient role does not have a separate model,
+        # so we need to change the class to Patient if the role is Pseudopatient.
         role = (
             Roles.PATIENT.name.lower()
             if self.role == Roles.PSEUDOPATIENT
@@ -103,7 +108,8 @@ class User(
     def editors(self) -> list["User"]:
         """Returns a list of Users who have edited the User."""
 
-        # TODO: Ideally this would be part of a larger queryset
+        # TODO: integrate optional lookup on prefetched histories
+        # Ideally this would be part of a larger queryset
         # (i.e. through get_object in the view or similar API methods)
         # BUT, the history reverse lookup is only available to the parent
         # model (User), so we need to query the history model directly.
@@ -185,7 +191,3 @@ class Provider(User):
 
     class Meta(User.Meta):
         proxy = True
-
-    @cached_property
-    def profile(self):
-        return getattr(self, "providerprofile", None)
