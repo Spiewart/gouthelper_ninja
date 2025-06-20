@@ -30,6 +30,7 @@ urlpatterns = [
         "ethnicitys/",
         include("gouthelper_ninja.ethnicitys.urls", namespace="ethnicitys"),
     ),
+    path("genders/", include("gouthelper_ninja.genders.urls", namespace="genders")),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

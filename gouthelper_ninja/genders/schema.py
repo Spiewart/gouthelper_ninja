@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from ninja import Schema
 
 from gouthelper_ninja.genders.choices import Genders
@@ -8,8 +10,8 @@ class GenderEditSchema(Schema):
 
 
 class GenderSchema(GenderEditSchema):
-    id: str  # Assuming id is a string, typically a UUID or similar identifier
-    patient: str  # Assuming patient is a string, typically a UUID or similar identifier
+    patient_id: UUID
+    id: UUID
 
     class Config:
         json_schema_extra = {

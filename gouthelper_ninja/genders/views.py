@@ -1,10 +1,13 @@
 from typing import Any
 
+from django.views.generic import UpdateView
+
 from gouthelper_ninja.genders.forms import GenderForm
 from gouthelper_ninja.genders.models import Gender
 from gouthelper_ninja.genders.schema import GenderEditSchema
 from gouthelper_ninja.utils.views import GoutHelperEditMixin
 from gouthelper_ninja.utils.views import GoutHelperUpdateMixin
+from gouthelper_ninja.utils.views import PatientObjectMixin
 
 
 class GenderEditMixin(GoutHelperEditMixin):
@@ -37,5 +40,10 @@ class GenderEditMixin(GoutHelperEditMixin):
         super().post_init()
 
 
-class GenderUpdateView(GoutHelperUpdateMixin, GenderEditMixin):
+class GenderUpdateView(
+    GoutHelperUpdateMixin,
+    GenderEditMixin,
+    PatientObjectMixin,
+    UpdateView,
+):
     """View for updating a Patient's Gender."""

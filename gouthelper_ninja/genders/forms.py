@@ -29,6 +29,16 @@ class GenderForm(GoutHelperForm):
         self.helper = FormHelper()
         self.helper.form_tag = False
 
+    def clean_gender(self):
+        """Converts string representations of the Genders enum
+        to the enum itself."""
+        gender = self.cleaned_data.get("gender")
+        if gender is not None and gender != "":
+            self.cleaned_data["gender"] = Genders(int(gender))
+        else:
+            self.cleaned_data["gender"] = None
+        return self.cleaned_data["gender"]
+
 
 class GenderFormOptional(GenderForm):
     """Subclass of GenderForm with gender field not required."""

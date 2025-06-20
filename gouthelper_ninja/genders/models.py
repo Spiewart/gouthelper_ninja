@@ -49,6 +49,10 @@ class Gender(
             return self.get_gender_display()
         return "Gender unknown"
 
+    def get_absolute_url(self):
+        """Returns the absolute URL for the Ethnicity's patient."""
+        return self.patient.get_absolute_url()
+
     def update(self, data: GenderEditSchema) -> "Gender":
         """Update the Gender instance with the given kwargs."""
 
