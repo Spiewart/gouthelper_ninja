@@ -14,7 +14,7 @@ router = Router()
 
 
 @router.post(
-    "/dateofbirths/update/{uuid:dateofbirth_id}",
+    "/update/{uuid:dateofbirth_id}",
     response={
         200: DateOfBirthSchema,
     },

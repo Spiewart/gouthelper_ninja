@@ -1,7 +1,11 @@
 from ninja import NinjaAPI
 
+from gouthelper_ninja.dateofbirths.api import router as dateofbirths_router
+from gouthelper_ninja.ethnicitys.api import router as ethnicitys_router
 from gouthelper_ninja.users.api import router as users_router
 
 api = NinjaAPI()
 
+api.add_router("dateofbirths", dateofbirths_router)
+api.add_router("ethnicitys", ethnicitys_router)
 api.add_router("users", users_router)

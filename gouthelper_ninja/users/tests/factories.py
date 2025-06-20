@@ -142,3 +142,27 @@ class PatientFactory(UserFactory):
                     gender=kwargs.get("gender", self.gender.gender),
                 )
             PatientProfileFactory(user=self, **kwargs)
+
+    @post_generation
+    def creator(
+        self,
+        create: Literal[True, False],
+        extracted: User | UUID | None = None,
+        **kwargs,
+    ) -> None:
+        """Post-generation hook to set the creator of the patient, which is a
+        a field on the User's history model.
+
+        args:
+            extracted (User | UUID | None): The user who created the patient."""
+
+        if create:
+            if extracted:
+                last_history = self.history.first()
+                user = (
+                    extracted
+                    if isinstance(extracted, User)
+                    else User.objects.get(id=extracted)
+                )
+                last_history.history_user = user
+                last_history.save()

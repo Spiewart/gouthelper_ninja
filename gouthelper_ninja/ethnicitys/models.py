@@ -43,8 +43,12 @@ class Ethnicity(
     def __str__(self):
         return self.get_ethnicity_display()
 
+    def get_absolute_url(self):
+        """Returns the absolute URL for the Ethnicity's patient."""
+        return self.patient.get_absolute_url()
+
     def update(self, data: EthnicityEditSchema) -> "Ethnicity":
-        """Update the Ethnicity instance with the given kwargs."""
+        """Update the Ethnicity instance using Pydantic schema."""
 
         ethnicity = data.ethnicity
         if ethnicity != self.ethnicity:

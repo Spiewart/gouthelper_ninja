@@ -1,3 +1,5 @@
+from uuid import UUID
+
 from ninja import Schema
 
 from gouthelper_ninja.ethnicitys.choices import Ethnicitys
@@ -8,13 +10,14 @@ class EthnicityEditSchema(Schema):
 
 
 class EthnicitySchema(EthnicityEditSchema):
-    patient: str
-    id: str
+    patient_id: UUID
+    id: UUID
 
     class Config:
         json_schema_extra = {
             "example": {
-                "ethnicitypatient": "patient_id",
+                "ethnicity": "AFRICANAMERICAN",
+                "patient_id": "patient_id",
                 "id": "ethnicity_id",
             },
         }

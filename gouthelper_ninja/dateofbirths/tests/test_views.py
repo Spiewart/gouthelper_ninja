@@ -1,5 +1,3 @@
-from datetime import timedelta
-
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpResponseRedirect
@@ -25,7 +23,7 @@ class TestDateOfBirthUpdateView(TestCase):
         self.patient = PatientFactory()
         self.provider = UserFactory()
         self.dob = self.patient.dateofbirth
-        self.new_dob = self.dob.dateofbirth - timedelta(days=365 * 10)  # 10 years ago
+        self.new_dob = yearsago_date(10, self.dob.dateofbirth)
         self.new_age = age_calc(self.new_dob)
         self.get = self.rf.get(
             reverse("dateofbirths:update", kwargs={"pk": self.dob.id}),

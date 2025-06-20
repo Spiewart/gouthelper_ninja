@@ -73,7 +73,7 @@ def num_years(
     if end is None:
         end = datetime.datetime.now(tz=tz).date()
     number_of_years = int((end - begin).days / 365.2425)
-    if begin > yearsago_datetime(number_of_years, end):
+    if begin > yearsago_date(number_of_years, end):
         return number_of_years - 1
     return number_of_years
 
@@ -235,16 +235,23 @@ def get_user_change(instance, request, **kwargs):  # pylint:disable=W0613
 
 
 def yearsago_datetime(
-    years,
-    from_date=None,
+    years: int,
+    from_date: datetime.date | datetime.datetime | None = None,
     tz: datetime.timezone = datetime.UTC,
-):
+) -> datetime.datetime:
     """Method that takes an age, or number of years, and
     returns a date of birth string. If no from_date is provided,
     the current date is used. Adjusts for leap years."""
     # https://stackoverflow.com/questions/765797/convert-timedelta-to-years
     if from_date is None:
         from_date = datetime.datetime.now(tz=tz)
+    elif isinstance(from_date, datetime.date):
+        from_date = datetime.datetime(
+            year=from_date.year,
+            month=from_date.month,
+            day=from_date.day,
+            tzinfo=tz,
+        )
     try:
         return from_date.replace(year=from_date.year - years)
     except ValueError:
@@ -253,14 +260,8 @@ def yearsago_datetime(
 
 
 def yearsago_date(
-    years,
-    from_date=None,
+    years: int,
+    from_date: datetime.date | datetime.datetime | None = None,
     tz: datetime.timezone = datetime.UTC,
-):
-    """Method that takes an age, or number of years, and
-    returns a date of birth string. If no from_date is provided,
-    the current date is used. Adjusts for leap years."""
-    from_date = (
-        from_date.date() if isinstance(from_date, datetime.datetime) else from_date
-    )
+) -> datetime.date:
     return yearsago_datetime(years, from_date, tz).date()

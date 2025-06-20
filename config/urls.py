@@ -26,6 +26,10 @@ urlpatterns = [
         "dateofbirths/",
         include("gouthelper_ninja.dateofbirths.urls", namespace="dateofbirths"),
     ),
+    path(
+        "ethnicitys/",
+        include("gouthelper_ninja.ethnicitys.urls", namespace="ethnicitys"),
+    ),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

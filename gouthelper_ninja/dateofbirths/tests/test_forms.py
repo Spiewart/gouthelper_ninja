@@ -15,7 +15,7 @@ def data():
 
 
 @pytest.fixture
-def form_kwargs(data):
+def form_kwargs():
     """Fixture to provide mock form kwargs."""
     return {
         "request_user": None,
