@@ -480,7 +480,7 @@ class TestPatientDetailView(TestCase):
                 patient=provider_patient.id,
             )
 
-        patient_created_by_provider = PatientFactory()
+        patient_created_by_provider = PatientFactory(creator=self.provider)
 
         get_with_creator = self.rf.get(
             reverse(
@@ -654,10 +654,7 @@ class TestPatientUpdateView(TestCase):
             )
 
         # Test with the patient's creator
-        patient_created_by_provider = PatientFactory()
-        most_recent_history = patient_created_by_provider.history.first()
-        most_recent_history.history_user = self.provider
-        most_recent_history.save()
+        patient_created_by_provider = PatientFactory(creator=self.provider)
         patient_created_by_provider_kwargs = {"patient": patient_created_by_provider.id}
         self.get.user = self.provider
         assert PatientUpdateView.as_view()(

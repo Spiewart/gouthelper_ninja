@@ -17,7 +17,7 @@ build:
 # up: Start up containers.
 up:
     @echo "Starting up containers..."
-    @docker compose up -d --remove-orphans
+    @docker compose up # -d --remove-orphans
 
 # down: Stop containers.
 down:

@@ -51,13 +51,7 @@ def patient_with_provider(db, provider):
 @pytest.fixture
 def patient_with_creator(db, provider):
     """A patient with a creator."""
-    patient = PatientFactory()
-    # Manually set the creator, as PatientFactory
-    # doesn't have a direct 'creator' argument
-    last_history = patient.history.first()
-    last_history.history_user = provider
-    last_history.save()
-    return patient
+    return PatientFactory(creator=provider)
 
 
 def pytest_addoption(parser):

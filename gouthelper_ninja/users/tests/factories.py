@@ -49,6 +49,7 @@ class UserFactory(DjangoModelFactory[User]):
     @classmethod
     def _after_postgeneration(cls, instance, create, results=None):
         """Save again the instance if creating and at least one hook ran."""
+
         if create and results and not cls._meta.skip_postgeneration_save:
             # Some post-generation hooks ran, and may have modified us.
             instance.save()
@@ -158,7 +159,7 @@ class PatientFactory(UserFactory):
 
         if create:
             if extracted:
-                last_history = self.history.first()
+                last_history = self.history.order_by("history_date").first()
                 user = (
                     extracted
                     if isinstance(extracted, User)

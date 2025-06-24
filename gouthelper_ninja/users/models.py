@@ -1,4 +1,3 @@
-from typing import TYPE_CHECKING
 from typing import Union
 
 from django.apps import apps
@@ -6,7 +5,6 @@ from django.contrib.auth.models import AbstractUser
 from django.db.models import CharField
 from django.db.models import CheckConstraint
 from django.db.models import IntegerField
-from django.db.models import Model
 from django.db.models import Q
 from django.urls import reverse
 from django.utils.functional import cached_property
@@ -30,9 +28,6 @@ from gouthelper_ninja.users.rules import view_user
 from gouthelper_ninja.users.schema import PatientEditSchema
 from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperModel
-
-if TYPE_CHECKING:
-    from django.db.models import Field
 
 
 class User(
@@ -105,30 +100,17 @@ class User(
         self.__class__ = apps.get_model(f"users.{role}")
 
     @cached_property
-    def editors(self) -> list["User"]:
-        """Returns a list of Users who have edited the User."""
-
-        # TODO: integrate optional lookup on prefetched histories
-        # Ideally this would be part of a larger queryset
-        # (i.e. through get_object in the view or similar API methods)
-        # BUT, the history reverse lookup is only available to the parent
-        # model (User), so we need to query the history model directly.
-
-        return [
-            history.history_user
-            for history in self.history.select_related(
+    def creator(self) -> Union["User", None]:
+        """Returns the first history's history_user, which if
+        present, is the user that created this User instance."""
+        return (
+            self.history.select_related(
                 "history_user",
             )
-            .filter(
-                history_user__isnull=False,
-            )
             .order_by("history_date")
-        ]
-
-    @property
-    def creator(self) -> Union["User", None]:
-        """Returns the User who created the User, if available."""
-        return self.editors[0] if self.editors else None
+            .first()
+            .history_user
+        )
 
 
 class Admin(User):
@@ -164,22 +146,9 @@ class Patient(User):
 
     def update(self, data: PatientEditSchema) -> "Patient":
         """Updates the Patient instance and related models.
-        Schema fields are Patient fields or related models
-        with their respective editing Schema."""
+        Overwritten to use PatientEditSchema for validation."""
 
-        for attr_name, attr_data in data.dict().items():
-            attr: Model | Field = getattr(self, attr_name)
-            if isinstance(attr, Model):
-                attr.update(data=attr.edit_schema(**attr_data))
-            else:
-                setattr(self, attr_name, attr_data)
-                self.save_needed = True
-
-        if self.save_needed:
-            self.full_clean()
-            self.save()
-
-        return self
+        return super().update(data=data)
 
 
 class Provider(User):

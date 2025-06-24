@@ -22,7 +22,7 @@ RESPONSE_NOT_FOUND = 404
 RESPONSE_UNPROCESSABLE_CONTENT = 422
 
 
-def create_ghform_kwargs(
+def create_form_kwargs(
     patient: Union["Patient", "User", None] = None,
     request_user: Union["User", None] = None,
     str_attrs: dict[str, str] | None = None,

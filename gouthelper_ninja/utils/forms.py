@@ -98,7 +98,6 @@ class GoutHelperForm(Form, GetStrAttrsMixin):
                 f"{len(self.helper.layout)}."
             )
             raise IndexError(error_msg) from e
-
         index.append(html)
 
     def insert_extra_form(

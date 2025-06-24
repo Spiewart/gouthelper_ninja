@@ -56,9 +56,4 @@ class Gender(
     def update(self, data: GenderEditSchema) -> "Gender":
         """Update the Gender instance with the given kwargs."""
 
-        gender = data.gender
-        if gender != self.gender:
-            self.gender = gender
-            self.full_clean()
-            self.save()
-        return self
+        return super().update(data=data)

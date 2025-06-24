@@ -58,9 +58,4 @@ class DateOfBirth(
     def update(self, data: DateOfBirthEditSchema) -> "DateOfBirth":
         """Update the DateOfBirth instance with the given kwargs."""
 
-        dob = data.dateofbirth
-        if dob != self.dateofbirth:
-            self.dateofbirth = dob
-            self.full_clean()
-            self.save()
-        return self
+        return super().update(data=data)

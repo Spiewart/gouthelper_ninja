@@ -28,7 +28,7 @@ class Profile(
         return str(self.user.username + "'s Profile")
 
     def get_absolute_url(self):
-        return reverse("users:detail", kwargs={"username": self.user_username})
+        return reverse("users:detail", kwargs={"username": self.user.username})
 
 
 class AdminProfile(Profile):

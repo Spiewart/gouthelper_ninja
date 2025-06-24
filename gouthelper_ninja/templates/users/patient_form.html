@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+  {% if object %}
+    Update {{ object }}
+  {% else %}
+    Create Patient
+  {% endif %}
+{% endblock title %}
+{% block content %}
+  <h1>
+    {% if object %}
+      Update {{ object }}
+    {% else %}
+      Create Patient
+    {% endif %}
+  </h1>
+  {% if object %}
+    <form method="post" action="{% url 'users:patient-update' object.id %}">
+      {% csrf_token %}
+      {% crispy form %}
+      <button type="submit" class="btn btn-primary">Update</button>
+    </form>
+  {% else %}
+    <form method="post" action="{% url 'users:patient-create' %}">
+      {% csrf_token %}
+      {% crispy form %}
+      <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+  {% endif %}
+{% endblock content %}

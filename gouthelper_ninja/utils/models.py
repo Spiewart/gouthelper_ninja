@@ -1,8 +1,13 @@
 import uuid
+from typing import TYPE_CHECKING
 
 from django.db.models import Manager
 from django.db.models import Model
 from django.db.models import UUIDField
+
+if TYPE_CHECKING:
+    from django.db.models import Field
+    from pydantic import BaseModel as Schema
 
 
 class GoutHelperModel(Model):
@@ -40,6 +45,27 @@ class GoutHelperModel(Model):
         """
         self.delete_needed = False
         super().delete(*args, **kwargs)
+
+    def update(self, data: "Schema") -> Model:
+        """Updates the Model instance and related models.
+        Schema fields are Model fields or related models
+        with their respective editing Schema."""
+
+        for attr_name, attr_data in data.dict().items():
+            attr: Model | Field = getattr(self, attr_name)
+            if isinstance(attr, Model):
+                attr.update(data=attr.edit_schema(**attr_data))
+            else:
+                attr_val = getattr(self, attr_name, None)
+                if attr_val != attr_data:
+                    setattr(self, attr_name, attr_data)
+                    self.save_needed = True
+
+        if self.save_needed:
+            self.full_clean()
+            self.save()
+
+        return self
 
 
 class GetStrAttrsMixin:

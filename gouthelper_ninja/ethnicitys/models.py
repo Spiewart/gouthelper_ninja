@@ -50,9 +50,4 @@ class Ethnicity(
     def update(self, data: EthnicityEditSchema) -> "Ethnicity":
         """Update the Ethnicity instance using Pydantic schema."""
 
-        ethnicity = data.ethnicity
-        if ethnicity != self.ethnicity:
-            self.ethnicity = ethnicity
-            self.full_clean()
-            self.save()
-        return self
+        return super().update(data=data)

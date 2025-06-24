@@ -66,7 +66,7 @@ class TestPatientPredicates(TestCase):
         assert obj_without_creator(None, self.provider)
         assert obj_without_creator(None, self.anon)
 
-        delattr(self.patient, "editors")
+        delattr(self.patient, "creator")
         last_patient_history = self.patient.history.last()
         last_patient_history.history_user = self.patient
         last_patient_history.save()
@@ -81,7 +81,7 @@ class TestPatientPredicates(TestCase):
         assert not user_is_obj_creator(self.patient, self.provider_patient)
         assert not user_is_obj_creator(self.anon, self.provider_patient)
 
-        delattr(self.provider_patient, "editors")
+        delattr(self.provider_patient, "creator")
         last_provider_patient_history = self.provider_patient.history.last()
         last_provider_patient_history.history_user = self.provider
         last_provider_patient_history.save()
@@ -237,7 +237,7 @@ class TestPatientPredicates(TestCase):
         patients_last_history.history_user = self.patient
         patients_last_history.save()
 
-        delattr(self.patient, "editors")
+        delattr(self.patient, "creator")
 
         assert not change_patient(self.provider, self.patient)
         assert change_patient(self.admin, self.patient)
@@ -310,7 +310,7 @@ class TestPatientPredicates(TestCase):
         patients_last_history.history_user = self.patient
         patients_last_history.save()
 
-        delattr(self.patient, "editors")
+        delattr(self.patient, "creator")
 
         assert not view_patient(self.provider, self.patient)
         assert view_patient(self.admin, self.patient)

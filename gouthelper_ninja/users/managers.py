@@ -6,6 +6,7 @@ from django.apps import apps
 from django.contrib.auth.base_user import BaseUserManager
 
 from gouthelper_ninja.profiles.helpers import get_provider_alias
+from gouthelper_ninja.profiles.models import AdminProfile
 from gouthelper_ninja.profiles.models import PatientProfile
 from gouthelper_ninja.profiles.models import ProviderProfile
 from gouthelper_ninja.users.choices import Roles
@@ -16,42 +17,55 @@ if TYPE_CHECKING:
     from uuid import UUID
 
 
-class AdminManager(BaseUserManager):
-    def get_queryset(self, *args, **kwargs):
-        results = super().get_queryset(*args, **kwargs)
-        return results.filter(role=Roles.ADMIN)
-
-
 class GoutHelperUserManager(BaseUserManager):
     """Custom User model manager for GoutHelper.
     It only overrides the create_superuser method."""
 
-    def create_user(self, username, email, password=None):
+    def create_user(self, username, email, password, role=Roles.PROVIDER):
         """Create and save a User with the given email and password."""
         user = self.model(
             username=username,
             email=email,
+            role=role,
         )
         user.set_password(password)
         user.save()
         return user
 
-    def create_superuser(self, email, password, **extra_fields):
+    def create_superuser(self, email, password, role=Roles.ADMIN, **extra_fields):
         """Create and save a SuperUser with the given email and password. Set
         role to ADMIN."""
         user = self.model(
             email=email,
             is_staff=True,
             is_superuser=True,
-            role=Roles.ADMIN,
+            role=role,
             **extra_fields,
         )
         user.set_password(password)
         user.save()
+        AdminProfile.objects.create(user=user)
         return user
 
 
-class PatientManager(BaseUserManager):
+class AdminManager(GoutHelperUserManager):
+    def get_queryset(self, *args, **kwargs):
+        results = super().get_queryset(*args, **kwargs)
+        return results.filter(role=Roles.ADMIN)
+
+    def create_user(self, username, email, password, role=Roles.ADMIN):
+        """Create a provider user."""
+        user = super().create_user(
+            username=username,
+            email=email,
+            password=password,
+            role=role,
+        )
+        AdminProfile.objects.create(user=user)
+        return user
+
+
+class PatientManager(GoutHelperUserManager):
     def get_queryset(self, *args, **kwargs):
         results = super().get_queryset(*args, **kwargs)
         return results.filter(role=Roles.PSEUDOPATIENT)
@@ -92,14 +106,30 @@ class PatientManager(BaseUserManager):
         )
         return patient
 
+    def create_user(self, username, email, password, role=Roles.PSEUDOPATIENT):
+        """Create a provider user."""
+        user = super().create_user(
+            username=username,
+            email=email,
+            password=password,
+            role=role,
+        )
+        PatientProfile.objects.create(user=user)
+        return user
 
-class ProviderManager(BaseUserManager):
+
+class ProviderManager(GoutHelperUserManager):
     def get_queryset(self, *args, **kwargs):
         results = super().get_queryset(*args, **kwargs)
         return results.filter(role=Roles.PROVIDER)
 
-    def create_user(self, **kwargs):
+    def create_user(self, username, email, password, role=Roles.PROVIDER):
         """Create a provider user."""
-        user = super().create(**kwargs)
+        user = super().create_user(
+            username=username,
+            email=email,
+            password=password,
+            role=role,
+        )
         ProviderProfile.objects.create(user=user)
         return user

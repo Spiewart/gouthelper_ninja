@@ -1,8 +1,5 @@
 from allauth.account.forms import SignupForm
 from allauth.socialaccount.forms import SignupForm as SocialSignupForm
-from crispy_forms.helper import FormHelper
-from crispy_forms.layout import Fieldset
-from crispy_forms.layout import Layout
 from django.contrib.auth import forms as admin_forms
 from django.utils.translation import gettext_lazy as _
 
@@ -12,19 +9,12 @@ from gouthelper_ninja.utils.forms import GoutHelperForm
 
 
 class PatientForm(GoutHelperForm):
-    """Model form for creating Patient objects."""
+    """Form for creating Patient objects."""
 
     model = Patient
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.helper = FormHelper()
-        self.helper.form_tag = False
-        self.helper.layout = Layout(
-            Fieldset(
-                "",
-            ),
-        )
         # TODO: Insert demographics Div if required
         # Dateofbirth and gender forms above menopause form
         self.insert_extra_form(
