@@ -6,8 +6,8 @@ from django.db.models import Model
 from django.db.models import UUIDField
 
 if TYPE_CHECKING:
-    from django.db.models import Field
-    from pydantic import BaseModel as Schema
+    from django.db.models import Field  # pragma: no_cover
+    from pydantic import BaseModel as Schema  # pragma: no_cover
 
 
 class GoutHelperModel(Model):

@@ -20,6 +20,11 @@ filterwarnings = [
 include = ["gouthelper_ninja/**"]
 omit = ["*/migrations/*", "*/tests/*"]
 plugins = ["django_coverage_plugin"]
+[tool.coverage.report]
+exclude_also = [
+    "pragma: no cover",
+    "if TYPE_CHECKING:",
+]
 
 # ==== mypy ====
 [tool.mypy]
