@@ -98,11 +98,6 @@ delete_patient = (
 
 view_patient = change_patient
 
-# Provider predicates
-# Permissions to view the provider list are the same as to add a Patient
-# for a specific provider.
-view_provider_list = add_provider_patient
-
 # User predicates
 change_user = ~user_is_anonymous & (user_is_obj | user_is_admin)
 delete_user = change_user
@@ -117,10 +112,6 @@ rules.add_rule("can_edit_patient", change_patient)
 rules.add_perm("users.can_edit_patient", change_patient)
 rules.add_rule("can_view_patient", view_patient)
 rules.add_perm("users.can_view_patient", view_patient)
-
-# Provider rules and permissions
-rules.add_rule("can_view_provider_list", view_provider_list)
-rules.add_perm("users.can_view_provider_list", view_provider_list)
 
 # User rules and permissions
 rules.add_rule("can_delete_user", delete_user)

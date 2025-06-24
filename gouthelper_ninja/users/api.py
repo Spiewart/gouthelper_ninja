@@ -9,6 +9,7 @@ from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.users.models import User
 from gouthelper_ninja.users.querysets import patient_qs
 from gouthelper_ninja.users.rules import add_provider_patient
+from gouthelper_ninja.users.rules import change_patient
 from gouthelper_ninja.users.rules import view_patient
 from gouthelper_ninja.users.schema import PatientEditSchema
 from gouthelper_ninja.users.schema import PatientSchema
@@ -17,8 +18,12 @@ router = Router()
 
 
 @router.get("/patients", response=list[PatientSchema], auth=[django_auth])
-def get_patients(request):
-    return Patient.objects.all()
+def get_patients(request) -> list[Patient]:
+    return list(
+        patient_qs(
+            Patient.objects.filter(patientprofile__provider_id=request.user.id).all(),
+        ),
+    )
 
 
 @router.post("/patients/create", response=PatientSchema)
@@ -68,9 +73,14 @@ def get_patient(request, patient_id: UUID) -> Patient:
 
 
 @router.post("/patients/update/{str:patient_id}", response=PatientSchema)
-def update_patient(request, patient_id: str, data: PatientSchema) -> Patient:
+def update_patient(request, patient_id: str, data: PatientEditSchema) -> Patient:
     patient: Patient = patient_qs(Patient.objects.filter(id=patient_id)).get()
     if not patient:
         raise HttpError(404, f"Patient with ID {patient_id} does not exist.")
-    patient.update(**data.dict())
+    if not change_patient(request.user, patient):
+        raise AuthorizationError(
+            403,
+            f"{request.user} does not have permission to edit this patient.",
+        )
+    patient.update(data=data)
     return patient

@@ -6,6 +6,8 @@ from django.test import RequestFactory
 from django.test import TestCase
 from django.urls import reverse
 
+from gouthelper_ninja.ethnicitys.choices import Ethnicitys
+from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.users.choices import Roles
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.users.tests.factories import PatientFactory
@@ -347,3 +349,105 @@ class TestGetPatients(TestCase):
             user=self.provider,
         )
         assert response.status_code == RESPONSE_SUCCESS
+
+
+class TestUpdatePatient(TestCase):
+    def setUp(self):
+        self.anon = AnonymousUser()
+        self.provider = UserFactory()
+        self.patient = PatientFactory()
+        self.patient_with_provider = PatientFactory(provider=self.provider)
+        self.patient_with_creator = PatientFactory(creator=self.provider)
+
+        self.url = reverse(
+            "api-1.0.0:update_patient",
+            kwargs={"patient_id": self.patient.id},
+        )
+        self.data = {
+            "dateofbirth": {"dateofbirth": "2000-06-12"},
+            "ethnicity": {"ethnicity": Ethnicitys.KOREAN},
+            "gender": {"gender": Genders.MALE},
+        }
+
+    def test__patient_without_provider(self):
+        response = self.client.post(
+            self.url,
+            data=json.dumps(self.data),
+            content_type="application/json",
+        )
+        assert response.status_code == RESPONSE_SUCCESS
+        patient = Patient.objects.get(id=self.patient.id)
+        assert patient.ethnicity.ethnicity == Ethnicitys.KOREAN
+        assert patient.gender.gender == Genders.MALE
+
+    def test__patient_with_provider(self):
+        response = self.client.post(
+            reverse(
+                "api-1.0.0:update_patient",
+                kwargs={"patient_id": self.patient_with_provider.id},
+            ),
+            data=json.dumps(self.data),
+            content_type="application/json",
+        )
+        assert response.status_code == RESPONSE_FORBIDDEN
+
+        self.client.force_login(self.patient)
+        response = self.client.post(
+            reverse(
+                "api-1.0.0:update_patient",
+                kwargs={"patient_id": self.patient_with_provider.id},
+            ),
+            data=json.dumps(self.data),
+            content_type="application/json",
+        )
+        assert response.status_code == RESPONSE_FORBIDDEN
+
+        self.client.force_login(self.provider)
+        response = self.client.post(
+            reverse(
+                "api-1.0.0:update_patient",
+                kwargs={"patient_id": self.patient_with_provider.id},
+            ),
+            data=json.dumps(self.data),
+            content_type="application/json",
+        )
+        assert response.status_code == RESPONSE_SUCCESS
+        patient = Patient.objects.get(id=self.patient_with_provider.id)
+        assert patient.ethnicity.ethnicity == Ethnicitys.KOREAN
+        assert patient.gender.gender == Genders.MALE
+
+    def test__patient_with_creator(self):
+        response = self.client.post(
+            reverse(
+                "api-1.0.0:update_patient",
+                kwargs={"patient_id": self.patient_with_creator.id},
+            ),
+            data=json.dumps(self.data),
+            content_type="application/json",
+        )
+        assert response.status_code == RESPONSE_FORBIDDEN
+
+        self.client.force_login(self.patient)
+        response = self.client.post(
+            reverse(
+                "api-1.0.0:update_patient",
+                kwargs={"patient_id": self.patient_with_creator.id},
+            ),
+            data=json.dumps(self.data),
+            content_type="application/json",
+        )
+        assert response.status_code == RESPONSE_FORBIDDEN
+
+        self.client.force_login(self.provider)
+        response = self.client.post(
+            reverse(
+                "api-1.0.0:update_patient",
+                kwargs={"patient_id": self.patient_with_creator.id},
+            ),
+            data=json.dumps(self.data),
+            content_type="application/json",
+        )
+        assert response.status_code == RESPONSE_SUCCESS
+        patient = Patient.objects.get(id=self.patient_with_creator.id)
+        assert patient.ethnicity.ethnicity == Ethnicitys.KOREAN
+        assert patient.gender.gender == Genders.MALE

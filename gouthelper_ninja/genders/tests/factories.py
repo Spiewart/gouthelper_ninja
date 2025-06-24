@@ -11,4 +11,7 @@ class GenderFactory(DjangoModelFactory):
         model = Gender
 
     gender = fuzzy.FuzzyChoice(Genders.choices, getter=lambda c: c[0])
-    patient = SubFactory("apps.gouthelper_ninja.users.tests.factories.PatientFactory")
+    patient = SubFactory(
+        "apps.gouthelper_ninja.users.tests.factories.PatientFactory",
+        gender=None,
+    )

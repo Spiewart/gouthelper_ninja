@@ -11,4 +11,7 @@ class EthnicityFactory(DjangoModelFactory):
         model = Ethnicity
 
     ethnicity = fuzzy.FuzzyChoice(Ethnicitys.choices, getter=lambda c: c[0])
-    patient = SubFactory("apps.gouthelper_ninja.users.tests.factories.PatientFactory")
+    patient = SubFactory(
+        "apps.gouthelper_ninja.users.tests.factories.PatientFactory",
+        ethnicity=None,
+    )

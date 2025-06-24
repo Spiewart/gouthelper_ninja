@@ -20,7 +20,6 @@ from gouthelper_ninja.users.rules import user_is_obj_creator
 from gouthelper_ninja.users.rules import user_is_obj_provider
 from gouthelper_ninja.users.rules import user_username_is_obj
 from gouthelper_ninja.users.rules import view_patient
-from gouthelper_ninja.users.rules import view_provider_list
 from gouthelper_ninja.users.rules import view_user
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
@@ -316,24 +315,6 @@ class TestPatientPredicates(TestCase):
         assert view_patient(self.admin, self.patient)
         assert view_patient(self.patient, self.patient)
         assert not view_patient(self.anon, self.patient)
-
-
-class TestProviderPredicates(TestCase):
-    def setUp(self):
-        """Create a User with the Provider role."""
-        self.provider = UserFactory()
-        self.admin = UserFactory(role=Roles.ADMIN)
-        self.patient = PatientFactory()
-        self.anon = AnonymousUser()
-
-    def test__view_provider_list(self):
-        """Test that view_provider_list returns True for Users whose
-        username matches the obj kwarg or who are admin, and False
-        for all other Users."""
-        assert view_provider_list(self.provider, self.provider.username)
-        assert view_provider_list(self.admin, self.provider.username)
-        assert not view_provider_list(self.patient, self.provider.username)
-        assert not view_provider_list(self.anon, self.provider.username)
 
 
 class TestUserPredicates(TestCase):

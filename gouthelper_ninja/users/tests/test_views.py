@@ -601,6 +601,26 @@ class TestPatientUpdateView(TestCase):
         assert self.patient.ethnicity.ethnicity == self.data["ethnicity"]
         assert self.patient.gender.gender == self.data["gender"]
 
+    def test__post_with_errors(self):
+        # Test with invalid data
+        invalid_data = self.data.copy()
+        invalid_data["dateofbirth"] = "invalid_date"
+
+        self.post_view.request.POST = invalid_data
+
+        SessionMiddleware(dummy_get_response).process_request(self.post)
+        MessageMiddleware(dummy_get_response).process_request(self.post)
+
+        response = self.post_view.post(self.post)
+
+        assert response.status_code == RESPONSE_SUCCESS
+        assert isinstance(response, HttpResponseRedirect) is False
+        assert isinstance(response, HttpResponse)
+        assert "form" in response.context_data
+        assert not response.context_data["form"].errors
+        assert "dateofbirth_form" in response.context_data
+        assert response.context_data["dateofbirth_form"].errors
+
     def test__permission(self):
         """Test that the view can only be accessed by the patient,
         the patient's provider, the patient's creator, or an admin."""
