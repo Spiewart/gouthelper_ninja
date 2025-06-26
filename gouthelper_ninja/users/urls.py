@@ -1,9 +1,11 @@
 from django.urls import path
 
 from .views import PatientCreateView
+from .views import PatientDeleteView
 from .views import PatientDetailView
 from .views import PatientProviderCreateView
 from .views import PatientUpdateView
+from .views import user_delete_view
 from .views import user_detail_view
 from .views import user_redirect_view
 from .views import user_update_view
@@ -26,6 +28,12 @@ urlpatterns = [
         view=PatientUpdateView.as_view(),
         name="patient-update",
     ),
+    path(
+        "patients/<uuid:patient>/delete/",
+        view=PatientDeleteView.as_view(),
+        name="patient-delete",
+    ),
+    path("~delete/", view=user_delete_view, name="delete"),
     path("~redirect/", view=user_redirect_view, name="redirect"),
     path("~update/", view=user_update_view, name="update"),
     path("<str:username>/", view=user_detail_view, name="detail"),

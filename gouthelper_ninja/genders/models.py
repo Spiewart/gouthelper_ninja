@@ -10,6 +10,7 @@ from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.genders.schema import GenderEditSchema
+from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperModel
 
 User = get_user_model()
@@ -32,7 +33,7 @@ class Gender(
         help_text="What is the patient's biological sex?",
     )
     patient = models.OneToOneField(User, on_delete=models.CASCADE, editable=False)
-    history = HistoricalRecords()
+    history = HistoricalRecords(get_user=get_user_change)
 
     edit_schema = GenderEditSchema
 

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+{% load static %}
+
+{% block title %}
+  Delete {{ object }}
+{% endblock title %}
+{% block heading %}
+  <h1>Delete {{ object }}</h1>
+  <hr size="3" color="dark" />
+{% endblock heading %}
+{% block content %}
+  <main class="container">
+    <form class="form-horizontal"
+          method="post"
+          action="{% url 'users:delete' %}">
+      {% csrf_token %}
+      <p>Are you sure you want to delete your account?</p>
+      <p>
+        This will permanently delete your account and any data related to it, including any
+        GoutPatient's you have created.
+      </p>
+      {{ form|crispy }}
+      <div class="control-group">
+        <div class="controls">
+          <button type="submit" class="btn btn-primary">Confirm</button>
+        </div>
+      </div>
+    </form>
+  </main>
+{% endblock content %}

@@ -27,11 +27,13 @@ from gouthelper_ninja.users.models import User
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
 from gouthelper_ninja.users.views import PatientCreateView
+from gouthelper_ninja.users.views import PatientDeleteView
 from gouthelper_ninja.users.views import PatientDetailView
 from gouthelper_ninja.users.views import PatientProviderCreateView
 from gouthelper_ninja.users.views import PatientUpdateView
 from gouthelper_ninja.users.views import UserRedirectView
 from gouthelper_ninja.users.views import UserUpdateView
+from gouthelper_ninja.users.views import user_delete_view
 from gouthelper_ninja.users.views import user_detail_view
 from gouthelper_ninja.utils.helpers import get_str_attrs_dict
 from gouthelper_ninja.utils.helpers import yearsago_date
@@ -419,6 +421,132 @@ class TestPatientProviderCreateView(TestCase):
         assert PatientProviderCreateView.as_view()(self.post, **kwargs)
 
 
+class TestPatientDeleteView(TestCase):
+    """Tests for the PatientDeleteView."""
+
+    def setUp(self):
+        self.rf = RequestFactory()
+        self.provider = UserFactory()
+        self.admin = UserFactory(role=User.Roles.ADMIN)
+        self.patient = PatientFactory()
+        self.patient_of_provider = PatientFactory(provider=self.provider)
+        self.patient_with_creator = PatientFactory(creator=self.provider)
+        self.unrelated_provider = UserFactory()
+        self.anon = AnonymousUser()
+
+    def _get_url(self, patient):
+        return reverse("users:patient-delete", kwargs={"patient": patient.id})
+
+    def _get_request(self, user, url):
+        request = self.rf.get(url)
+        request.user = user
+        return request
+
+    def _post_request(self, user, url):
+        request = self.rf.post(url)
+        request.user = user
+        SessionMiddleware(dummy_get_response).process_request(request)
+        MessageMiddleware(dummy_get_response).process_request(request)
+        return request
+
+    def test_get_request_shows_confirmation(self):
+        """Test GET request to the delete confirmation page."""
+        request = self._get_request(
+            self.provider,
+            self._get_url(self.patient_of_provider),
+        )
+        response = PatientDeleteView.as_view()(
+            request,
+            patient=self.patient_of_provider.id,
+        )
+        assert response.status_code == HTTPStatus.OK
+        response = response.render()
+        assert "Are you sure you want to delete" in response.content.decode()
+
+    def test_post_deletes_patient_and_redirects(self):
+        """Test POST request deletes the patient and redirects."""
+        patient_to_delete = PatientFactory(provider=self.provider)
+        patient_count = Patient.objects.count()
+
+        request = self._post_request(self.provider, self._get_url(patient_to_delete))
+
+        response = PatientDeleteView.as_view()(request, patient=patient_to_delete.id)
+
+        assert Patient.objects.count() == patient_count - 1
+        with pytest.raises(Patient.DoesNotExist):
+            Patient.objects.get(id=patient_to_delete.id)
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url == reverse(
+            "users:detail",
+            kwargs={"username": self.provider.username},
+        )
+
+        messages_sent = [m.message for m in messages.get_messages(request)]
+        assert "GoutPatient successfully deleted" in messages_sent
+
+    def test_patient_deleting_themselves_redirects_to_home(self):
+        """Test a patient deleting their own account redirects to home."""
+        patient_to_delete = PatientFactory()
+        patient_count = Patient.objects.count()
+
+        request = self._post_request(
+            patient_to_delete,
+            self._get_url(patient_to_delete),
+        )
+
+        response = PatientDeleteView.as_view()(request, patient=patient_to_delete.id)
+
+        assert Patient.objects.count() == patient_count - 1
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url == reverse("contents:home")
+
+    def test_permissions(self):
+        """Test view permissions for deleting a patient."""
+        patient = self.patient_of_provider
+        url = self._get_url(patient)
+        kwargs = {"patient": patient.id}
+
+        # Anonymous user cannot delete
+        request = self._post_request(self.anon, url)
+        with pytest.raises(PermissionDenied):
+            PatientDeleteView.as_view(raise_exception=True)(request, **kwargs)
+
+        # Unrelated provider cannot delete
+        request = self._post_request(self.unrelated_provider, url)
+        with pytest.raises(PermissionDenied):
+            PatientDeleteView.as_view(raise_exception=True)(request, **kwargs)
+
+        # Patient cannot delete another patient with a provider
+        other_patient = PatientFactory()
+        request = self._post_request(other_patient, url)
+        with pytest.raises(PermissionDenied):
+            PatientDeleteView.as_view(raise_exception=True)(request, **kwargs)
+
+        # Patient's provider can delete
+        request = self._post_request(self.provider, url)
+        response = PatientDeleteView.as_view()(request, **kwargs)
+        assert response.status_code == HTTPStatus.FOUND
+
+        # Patient with creator
+        patient_c = PatientFactory(creator=self.provider)
+        url_c = self._get_url(patient_c)
+        kwargs_c = {"patient": patient_c.id}
+
+        # Creator can delete
+        request = self._post_request(self.provider, url_c)
+        response = PatientDeleteView.as_view()(request, **kwargs_c)
+        assert response.status_code == HTTPStatus.FOUND
+
+        # Admin can delete any patient
+        patient_a = PatientFactory(provider=self.unrelated_provider)
+        url_a = self._get_url(patient_a)
+        kwargs_a = {"patient": patient_a.id}
+        request = self._post_request(self.admin, url_a)
+        response = PatientDeleteView.as_view()(request, **kwargs_a)
+        assert response.status_code == HTTPStatus.FOUND
+
+
 class TestPatientDetailView(TestCase):
     def setUp(self):
         self.provider = UserFactory()
@@ -781,3 +909,96 @@ class TestUserDetailView:
         assert isinstance(response, HttpResponseRedirect)
         assert response.status_code == HTTPStatus.FOUND
         assert response.url == f"{login_url}?next=/fake-url/"
+
+
+class TestUserDeleteView:
+    def dummy_get_response(self, request: HttpRequest):
+        return None
+
+    def test_get_request_shows_confirmation_page(self, user: User, rf: RequestFactory):
+        """Test GET request by an authenticated user shows confirmation page."""
+        url = reverse("users:delete")
+        request = rf.get(url)
+        request.user = user
+        response = user_delete_view(request)
+
+        assert response.status_code == HTTPStatus.OK
+        response.render()
+        # Default Django DeleteView template contains this text
+        assert b"Are you sure you want to delete" in response.content
+
+    def test_get_request_unauthenticated_redirects_to_login(self, rf: RequestFactory):
+        """Test GET request by an unauthenticated user redirects to login."""
+        url = reverse("users:delete")
+        request = rf.get(url)
+        request.user = AnonymousUser()
+        response = user_delete_view(request)
+
+        login_url = reverse(settings.LOGIN_URL)
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url == f"{login_url}?next={url}"
+
+    def test_post_deletes_user_and_redirects(self, user: User, rf: RequestFactory):
+        """Test POST request deletes the user and redirects home with a message."""
+        url = reverse("users:delete")
+        request = rf.post(url)
+        request.user = user
+
+        # Add middleware for messages
+        SessionMiddleware(self.dummy_get_response).process_request(request)
+        MessageMiddleware(self.dummy_get_response).process_request(request)
+
+        user_count = User.objects.count()
+
+        response = user_delete_view(request)
+
+        assert User.objects.count() == user_count - 1
+        with pytest.raises(User.DoesNotExist):
+            User.objects.get(pk=user.pk)
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url == reverse("contents:home")
+
+        messages_sent = [m.message for m in messages.get_messages(request)]
+        assert "Account successfully deleted" in messages_sent
+
+
+class TestUserViewPermissions(TestCase):
+    def setUp(self):
+        self.provider = UserFactory()
+        self.patient = PatientFactory()
+        self.patient_with_provider = PatientFactory(provider=self.provider)
+        self.patient_with_creator = PatientFactory(creator=self.provider)
+        self.another_provider = UserFactory()
+        self.anon = AnonymousUser()
+        self.admin = UserFactory(role=User.Roles.ADMIN)
+
+    def test__delete_permissions(self):
+        # Test that an unlogged in user is redirected to the login page
+        url = reverse("users:delete")
+        response = self.client.get(url)
+        login_url = reverse(settings.LOGIN_URL)
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url == f"{login_url}?next={url}"
+
+        # Test that the logged in user can access their own delete view
+        self.client.force_login(self.provider)
+        response = self.client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        response = self.client.post(url)
+        assert response.status_code == HTTPStatus.FOUND
+
+        # Test that the anonymous Patient can delete themselves
+        self.client.force_login(self.patient)
+        response = self.client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        response = self.client.post(url)
+        assert response.status_code == HTTPStatus.FOUND
+
+        # Test that an Admin can delete themself
+        self.client.force_login(self.admin)
+        response = self.client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        response = self.client.post(url)
+        assert response.status_code == HTTPStatus.FOUND

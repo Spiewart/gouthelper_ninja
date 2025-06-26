@@ -19,6 +19,12 @@ if TYPE_CHECKING:
 
 
 @rules.predicate
+def obj_not_none(_, obj: "Model") -> bool:
+    """Returns True if the object is not None."""
+    return obj is not None
+
+
+@rules.predicate
 def obj_patient_without_provider(_, obj: "Model"):
     """Returns True if the object's Patient does not have a provider."""
     return obj.patient.patientprofile.provider is None
@@ -87,7 +93,7 @@ def user_id_is_obj(user: "User", obj: str | UUID | None):
 def user_is_obj(user: "User", obj: "User") -> bool:
     """Returns True if the user is the same as the object."""
 
-    return user == obj
+    return user.id == obj.id
 
 
 @rules.predicate
@@ -96,7 +102,7 @@ def user_is_obj_creator(user: "User", obj: "User") -> bool:
     Need to ensure that the object is a Patient first."""
 
     creator = getattr(obj, "creator", None)
-    return creator is not None and creator == user
+    return creator is not None and creator.id == user.id
 
 
 @rules.predicate
@@ -105,12 +111,12 @@ def user_is_obj_provider(user: "User", obj: "Patient") -> bool:
     Need to ensure that the object is a Patient first."""
 
     provider = getattr(obj.patientprofile, "provider", None)
-    return provider is not None and provider == user
+    return provider is not None and provider.id == user.id
 
 
-add_object = (
-    ~user_is_anonymous
-    & (user_is_admin | user_is_obj | user_is_obj_provider | user_is_obj_creator)
+add_object = ~user_is_anonymous & (
+    user_is_admin
+    | (obj_not_none & (user_is_obj | user_is_obj_provider | user_is_obj_creator))
 ) | (obj_without_provider & obj_without_creator)
 delete_object = ~user_is_anonymous & (
     user_is_admin

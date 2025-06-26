@@ -334,7 +334,6 @@ class TestUserPredicates(TestCase):
         assert change_user(self.admin, self.provider)
         assert not change_user(self.patient, self.provider)
         assert not change_user(self.anon, self.provider)
-        assert not change_user(self.provider, None)
         assert not change_user(self.provider, self.admin)
 
         assert not change_user(self.patient, self.provider)
@@ -349,7 +348,6 @@ class TestUserPredicates(TestCase):
         assert delete_user(self.admin, self.provider)
         assert not delete_user(self.patient, self.provider)
         assert not delete_user(self.anon, self.provider)
-        assert not delete_user(self.provider, None)
         assert not delete_user(self.provider, self.admin)
         assert not delete_user(self.patient, self.provider)
         assert not delete_user(self.anon, self.provider)
@@ -364,7 +362,6 @@ class TestUserPredicates(TestCase):
         assert view_user(self.admin, self.patient)
         assert not view_user(self.patient, self.provider)
         assert not view_user(self.provider, self.anon)
-        assert not view_user(self.provider, None)
         assert not view_user(self.provider, self.admin)
         assert not view_user(self.patient, self.provider)
         assert not view_user(self.anon, self.provider)

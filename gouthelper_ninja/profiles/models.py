@@ -54,7 +54,6 @@ class PatientProfile(Profile):
         null=True,
         blank=True,
         default=None,
-        editable=False,
     )
     history = HistoricalRecords(get_user=get_user_change)
 
@@ -63,7 +62,7 @@ class PatientProfile(Profile):
             models.CheckConstraint(
                 condition=(
                     models.Q(provider__isnull=False, provider_alias__isnull=False)
-                    | models.Q(provider__isnull=True, provider_alias__isnull=True)
+                    | models.Q(provider__isnull=True)
                 ),
                 name="%(class)s_alias_required_for_provider",
             ),

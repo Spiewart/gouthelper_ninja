@@ -84,22 +84,6 @@ class TestPatientProfile:
             "patientprofile_alias_required_for_provider" in str(excinfo.value).lower()
         )
 
-    def test_patient_profile_constraint_alias_provider_mismatch(self):
-        """
-        Tests that CheckConstraint %(class)s_alias_required_for_provider fails
-        if provider_alias is set and provider is None.
-        """
-        patient_user = UserFactory(username="patient_constr_2")
-        with pytest.raises(IntegrityError) as excinfo:
-            PatientProfile.objects.create(
-                user=patient_user,
-                provider=None,
-                provider_alias=1,
-            )
-        assert (
-            "patientprofile_alias_required_for_provider" in str(excinfo.value).lower()
-        )
-
     def test_patient_profile_constraint_valid_no_provider(self):
         """
         Tests that CheckConstraint %(class)s_alias_required_for_provider passes

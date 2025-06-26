@@ -68,3 +68,15 @@ def test_patient_update(patient: Patient):
         resolve(f"/users/patients/{patient.id}/update/").view_name
         == "users:patient-update"
     )
+
+
+def test_patient_delete(patient: Patient):
+    """Tests reversing and resolving the patient-delete URL."""
+    assert (
+        reverse("users:patient-delete", kwargs={"patient": patient.id})
+        == f"/users/patients/{patient.id}/delete/"
+    )
+    assert (
+        resolve(f"/users/patients/{patient.id}/delete/").view_name
+        == "users:patient-delete"
+    )

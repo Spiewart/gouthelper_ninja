@@ -22,7 +22,14 @@ def age_calc(date_of_birth: datetime.date) -> int:
     Returns:
         age or None: age integer object or None
     """
-    return num_years(check_for_datetime_and_convert_to_date(date_of_birth))
+    # https://stackoverflow.com/questions/2217488/age-from-birthdate-in-python/9754466#9754466
+
+    today = datetime.datetime.now(tz=datetime.UTC).date()
+    return (
+        today.year
+        - date_of_birth.year
+        - ((today.month, today.day) < (date_of_birth.month, date_of_birth.day))
+    )
 
 
 def check_for_datetime_and_convert_to_date(
@@ -70,6 +77,8 @@ def num_years(
     Returns:
         int: number of years since the begin date
     """
+    # TODO: this is not implemented anywhere, delete?
+
     if end is None:
         end = datetime.datetime.now(tz=tz).date()
     number_of_years = int((end - begin).days / 365.2425)
@@ -219,18 +228,29 @@ def get_str_attrs_dict(
 def get_user_change(instance, request, **kwargs):  # pylint:disable=W0613
     # https://django-simple-history.readthedocs.io/en/latest/user_tracking.html
     """Method for django-simple-history to assign the user who made the change
-    to the HistoricalUser history_user field. Written to deal with the case where
-    the User is deleting his or her own profile and setting the history_user
-    to the User's id will result in an IntegrityError."""
-    # Check if the user is authenticated and the user is the User instance
-    # and if the url for the request is for the User's deletion
+    to the History history_user field. Deals with the case where
+    a User is deleting his or her own profile and setting the history_user
+    to the User's or his or her related object's id will result in an
+    IntegrityError."""
+    # Check if there's a request with an authenticated user
     if request and request.user and request.user.is_authenticated:
-        if request.user == instance and request.path.endswith(reverse("users:delete")):
-            # Set the history_user to None
-            return None
-        # Otherwise, return the request.user
+        # Check if the request is for deleting a user
+        if request.path.endswith(reverse("users:delete")):
+            # Get the ID of the user that is being deleted
+            # Most models track the user via a patient field
+            if hasattr(instance, "patient"):
+                user_id = instance.patient.id
+            # Others (profiles) track the user via a user field
+            elif hasattr(instance, "user"):
+                user_id = instance.user.id
+            # If the instance is a User, use its ID directly
+            else:
+                user_id = instance.id
+            # If the request user is the same as the user being deleted:
+            if request.user.id == user_id:
+                # Set the history_user to None
+                return None
         return request.user
-    # Otherwise, return None
     return None
 
 
@@ -242,6 +262,7 @@ def yearsago_datetime(
     """Method that takes an age, or number of years, and
     returns a date of birth string. If no from_date is provided,
     the current date is used. Adjusts for leap years."""
+
     # https://stackoverflow.com/questions/765797/convert-timedelta-to-years
     if from_date is None:
         from_date = datetime.datetime.now(tz=tz)

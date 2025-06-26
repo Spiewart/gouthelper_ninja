@@ -9,6 +9,7 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import CreateView
+from django.views.generic import DeleteView
 from django.views.generic import DetailView
 from django.views.generic import RedirectView
 from django.views.generic import UpdateView
@@ -39,7 +40,6 @@ class PatientEditMixin(
     """Mixin adding common elements for editing a Patient,
     including date of birth, ethnicity, and gender."""
 
-    model = Patient
     form_class = PatientForm
 
 
@@ -54,6 +54,7 @@ class PatientCreateView(
     TODO: Add required MedHistorys (i.e. menopause as needed) once
     this app is implemented."""
 
+    model = Patient
     schema = PatientEditSchema
 
     @cached_property
@@ -67,7 +68,6 @@ class PatientProviderCreateView(
     PatientCreateView,
 ):
     permission_required = "users.can_add_provider_patient"
-    schema = PatientEditSchema
 
     def dispatch(self, request, *args, **kwargs):
         """Overwritten to check if the provider kwarg belongs to a
@@ -121,6 +121,8 @@ class PatientProviderCreateView(
 
 class PatientMixin:
     """Mixin for handling a Patient object in views."""
+
+    model = Patient
 
     @cached_property
     def patient(self) -> Patient:
@@ -178,14 +180,36 @@ class PatientMixin:
         return patient_qs(super().get_queryset())
 
 
+class PatientDeleteView(
+    AutoPermissionRequiredMixin,
+    SuccessMessageMixin,
+    PatientMixin,
+    DeleteView,
+):
+    """View for deleting a Patient.
+    Only authenticated users can delete a Patient.
+    Permission via rules."""
+
+    # TODO: when session management is implemented,
+    # TODO: remove the patient from the session in form_valid
+
+    def get_success_message(self, cleaned_data):
+        return _("GoutPatient successfully deleted")
+
+    def get_success_url(self):
+        # If the user is deleting their own account, redirect to home.
+        # The user will be logged out after this.
+        if self.request.user.pk == self.object.pk:
+            return reverse("contents:home")
+        return reverse("users:detail", kwargs={"username": self.request.user.username})
+
+
 class PatientDetailView(
     AutoPermissionRequiredMixin,
     PatientMixin,
     DetailView,
 ):
     """View for displaying a Patient's details."""
-
-    model = Patient
 
 
 class PatientUpdateView(
@@ -214,6 +238,31 @@ class PatientUpdateView(
 
 # TODO: use Django-rules to prevent accessing User views for Patients
 # TODO: that are not the request user.
+
+
+class UserDeleteView(
+    LoginRequiredMixin,
+    AutoPermissionRequiredMixin,
+    SuccessMessageMixin,
+    DeleteView,
+):
+    model = User
+    # template_name needs to be declared because a User proxy model
+    # will have a different model name and Django will not find the
+    # correct template.
+    template_name = "users/user_confirm_delete.html"
+
+    def get_success_message(self, cleaned_data):
+        return _("Account successfully deleted")
+
+    def get_success_url(self):
+        return reverse("contents:home")
+
+    def get_object(self):
+        return self.request.user
+
+
+user_delete_view = UserDeleteView.as_view()
 
 
 class UserDetailView(LoginRequiredMixin, DetailView):
