@@ -898,7 +898,6 @@ class TestUserDetailView:
         request.user = UserFactory()
         with pytest.raises(PermissionDenied):
             response = user_detail_view(request, username=user.username)
-        assert response.status_code == HTTPStatus.FORBIDDEN
 
         response = user_detail_view(request, username=request.user.username)
         assert response.status_code == HTTPStatus.OK
