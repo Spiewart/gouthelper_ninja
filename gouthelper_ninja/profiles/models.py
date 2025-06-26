@@ -6,7 +6,7 @@ from rules.contrib.models import RulesModelBase
 from rules.contrib.models import RulesModelMixin
 from simple_history.models import HistoricalRecords
 
-from gouthelper_ninja.utils.helpers import get_user_change
+from gouthelper_ninja.profiles.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperModel
 
 

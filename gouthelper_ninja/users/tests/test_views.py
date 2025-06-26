@@ -896,8 +896,11 @@ class TestUserDetailView:
     def test_authenticated(self, user: User, rf: RequestFactory):
         request = rf.get("/fake-url/")
         request.user = UserFactory()
-        response = user_detail_view(request, username=user.username)
+        with pytest.raises(PermissionDenied):
+            response = user_detail_view(request, username=user.username)
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
+        response = user_detail_view(request, username=request.user.username)
         assert response.status_code == HTTPStatus.OK
 
     def test_not_authenticated(self, user: User, rf: RequestFactory):

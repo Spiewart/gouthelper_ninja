@@ -236,18 +236,8 @@ def get_user_change(instance, request, **kwargs):  # pylint:disable=W0613
     if request and request.user and request.user.is_authenticated:
         # Check if the request is for deleting a user
         if request.path.endswith(reverse("users:delete")):
-            # Get the ID of the user that is being deleted
-            # Most models track the user via a patient field
-            if hasattr(instance, "patient"):
-                user_id = instance.patient.id
-            # Others (profiles) track the user via a user field
-            elif hasattr(instance, "user"):
-                user_id = instance.user.id
-            # If the instance is a User, use its ID directly
-            else:
-                user_id = instance.id
             # If the request user is the same as the user being deleted:
-            if request.user.id == user_id:
+            if request.user.id == instance.patient.id:
                 # Set the history_user to None
                 return None
         return request.user

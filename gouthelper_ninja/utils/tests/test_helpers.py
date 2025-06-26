@@ -1,4 +1,5 @@
 import datetime
+from unittest.mock import Mock
 from uuid import uuid4
 
 import pytest
@@ -139,28 +140,32 @@ class TestHelperFunctions(TestCase):
 
     def test_get_user_change(self):
         user = UserFactory()
+        # Create a mock instance with a 'patient' attribute
+        mock_instance_with_patient = Mock()
+        mock_instance_with_patient.patient = user
+
         # Scenario 1: request.user is authenticated and not the instance
         other_user = UserFactory()
         request = self.factory.get("/fake-url/")
         request.user = other_user
-        assert get_user_change(user, request) == other_user
+        assert get_user_change(mock_instance_with_patient, request) == other_user
 
         # Scenario 2: request.user is the instance, but not delete path
         request.user = user
-        assert get_user_change(user, request) == user
+        assert get_user_change(mock_instance_with_patient, request) == user
 
         # Scenario 3: request.user is instance, and it is delete path
         delete_url = reverse("users:delete")
         request = self.factory.get(delete_url)
         request.user = user
-        assert get_user_change(user, request) is None
+        assert get_user_change(mock_instance_with_patient, request) is None
 
         # Scenario 4: user is not authenticated
         request.user = AnonymousUser()
-        assert get_user_change(user, request) is None
+        assert get_user_change(mock_instance_with_patient, request) is None
 
         # Scenario 5: no request
-        assert get_user_change(user, None) is None
+        assert get_user_change(mock_instance_with_patient, None) is None
 
     def test_yearsago_datetime(self):
         from_date = datetime.datetime(2023, 10, 27, 12, 0, 0, tzinfo=datetime.UTC)
