@@ -265,7 +265,7 @@ class UserDeleteView(
 user_delete_view = UserDeleteView.as_view()
 
 
-class UserDetailView(LoginRequiredMixin, DetailView):
+class UserDetailView(LoginRequiredMixin, AutoPermissionRequiredMixin, DetailView):
     model = User
     slug_field = "username"
     slug_url_kwarg = "username"
@@ -274,7 +274,12 @@ class UserDetailView(LoginRequiredMixin, DetailView):
 user_detail_view = UserDetailView.as_view()
 
 
-class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+class UserUpdateView(
+    LoginRequiredMixin,
+    AutoPermissionRequiredMixin,
+    SuccessMessageMixin,
+    UpdateView,
+):
     model = User
     fields = ["name"]
     success_message = _("Information successfully updated")

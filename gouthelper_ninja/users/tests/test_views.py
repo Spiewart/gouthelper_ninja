@@ -1002,3 +1002,60 @@ class TestUserViewPermissions(TestCase):
         assert response.status_code == HTTPStatus.OK
         response = self.client.post(url)
         assert response.status_code == HTTPStatus.FOUND
+
+    def test__detail_permissions(self):
+        # Test that an unlogged in user can't access the detail view
+        url = reverse("users:detail", kwargs={"username": self.provider.username})
+        response = self.client.get(url)
+        login_url = reverse(settings.LOGIN_URL)
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url == f"{login_url}?next={url}"
+
+        # Test that the logged in user can access their own detail view
+        self.client.force_login(self.provider)
+        response = self.client.get(url)
+        assert response.status_code == HTTPStatus.OK
+
+        # Test that the logged in user can't access another user's detail view
+        another_user = UserFactory()
+        another_url = reverse(
+            "users:detail",
+            kwargs={"username": another_user.username},
+        )
+        response = self.client.get(another_url)
+        assert response.status_code == HTTPStatus.FORBIDDEN
+
+        # Test that the logged in patient can access their own detail view
+        self.client.force_login(self.patient)
+        patient_url = reverse(
+            "users:detail",
+            kwargs={"username": self.patient.username},
+        )
+        response = self.client.get(patient_url)
+        assert response.status_code == HTTPStatus.OK
+
+        # Test that an Admin can access any user's detail view
+        self.client.force_login(self.admin)
+        response = self.client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        response = self.client.get(another_url)
+        assert response.status_code == HTTPStatus.OK
+        response = self.client.get(patient_url)
+        assert response.status_code == HTTPStatus.OK
+
+    def test__update_permissions(self):
+        # Test that an unlogged in user can't access the update view
+        url = reverse("users:update")
+        response = self.client.get(url)
+        login_url = reverse(settings.LOGIN_URL)
+
+        assert response.status_code == HTTPStatus.FOUND
+        assert response.url == f"{login_url}?next={url}"
+
+        # Test that the logged in user can access their own update view
+        self.client.force_login(self.provider)
+        response = self.client.get(url)
+        assert response.status_code == HTTPStatus.OK
+        response = self.client.post(url, data={"username": "new_username"})
+        assert response.status_code == HTTPStatus.FOUND
