@@ -72,7 +72,6 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
                     obj_field_names.remove(field)
                     # If the field is a model field, get its value from the object
                     initial[field] = getattr(self.object, field)
-
         return initial
 
     @property
@@ -223,6 +222,7 @@ class GoutHelperCreateMixin(GoutHelperEditMixin):
     def post(self, request, *args, **kwargs):
         """Overwritten to set the patient attribute on the view."""
         self.object = None
+
         return super().post(request, *args, **kwargs)
 
     def form_valid(self, schema: "BaseModel", **kwargs) -> "HttpResponse":
@@ -238,6 +238,7 @@ class GoutHelperCreateMixin(GoutHelperEditMixin):
         """Method to create the object from the validated schema.
         Can be overwritten in child classes to add additional
         functionality or processing."""
+
         return self.model.objects.create(data=schema, **kwargs)
 
 
