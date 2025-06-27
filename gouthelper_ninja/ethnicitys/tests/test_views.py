@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpResponseRedirect
@@ -11,9 +13,7 @@ from gouthelper_ninja.ethnicitys.forms import EthnicityForm
 from gouthelper_ninja.ethnicitys.views import EthnicityUpdateView
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
-from gouthelper_ninja.utils.test_helpers import RESPONSE_REDIRECT
-from gouthelper_ninja.utils.test_helpers import RESPONSE_SUCCESS
-from gouthelper_ninja.utils.test_helpers import dummy_get_response
+from gouthelper_ninja.utils.tests.helpers import dummy_get_response
 
 
 class TestEthnicityUpdateView(TestCase):
@@ -91,7 +91,7 @@ class TestEthnicityUpdateView(TestCase):
         response = self.post_view.post(self.post_request)
 
         assert isinstance(response, HttpResponseRedirect)
-        assert response.status_code == RESPONSE_REDIRECT
+        assert response.status_code == HTTPStatus.FOUND
         assert response.url == reverse(
             "users:patient-detail",
             kwargs={"patient": self.patient.id},
@@ -120,11 +120,11 @@ class TestEthnicityUpdateView(TestCase):
 
     def test__get_endpoint(self):
         response = self.client.get(self.url)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
 
     def test__post_endpoint(self):
         response = self.client.post(self.url, self.post_data)
-        assert response.status_code == RESPONSE_REDIRECT
+        assert response.status_code == HTTPStatus.FOUND
         assert response.url == reverse(
             "users:patient-detail",
             kwargs={"patient": self.patient.id},
@@ -134,7 +134,7 @@ class TestEthnicityUpdateView(TestCase):
 
     def test__post_endpoint_errors(self):
         response = self.client.post(self.url, {"ethnicity": "INVALID_ETHNICITY"})
-        assert response.status_code == RESPONSE_SUCCESS  # Form redisplay
+        assert response.status_code == HTTPStatus.OK  # Form redisplay
         assert "form" in response.context
         assert isinstance(response.context["form"], EthnicityForm)
         assert not response.context["form"].is_valid()
@@ -148,7 +148,7 @@ class TestEthnicityUpdateView(TestCase):
             self.post_data,
             headers={"hx-request": "true"},
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert isinstance(response, HttpResponseClientRefresh)
         self.ethnicity_obj.refresh_from_db()
         assert self.ethnicity_obj.ethnicity == self.new_ethnicity_value

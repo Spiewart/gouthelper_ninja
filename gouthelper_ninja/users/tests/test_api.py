@@ -1,4 +1,5 @@
 import json
+from http import HTTPStatus
 from uuid import uuid4
 
 from django.contrib.auth.models import AnonymousUser
@@ -12,11 +13,6 @@ from gouthelper_ninja.users.choices import Roles
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
-from gouthelper_ninja.utils.test_helpers import RESPONSE_FORBIDDEN
-from gouthelper_ninja.utils.test_helpers import RESPONSE_NOT_FOUND
-from gouthelper_ninja.utils.test_helpers import RESPONSE_SUCCESS
-from gouthelper_ninja.utils.test_helpers import RESPONSE_UNAUTHORIZED
-from gouthelper_ninja.utils.test_helpers import RESPONSE_UNPROCESSABLE_CONTENT
 
 
 class TestCreatePatient(TestCase):
@@ -36,7 +32,7 @@ class TestCreatePatient(TestCase):
             content_type="application/json",
         )
 
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         # Fetch patient by most recently created, will avoid problems
         # if fixtures are added later to create patients at test initialization.
         patient = Patient.objects.order_by("-created").first()
@@ -54,7 +50,7 @@ class TestCreatePatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         patient = Patient.objects.order_by("-created").first()
         assert isinstance(patient, Patient)
         assert str(patient.id) == response.json()["id"]
@@ -75,7 +71,7 @@ class TestCreatePatient(TestCase):
         )
         # The response should be a 422 for invalid input because extra parameters
         # are not allowed for PatientBaseSchema children.
-        assert response.status_code == RESPONSE_UNPROCESSABLE_CONTENT
+        assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
         assert response.json() == {
             "detail": [
                 {
@@ -108,7 +104,7 @@ class TestCreateProviderPatient(TestCase):
             content_type="application/json",
         )
 
-        assert response.status_code == RESPONSE_UNAUTHORIZED
+        assert response.status_code == HTTPStatus.UNAUTHORIZED
         assert response.json() == {"detail": "Unauthorized"}
 
     def test__api(self):
@@ -121,7 +117,7 @@ class TestCreateProviderPatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         patient = Patient.objects.get(id=response.json()["id"])
         assert patient.patientprofile.provider == self.provider
         assert patient.patientprofile.provider_alias is not None
@@ -139,7 +135,7 @@ class TestCreateProviderPatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.status_code == HTTPStatus.FORBIDDEN
         assert response.json() == {
             "detail": (
                 f"{self.patient} does not have permission to create a "
@@ -158,7 +154,7 @@ class TestCreateProviderPatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         patient = Patient.objects.get(id=response.json()["id"])
         assert patient.patientprofile.provider == self.provider
         # The creator should be the admin user who made the request
@@ -175,7 +171,7 @@ class TestCreateProviderPatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.status_code == HTTPStatus.FORBIDDEN
         assert response.json() == {
             "detail": (
                 f"{other_provider} does not have permission to create a "
@@ -194,7 +190,7 @@ class TestCreateProviderPatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_NOT_FOUND
+        assert response.status_code == HTTPStatus.NOT_FOUND
         assert response.json() == {
             "detail": f"Provider with id: {invalid_provider_id} not found.",
         }
@@ -217,14 +213,14 @@ class TestGetPatient(TestCase):
 
     def test__auth(self):
         response = self.client.get(self.url)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
 
     def test__api(self):
         response = self.client.get(
             self.url,
         )
 
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
 
         assert response.json()["id"] == str(self.patient.id)
 
@@ -234,7 +230,7 @@ class TestGetPatient(TestCase):
             f"/api/users/patients/{fake_user_id}",
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_NOT_FOUND
+        assert response.status_code == HTTPStatus.NOT_FOUND
         assert response.json() == {
             "detail": f"Patient with id: {fake_user_id} not found",
         }
@@ -244,20 +240,20 @@ class TestGetPatient(TestCase):
         response = self.client.get(
             self.provider_patient_url,
         )
-        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.status_code == HTTPStatus.FORBIDDEN
         assert response.json() == {
             "detail": "AnonymousUser does not have permission to view this patient.",
         }
 
         # Anonymous user trying to access a patient without a provider (should succeed)
         response = self.client.get(self.url)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert response.json()["id"] == str(self.patient.id)
 
         # Patient trying to access their own details (patient has no provider)
         self.client.force_login(self.patient)
         response = self.client.get(self.url)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert response.json()["id"] == str(self.patient.id)
 
         # Patient trying to access another patient's details
@@ -268,7 +264,7 @@ class TestGetPatient(TestCase):
             kwargs={"patient_id": other_patient_with_provider.id},
         )
         response = self.client.get(other_patient_url)
-        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.status_code == HTTPStatus.FORBIDDEN
         assert response.json() == {
             "detail": f"{self.patient} does not have permission to view this patient.",
         }
@@ -276,24 +272,24 @@ class TestGetPatient(TestCase):
         # Provider trying to access their own patient
         self.client.force_login(self.provider)
         response = self.client.get(self.provider_patient_url)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert response.json()["id"] == str(self.patient_with_provider.id)
 
         # Provider trying to access a patient not assigned to them
         # (but without a provider)
         response = self.client.get(self.url)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert response.json()["id"] == str(self.patient.id)
 
         # Admin user trying to access any patient
         admin_user = UserFactory(role=Roles.ADMIN)
         self.client.force_login(admin_user)
         response = self.client.get(self.url)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert response.json()["id"] == str(self.patient.id)
 
         response = self.client.get(self.provider_patient_url)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert response.json()["id"] == str(self.patient_with_provider.id)
 
         # Test user who created a patient (but is not their provider)
@@ -308,7 +304,7 @@ class TestGetPatient(TestCase):
             kwargs={"patient_id": created_patient.id},
         )
         response = self.client.get(created_patient_url)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert response.json()["id"] == str(created_patient.id)
 
         self.client.force_login(self.provider)
@@ -316,7 +312,7 @@ class TestGetPatient(TestCase):
             self.provider_patient_url,
             data={"patient_id": self.patient_with_provider.id},
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert response.json()["id"] == str(self.patient_with_provider.id)
 
 
@@ -334,21 +330,21 @@ class TestGetPatients(TestCase):
             self.url,
             user=self.anon,
         )
-        assert response.status_code == RESPONSE_UNAUTHORIZED
+        assert response.status_code == HTTPStatus.UNAUTHORIZED
 
     def test__authenticated_user(self):
         response = self.client.get(
             self.url,
             user=self.patient,
         )
-        assert response.status_code == RESPONSE_UNAUTHORIZED
+        assert response.status_code == HTTPStatus.UNAUTHORIZED
 
         self.client.force_login(self.provider)
         response = self.client.get(
             self.url,
             user=self.provider,
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
 
 
 class TestUpdatePatient(TestCase):
@@ -375,7 +371,7 @@ class TestUpdatePatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         patient = Patient.objects.get(id=self.patient.id)
         assert patient.ethnicity.ethnicity == Ethnicitys.KOREAN
         assert patient.gender.gender == Genders.MALE
@@ -389,7 +385,7 @@ class TestUpdatePatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
         self.client.force_login(self.patient)
         response = self.client.post(
@@ -400,7 +396,7 @@ class TestUpdatePatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
         self.client.force_login(self.provider)
         response = self.client.post(
@@ -411,7 +407,7 @@ class TestUpdatePatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         patient = Patient.objects.get(id=self.patient_with_provider.id)
         assert patient.ethnicity.ethnicity == Ethnicitys.KOREAN
         assert patient.gender.gender == Genders.MALE
@@ -425,7 +421,7 @@ class TestUpdatePatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
         self.client.force_login(self.patient)
         response = self.client.post(
@@ -436,7 +432,7 @@ class TestUpdatePatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
         self.client.force_login(self.provider)
         response = self.client.post(
@@ -447,7 +443,7 @@ class TestUpdatePatient(TestCase):
             data=json.dumps(self.data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         patient = Patient.objects.get(id=self.patient_with_creator.id)
         assert patient.ethnicity.ethnicity == Ethnicitys.KOREAN
         assert patient.gender.gender == Genders.MALE

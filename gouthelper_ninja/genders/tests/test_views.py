@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpResponseRedirect
@@ -11,9 +13,7 @@ from gouthelper_ninja.genders.forms import GenderForm
 from gouthelper_ninja.genders.views import GenderUpdateView
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
-from gouthelper_ninja.utils.test_helpers import RESPONSE_REDIRECT
-from gouthelper_ninja.utils.test_helpers import RESPONSE_SUCCESS
-from gouthelper_ninja.utils.test_helpers import dummy_get_response
+from gouthelper_ninja.utils.tests.helpers import dummy_get_response
 
 
 class TestGenderUpdateView(TestCase):
@@ -95,7 +95,7 @@ class TestGenderUpdateView(TestCase):
         response = self.post_view.post(self.post_request)
 
         assert isinstance(response, HttpResponseRedirect)
-        assert response.status_code == RESPONSE_REDIRECT
+        assert response.status_code == HTTPStatus.FOUND
         assert response.url == reverse(
             "users:patient-detail",
             kwargs={"patient": self.patient.id},
@@ -130,12 +130,12 @@ class TestGenderUpdateView(TestCase):
     def test__get_endpoint(self):
         self.client.force_login(self.provider)
         response = self.client.get(self.url)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
 
     def test__post_endpoint(self):
         self.client.force_login(self.provider)
         response = self.client.post(self.url, self.post_data)
-        assert response.status_code == RESPONSE_REDIRECT
+        assert response.status_code == HTTPStatus.FOUND
         assert response.url == reverse(
             "users:patient-detail",
             kwargs={"patient": self.patient.id},
@@ -146,7 +146,7 @@ class TestGenderUpdateView(TestCase):
     def test__post_endpoint_errors(self):
         self.client.force_login(self.provider)
         response = self.client.post(self.url, {"gender": "INVALID_GENDER_VALUE"})
-        assert response.status_code == RESPONSE_SUCCESS  # Form redisplay
+        assert response.status_code == HTTPStatus.OK  # Form redisplay
         assert "form" in response.context
         assert isinstance(response.context["form"], GenderForm)
         assert not response.context["form"].is_valid()
@@ -159,7 +159,7 @@ class TestGenderUpdateView(TestCase):
             self.post_data,
             headers={"hx-request": "true"},
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert isinstance(response, HttpResponseClientRefresh)
         self.gender_obj.refresh_from_db()
         assert self.gender_obj.gender == self.new_gender_value

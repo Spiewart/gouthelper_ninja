@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import HttpResponseRedirect
@@ -12,9 +14,7 @@ from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
 from gouthelper_ninja.utils.helpers import age_calc
 from gouthelper_ninja.utils.helpers import yearsago_date
-from gouthelper_ninja.utils.test_helpers import RESPONSE_REDIRECT
-from gouthelper_ninja.utils.test_helpers import RESPONSE_SUCCESS
-from gouthelper_ninja.utils.test_helpers import dummy_get_response
+from gouthelper_ninja.utils.tests.helpers import dummy_get_response
 
 
 class TestDateOfBirthUpdateView(TestCase):
@@ -80,7 +80,7 @@ class TestDateOfBirthUpdateView(TestCase):
         response = self.post_view.post(self.post)
 
         assert isinstance(response, HttpResponseRedirect)
-        assert response.status_code == RESPONSE_REDIRECT
+        assert response.status_code == HTTPStatus.FOUND
         assert response.url == reverse(
             "users:patient-detail",
             kwargs={"patient": self.patient.id},
@@ -117,14 +117,14 @@ class TestDateOfBirthUpdateView(TestCase):
         response = self.client.get(
             reverse("dateofbirths:update", kwargs={"pk": self.dob.id}),
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
 
     def test__post_endpoint(self):
         response = self.client.post(
             reverse("dateofbirths:update", kwargs={"pk": self.dob.id}),
             {"dateofbirth": self.new_age},
         )
-        assert response.status_code == RESPONSE_REDIRECT
+        assert response.status_code == HTTPStatus.FOUND
         assert response.url == reverse(
             "users:patient-detail",
             kwargs={"patient": self.patient.id},
@@ -137,7 +137,7 @@ class TestDateOfBirthUpdateView(TestCase):
             reverse("dateofbirths:update", kwargs={"pk": self.dob.id}),
             {"dateofbirth": "invalid-date"},
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert "form" in response.context
         assert isinstance(response.context["form"], DateOfBirthForm)
         assert not response.context["form"].is_valid()
@@ -151,7 +151,7 @@ class TestDateOfBirthUpdateView(TestCase):
             {"dateofbirth": self.new_age},
             headers={"hx-request": "true"},
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert isinstance(response, HttpResponseClientRefresh)
 
         self.dob.refresh_from_db()

@@ -14,14 +14,6 @@ if TYPE_CHECKING:
     from gouthelper_ninja.users.models import User
 
 
-RESPONSE_REDIRECT = 302
-RESPONSE_SUCCESS = 200
-RESPONSE_UNAUTHORIZED = 401
-RESPONSE_FORBIDDEN = 403
-RESPONSE_NOT_FOUND = 404
-RESPONSE_UNPROCESSABLE_CONTENT = 422
-
-
 def create_form_kwargs(
     patient: Union["Patient", "User", None] = None,
     request_user: Union["User", None] = None,

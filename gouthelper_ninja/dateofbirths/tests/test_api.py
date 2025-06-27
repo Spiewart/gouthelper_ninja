@@ -1,4 +1,5 @@
 import json
+from http import HTTPStatus
 from uuid import uuid4
 
 import pytest
@@ -11,9 +12,6 @@ from gouthelper_ninja.dateofbirths.models import DateOfBirth
 from gouthelper_ninja.dateofbirths.schema import DateOfBirthEditSchema
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
-from gouthelper_ninja.utils.test_helpers import RESPONSE_FORBIDDEN
-from gouthelper_ninja.utils.test_helpers import RESPONSE_NOT_FOUND
-from gouthelper_ninja.utils.test_helpers import RESPONSE_SUCCESS
 
 pytestmark = pytest.mark.django_db
 
@@ -58,7 +56,7 @@ class TestUpdateDateOfBirth(TestCase):
             content_type="application/json",
         )
 
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert response.json()["dateofbirth"] == self.new_dob["dateofbirth"]
         self.patient.dateofbirth.refresh_from_db()
         assert (
@@ -80,7 +78,7 @@ class TestUpdateDateOfBirth(TestCase):
             data=json.dumps(self.new_dob),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
 
         # AnonymousUser should not be able to update another
         # self.patient's date of birth
@@ -92,7 +90,7 @@ class TestUpdateDateOfBirth(TestCase):
             data=json.dumps(self.new_dob),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
         # Provider should be able to update his or her own self.patient's date of birth
         self.client.force_login(self.provider)
@@ -104,7 +102,7 @@ class TestUpdateDateOfBirth(TestCase):
             data=json.dumps(self.new_dob),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
 
         # Another provider should not be able to update
         # another self.patient's date of birth
@@ -117,7 +115,7 @@ class TestUpdateDateOfBirth(TestCase):
             data=json.dumps(self.new_dob),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_FORBIDDEN
+        assert response.status_code == HTTPStatus.FORBIDDEN
 
     def test__404(self):
         """Test that a 404 is returned when trying to
@@ -128,7 +126,7 @@ class TestUpdateDateOfBirth(TestCase):
             data=json.dumps(self.new_dob),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_NOT_FOUND
+        assert response.status_code == HTTPStatus.NOT_FOUND
         assert response.json()["detail"] == (
             f"DateOfBirth with id {fake_uuid} does not exist."
         )

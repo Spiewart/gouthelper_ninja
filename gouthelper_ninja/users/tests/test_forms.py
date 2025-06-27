@@ -9,7 +9,7 @@ from gouthelper_ninja.users.forms import UserAdminCreationForm
 from gouthelper_ninja.users.models import User
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
-from gouthelper_ninja.utils.test_helpers import create_form_kwargs
+from gouthelper_ninja.utils.tests.helpers import create_form_kwargs
 
 
 class TestPatientForm(TestCase):

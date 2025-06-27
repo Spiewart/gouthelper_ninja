@@ -8,7 +8,6 @@ from django.contrib.messages.middleware import MessageMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.exceptions import PermissionDenied
 from django.http import Http404
-from django.http import HttpRequest
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.test import RequestFactory
@@ -37,9 +36,7 @@ from gouthelper_ninja.users.views import user_delete_view
 from gouthelper_ninja.users.views import user_detail_view
 from gouthelper_ninja.utils.helpers import get_str_attrs_dict
 from gouthelper_ninja.utils.helpers import yearsago_date
-from gouthelper_ninja.utils.test_helpers import RESPONSE_REDIRECT
-from gouthelper_ninja.utils.test_helpers import RESPONSE_SUCCESS
-from gouthelper_ninja.utils.test_helpers import dummy_get_response
+from gouthelper_ninja.utils.tests.helpers import dummy_get_response
 
 pytestmark = pytest.mark.django_db
 
@@ -142,7 +139,7 @@ class TestPatientCreateView(TestCase):
         response = self.post_view.post(self.post)
 
         assert isinstance(response, HttpResponseRedirect)
-        assert response.status_code == RESPONSE_REDIRECT
+        assert response.status_code == HTTPStatus.FOUND
 
         patient = Patient.objects.order_by("created").last()
         assert response.url == reverse(
@@ -164,7 +161,7 @@ class TestPatientCreateView(TestCase):
 
         response = self.post_view.post(self.post)
 
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert isinstance(response, HttpResponseRedirect) is False
         assert isinstance(response, HttpResponse)
         assert "form" in response.context_data
@@ -311,7 +308,7 @@ class TestPatientProviderCreateView(TestCase):
     def test__get(self):
         response = self.get_view.get(self.get)
         assert isinstance(response, HttpResponse)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert "form" in response.context_data
         assert isinstance(
             response.context_data["form"],
@@ -335,7 +332,7 @@ class TestPatientProviderCreateView(TestCase):
         response = self.post_view.post(self.post)
 
         assert isinstance(response, HttpResponseRedirect)
-        assert response.status_code == RESPONSE_REDIRECT
+        assert response.status_code == HTTPStatus.FOUND
 
         patient = Patient.objects.order_by("created").last()
         assert response.url == reverse(
@@ -350,7 +347,7 @@ class TestPatientProviderCreateView(TestCase):
         # Test that calling the view a second time, creating another identifical
         # patient, increments the provider alias
         response = self.post_view.post(self.post)
-        assert response.status_code == RESPONSE_REDIRECT
+        assert response.status_code == HTTPStatus.FOUND
 
         assert Patient.objects.count() == num_patients + 2
         new_patient = Patient.objects.order_by("created").last()
@@ -369,7 +366,7 @@ class TestPatientProviderCreateView(TestCase):
 
         response = self.post_view.post(self.post)
 
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert isinstance(response, HttpResponseRedirect) is False
         assert isinstance(response, HttpResponse)
         assert "form" in response.context_data
@@ -582,7 +579,7 @@ class TestPatientDetailView(TestCase):
     def test__get(self):
         response = self.get_view.get(self.get)
         assert isinstance(response, HttpResponse)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert "object" in response.context_data
         assert response.context_data["object"] == self.patient
 
@@ -683,7 +680,7 @@ class TestPatientUpdateView(TestCase):
     def test__get(self):
         response = self.get_view.get(self.get)
         assert isinstance(response, HttpResponse)
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert "form" in response.context_data
         assert isinstance(response.context_data["form"], PatientUpdateView.form_class)
         assert "dateofbirth_form" in response.context_data
@@ -713,7 +710,7 @@ class TestPatientUpdateView(TestCase):
         response = self.post_view.post(self.post)
 
         assert isinstance(response, HttpResponseRedirect)
-        assert response.status_code == RESPONSE_REDIRECT
+        assert response.status_code == HTTPStatus.FOUND
 
         assert response.url == reverse(
             "users:patient-detail",
@@ -741,7 +738,7 @@ class TestPatientUpdateView(TestCase):
 
         response = self.post_view.post(self.post)
 
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert isinstance(response, HttpResponseRedirect) is False
         assert isinstance(response, HttpResponse)
         assert "form" in response.context_data
@@ -841,9 +838,6 @@ class TestPatientUpdateView(TestCase):
 
 
 class TestUserUpdateView:
-    def dummy_get_response(self, request: HttpRequest):
-        return None
-
     def test_get_success_url(self, user: User, rf: RequestFactory):
         view = UserUpdateView()
         request = rf.get("/fake-url/")
@@ -866,8 +860,8 @@ class TestUserUpdateView:
         request = rf.get("/fake-url/")
 
         # Add the session/message middleware to the request
-        SessionMiddleware(self.dummy_get_response).process_request(request)
-        MessageMiddleware(self.dummy_get_response).process_request(request)
+        SessionMiddleware(dummy_get_response).process_request(request)
+        MessageMiddleware(dummy_get_response).process_request(request)
         request.user = user
 
         view.request = request
@@ -914,9 +908,6 @@ class TestUserDetailView:
 
 
 class TestUserDeleteView:
-    def dummy_get_response(self, request: HttpRequest):
-        return None
-
     def test_get_request_shows_confirmation_page(self, user: User, rf: RequestFactory):
         """Test GET request by an authenticated user shows confirmation page."""
         url = reverse("users:delete")
@@ -947,8 +938,8 @@ class TestUserDeleteView:
         request.user = user
 
         # Add middleware for messages
-        SessionMiddleware(self.dummy_get_response).process_request(request)
-        MessageMiddleware(self.dummy_get_response).process_request(request)
+        SessionMiddleware(dummy_get_response).process_request(request)
+        MessageMiddleware(dummy_get_response).process_request(request)
 
         user_count = User.objects.count()
 

@@ -51,7 +51,7 @@ class GoutHelperModel(Model):
         Schema fields are Model fields or related models
         with their respective editing Schema."""
 
-        for attr_name, attr_data in data.dict().items():
+        for attr_name, attr_data in data.model_dump().items():
             attr: Model | Field = getattr(self, attr_name)
             if isinstance(attr, Model):
                 attr.update(data=attr.edit_schema(**attr_data))

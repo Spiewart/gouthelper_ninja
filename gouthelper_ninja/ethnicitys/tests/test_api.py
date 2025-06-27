@@ -1,4 +1,5 @@
 import json
+from http import HTTPStatus
 from typing import TYPE_CHECKING
 from uuid import UUID
 from uuid import uuid4
@@ -16,9 +17,6 @@ from gouthelper_ninja.ethnicitys.schema import EthnicityEditSchema
 from gouthelper_ninja.users.choices import Roles
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
-from gouthelper_ninja.utils.test_helpers import RESPONSE_FORBIDDEN
-from gouthelper_ninja.utils.test_helpers import RESPONSE_NOT_FOUND
-from gouthelper_ninja.utils.test_helpers import RESPONSE_SUCCESS
 
 if TYPE_CHECKING:
     from gouthelper_ninja.users.models import User
@@ -98,7 +96,7 @@ class TestUpdateEthnicity(TestCase):
             content_type="application/json",
         )
 
-        assert response.status_code == RESPONSE_SUCCESS
+        assert response.status_code == HTTPStatus.OK
         assert response.json()["ethnicity"] == self.new_ethnicity_value
         ethnicity_obj.refresh_from_db()
         assert ethnicity_obj.ethnicity == self.new_ethnicity_value
@@ -165,7 +163,7 @@ class TestUpdateEthnicity(TestCase):
                 ethnicity_with_provider.id,
                 self.payload_schema,
             )
-        assert excinfo_unrelated_provider.value.status_code == RESPONSE_FORBIDDEN
+        assert excinfo_unrelated_provider.value.status_code == HTTPStatus.FORBIDDEN
 
         # Patient cannot update another (unrelated) patient's Ethnicity
         with pytest.raises(AuthorizationError) as excinfo_unrelated_patient:
@@ -174,7 +172,7 @@ class TestUpdateEthnicity(TestCase):
                 ethnicity_with_provider.id,
                 self.payload_schema,
             )
-        assert excinfo_unrelated_patient.value.status_code == RESPONSE_FORBIDDEN
+        assert excinfo_unrelated_patient.value.status_code == HTTPStatus.FORBIDDEN
 
         # Anonymous user cannot update any Ethnicity
         # (unless patient has no affiliations, which is covered by the rule test)
@@ -185,7 +183,7 @@ class TestUpdateEthnicity(TestCase):
                 # Use AnonymousUser for permission checks
                 self.payload_schema,
             )
-        assert excinfo_anon.value.status_code == RESPONSE_FORBIDDEN
+        assert excinfo_anon.value.status_code == HTTPStatus.FORBIDDEN
 
         # Authenticated (but unrelated) user CAN update Ethnicity
         # if the target patient has NO affiliations (provider/creator).
@@ -217,7 +215,7 @@ class TestUpdateEthnicity(TestCase):
             data=json.dumps(self.new_ethnicity_data),
             content_type="application/json",
         )
-        assert response.status_code == RESPONSE_NOT_FOUND
+        assert response.status_code == HTTPStatus.NOT_FOUND
         assert response.json()["detail"] == (
             f"Ethnicity with id {fake_uuid} does not exist."
         )

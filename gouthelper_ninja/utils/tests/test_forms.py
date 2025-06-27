@@ -6,7 +6,7 @@ from crispy_forms.layout import Layout
 from django.test import TestCase
 
 from gouthelper_ninja.utils.forms import GoutHelperForm
-from gouthelper_ninja.utils.test_helpers import create_form_kwargs
+from gouthelper_ninja.utils.tests.helpers import create_form_kwargs
 
 
 class TestGoutHelperForm(TestCase):
