@@ -45,7 +45,7 @@ class TestDateOfBirthUpdateView(TestCase):
         self.post_view.object = self.dob
 
     def test__get_permission_object(self):
-        assert self.get_view.get_permission_object() == self.patient
+        assert self.get_view.get_permission_object() == self.dob
 
     def test__get_form_kwargs(self):
         form_kwargs = self.get_view.get_form_kwargs()

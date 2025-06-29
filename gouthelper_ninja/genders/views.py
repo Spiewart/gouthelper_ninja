@@ -41,9 +41,10 @@ class GenderEditMixin(GoutHelperEditMixin):
 
 
 class GenderUpdateView(
+    # PatientObjectMixin needs to be first so it sets self.patient
+    PatientObjectMixin,
     GoutHelperUpdateMixin,
     GenderEditMixin,
-    PatientObjectMixin,
     UpdateView,
 ):
     """View for updating a Patient's Gender."""

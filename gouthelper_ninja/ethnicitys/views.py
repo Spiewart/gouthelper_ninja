@@ -46,9 +46,10 @@ class EthnicityEditMixin(GoutHelperEditMixin):
 
 
 class EthnicityUpdateView(
+    # PatientObjectMixin needs to be first so it sets self.patient
+    PatientObjectMixin,
     GoutHelperUpdateMixin,
     EthnicityEditMixin,
-    PatientObjectMixin,
     UpdateView,
 ):
     """View for updating a Patient's Ethnicity."""

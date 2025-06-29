@@ -4,10 +4,13 @@ from typing import Union
 
 from django.contrib import messages
 from django.contrib.messages.views import SuccessMessageMixin
+from django.http import Http404
 from django.http import HttpResponse
 from django.http import HttpResponseRedirect
 from django.utils.functional import cached_property
+from django.utils.translation import gettext_lazy as _
 from django_htmx.http import HttpResponseClientRefresh
+from rules.contrib.views import AutoPermissionRequiredMixin
 
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.utils.helpers import get_str_attrs_dict
@@ -209,13 +212,56 @@ class PatientKwargMixin:
         return Patient.objects.filter(pk=self.kwargs.get("patient")).get()
 
 
-class PatientObjectMixin:
+class PatientObjectMixin(AutoPermissionRequiredMixin):
+    """Mixin for handling objects that have a OneToOne relationship
+    with a Patient via a patient field. Used to set the object on dispatch,
+    which is then used to check object-level permissions. get_object()
+    can be called multiple times without re-querying the database
+    if the object is already set on the view."""
+
     object: Any
 
     @cached_property
     def patient(self) -> "User":
         """Returns the view's object's patient."""
         return self.object.patient
+
+    def dispatch(self, request, *args, **kwargs):
+        """Overwritten to set the object attribute on the view,
+        which is used by the patient cached_property, which is
+        then used to check object-level permissions."""
+        self.object = self.get_object()
+        return super().dispatch(request, *args, **kwargs)
+
+    def get_object(self, queryset=None) -> Patient | None:
+        """Overwritten to use the patient kwarg rather than pk or
+        slug to get the Patient object. Also, checks if the object
+        is already set on the view, and returns it if so to avoid
+        duplicate database queries and still work with Django CBVs
+        without re-writing several methods."""
+        if not hasattr(self, "object"):
+            if queryset is None:
+                queryset = self.get_queryset()
+            pk = self.kwargs.get("pk", None)
+            if pk is None:
+                class_name = self.__class__.__name__
+                raise AttributeError(
+                    class_name + " must be called with a uuid in the pk kwarg "
+                    "in the URLconf.",
+                )
+            queryset = queryset.filter(
+                pk=pk,
+            )
+            try:
+                obj = queryset.get()
+            except queryset.model.DoesNotExist as e:
+                raise Http404(
+                    _("No %(verbose_name)s found matching the query")
+                    % {"verbose_name": queryset.model._meta.verbose_name},  # noqa: SLF001
+                ) from e
+        else:
+            obj = self.object
+        return obj
 
 
 class GoutHelperCreateMixin(GoutHelperEditMixin):

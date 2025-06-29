@@ -10,8 +10,6 @@ from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from rules.contrib.models import RulesModelBase
-from rules.contrib.models import RulesModelMixin
 from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.users.choices import Roles
@@ -31,11 +29,9 @@ from gouthelper_ninja.utils.models import GoutHelperModel
 
 
 class User(
-    RulesModelMixin,
     GoutHelperModel,
     TimeStampedModel,
     AbstractUser,
-    metaclass=RulesModelBase,
 ):
     """
     Default custom user model for gouthelper.

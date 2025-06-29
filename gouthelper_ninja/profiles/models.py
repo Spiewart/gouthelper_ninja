@@ -2,26 +2,26 @@ from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django_extensions.db.models import TimeStampedModel
-from rules.contrib.models import RulesModelBase
-from rules.contrib.models import RulesModelMixin
 from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.profiles.helpers import get_user_change
+from gouthelper_ninja.rules import add_object
+from gouthelper_ninja.rules import change_object
+from gouthelper_ninja.rules import delete_object
+from gouthelper_ninja.rules import view_object
 from gouthelper_ninja.utils.models import GoutHelperModel
 
 
 class Profile(
-    RulesModelMixin,
     GoutHelperModel,
     TimeStampedModel,
-    metaclass=RulesModelBase,
 ):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
 
-    class Meta:
+    class Meta(GoutHelperModel.Meta):
         abstract = True
 
     def __str__(self):
@@ -57,7 +57,7 @@ class PatientProfile(Profile):
     )
     history = HistoricalRecords(get_user=get_user_change)
 
-    class Meta:
+    class Meta(Profile.Meta):
         constraints = [
             models.CheckConstraint(
                 condition=(
@@ -67,6 +67,12 @@ class PatientProfile(Profile):
                 name="%(class)s_alias_required_for_provider",
             ),
         ]
+        rules_permissions = {
+            "add": add_object,
+            "change": change_object,
+            "delete": delete_object,
+            "view": view_object,
+        }
 
 
 class ProviderProfile(Profile):

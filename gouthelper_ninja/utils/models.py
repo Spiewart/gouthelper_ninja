@@ -4,13 +4,20 @@ from typing import TYPE_CHECKING
 from django.db.models import Manager
 from django.db.models import Model
 from django.db.models import UUIDField
+from rules.contrib.models import RulesModelBase
+from rules.contrib.models import RulesModelMixin
+
+from gouthelper_ninja.rules import add_object
+from gouthelper_ninja.rules import change_object
+from gouthelper_ninja.rules import delete_object
+from gouthelper_ninja.rules import view_object
 
 if TYPE_CHECKING:
     from django.db.models import Field  # pragma: no_cover
     from pydantic import BaseModel as Schema  # pragma: no_cover
 
 
-class GoutHelperModel(Model):
+class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
     """
     Model Mixin to add UUID field for objects.
     """
@@ -31,6 +38,12 @@ class GoutHelperModel(Model):
 
     class Meta:
         abstract = True
+        rules_permissions = {
+            "add": add_object,
+            "change": change_object,
+            "delete": delete_object,
+            "read": view_object,
+        }
 
     def save(self, *args, **kwargs):
         """

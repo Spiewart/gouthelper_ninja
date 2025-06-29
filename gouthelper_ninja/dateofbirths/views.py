@@ -44,9 +44,10 @@ class DateOfBirthEditMixin(GoutHelperEditMixin):
 
 
 class DateOfBirthUpdateView(
+    # PatientObjectMixin needs to be first so it sets self.patient
+    PatientObjectMixin,
     GoutHelperUpdateMixin,
     DateOfBirthEditMixin,
-    PatientObjectMixin,
     UpdateView,
 ):
     """View for updating a Patient's DateOfBirth."""
