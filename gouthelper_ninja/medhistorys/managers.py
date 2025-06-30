@@ -4,8 +4,6 @@ from .choices import MedHistoryTypes
 
 
 class AnginaManager(Manager):
-    """Manager for Angina MedHistory proxy model."""
-
     def get_queryset(self):
         return super().get_queryset().filter(medhistorytype=MedHistoryTypes.ANGINA)
 
@@ -15,8 +13,6 @@ class AnginaManager(Manager):
 
 
 class AnticoagulationManager(Manager):
-    """Manager for Anticoagulation MedHistory proxy model."""
-
     def get_queryset(self):
         return (
             super()
@@ -30,8 +26,6 @@ class AnticoagulationManager(Manager):
 
 
 class BleedManager(Manager):
-    """Manager for Bleed MedHistory proxy model."""
-
     def get_queryset(self):
         return super().get_queryset().filter(medhistorytype=MedHistoryTypes.BLEED)
 
@@ -41,21 +35,15 @@ class BleedManager(Manager):
 
 
 class CadManager(Manager):
-    """Manager for Cad MedHistory proxy model."""
-
     def get_queryset(self):
-        """Filters QuerySet to only include Cad MedHistory objects."""
         return super().get_queryset().filter(medhistorytype=MedHistoryTypes.CAD)
 
     def create(self, **kwargs):
-        """Creates a new MedHistory object with medhistorytype=CAD."""
         kwargs.update({"medhistorytype": MedHistoryTypes.CAD})
         return super().create(**kwargs)
 
 
 class ChfManager(Manager):
-    """Manager for Chf MedHistory proxy model."""
-
     def get_queryset(self):
         return super().get_queryset().filter(medhistorytype=MedHistoryTypes.CHF)
 
@@ -65,19 +53,12 @@ class ChfManager(Manager):
 
 
 class CkdManager(Manager):
-    """Manager for Ckd MedHistory proxy model."""
-
     def get_queryset(self):
         return super().get_queryset().filter(medhistorytype=MedHistoryTypes.CKD)
 
     def create(self, **kwargs):
         kwargs.update({"medhistorytype": MedHistoryTypes.CKD})
         return super().create(**kwargs)
-
-
-class CkdRelationsManager(CkdManager):
-    def get_queryset(self):
-        return super().get_queryset().select_related("baselinecreatinine", "ckddetail")
 
 
 class ColchicineinteractionManager(Manager):
@@ -131,11 +112,6 @@ class GoutManager(Manager):
         return super().create(**kwargs)
 
 
-class GoutRelationsManager(GoutManager):
-    def get_queryset(self):
-        return super().get_queryset().select_related("goutdetail")
-
-
 class HeartattackManager(Manager):
     def get_queryset(self):
         return super().get_queryset().filter(medhistorytype=MedHistoryTypes.HEARTATTACK)
@@ -186,9 +162,6 @@ class IbdManager(Manager):
 
 
 class MenopauseManager(Manager):
-    """Sets medhistorytype to Menopause when creating a new instance and
-    filters queryset to only include Menopause instances."""
-
     def get_queryset(self):
         return super().get_queryset().filter(medhistorytype=MedHistoryTypes.MENOPAUSE)
 

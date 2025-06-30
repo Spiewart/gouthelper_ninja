@@ -6,20 +6,17 @@ from django_extensions.db.models import TimeStampedModel
 from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.medhistorys.choices import MedHistoryTypes
-from gouthelper_ninja.medhistorys.helpers import medhistorys_get_default_medhistorytype
 from gouthelper_ninja.medhistorys.managers import AnginaManager
 from gouthelper_ninja.medhistorys.managers import AnticoagulationManager
 from gouthelper_ninja.medhistorys.managers import BleedManager
 from gouthelper_ninja.medhistorys.managers import CadManager
 from gouthelper_ninja.medhistorys.managers import ChfManager
 from gouthelper_ninja.medhistorys.managers import CkdManager
-from gouthelper_ninja.medhistorys.managers import CkdRelationsManager
 from gouthelper_ninja.medhistorys.managers import ColchicineinteractionManager
 from gouthelper_ninja.medhistorys.managers import DiabetesManager
 from gouthelper_ninja.medhistorys.managers import ErosionsManager
 from gouthelper_ninja.medhistorys.managers import GastricbypassManager
 from gouthelper_ninja.medhistorys.managers import GoutManager
-from gouthelper_ninja.medhistorys.managers import GoutRelationsManager
 from gouthelper_ninja.medhistorys.managers import HeartattackManager
 from gouthelper_ninja.medhistorys.managers import HepatitisManager
 from gouthelper_ninja.medhistorys.managers import HypertensionManager
@@ -38,6 +35,7 @@ from gouthelper_ninja.rules import add_object
 from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
+from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperModel
 
 
@@ -72,13 +70,13 @@ class MedHistory(
     MedHistoryTypes = MedHistoryTypes
 
     medhistorytype = models.CharField(
-        _("MedHistory Type"),
+        _("Type of medical history"),
         max_length=50,
         choices=MedHistoryTypes.choices,
         editable=False,
     )
-    value = models.BooleanField(
-        _("Value"),
+    history_of = models.BooleanField(
+        _("History of"),
         help_text="Does the patient have this medical history?",
         default=False,
     )
@@ -87,17 +85,14 @@ class MedHistory(
         on_delete=models.CASCADE,
         editable=False,
     )
-    history = HistoricalRecords()
+    history = HistoricalRecords(get_user=get_user_change)
     objects = models.Manager()
 
     def __str__(self):
-        try:
-            return f"{self.MedHistoryTypes(self.medhistorytype).label}"
-        except ValueError:
-            try:
-                return f"{self.MedHistoryTypes(self._meta.model_name).label}"
-            except ValueError:
-                return f"{medhistorys_get_default_medhistorytype(self)} pre-save"
+        """Returns a string representation of the MedHistory object."""
+        return (
+            f"{self.patient} - {self.get_medhistorytype_display()}: {self.history_of}"
+        )
 
     def delete(
         self,
@@ -105,9 +100,7 @@ class MedHistory(
         **kwargs,
     ):
         """Overwritten to change class before and after calling super().save()
-        so Django-Simple-History works."""
-        # Change class to MedHistory, call super().delete(), then change class back
-        # to proxy model class in order for Django-Simple-History to work properly
+        so Django-Simple-History updates the HistoricalMedHistory table."""
         self.__class__ = MedHistory
         super().delete(*args, **kwargs)
         self.__class__ = apps.get_model(f"medhistorys.{self.medhistorytype}")
@@ -117,17 +110,8 @@ class MedHistory(
         *args,
         **kwargs,
     ):
-        """Overwritten to:
-        1. Add medhistorytype on initial save.
-        2. Change class before and after calling super().save()
-        so Django-Simple-History works.
-        """
-        # Add medhistorytype on initial save
-        if self._state.adding is True:
-            if not self.medhistorytype:
-                self.medhistorytype = medhistorys_get_default_medhistorytype(self)
-        # Change class to MedHistory, call super().save(), then change class back
-        # to proxy model class in order for Django-Simple-History to work properly
+        """Overwritten to change class before and after calling super().save()
+        so Django-Simple-History updates the HistoricalMedHistory table."""
         self.__class__ = MedHistory
         super().save(*args, **kwargs)
         self.__class__ = apps.get_model(f"medhistorys.{self.medhistorytype}")
@@ -180,14 +164,12 @@ class Chf(MedHistory):
 
 
 class Ckd(MedHistory):
-    """Whether Patient has a history of chronic kidney disease.
-    Details are stored in HistoryDetail related object CkdDetail."""
+    """Whether Patient has a history of chronic kidney disease."""
 
     class Meta:
         proxy = True
 
     objects = CkdManager()
-    related_objects = CkdRelationsManager()
 
 
 class Colchicineinteraction(MedHistory):
@@ -229,14 +211,12 @@ class Gastricbypass(MedHistory):
 
 
 class Gout(MedHistory):
-    """Whether or not a Patient has gout. GoutDetail related object to describe
-    whether or not a Patient is actively flaring or hyperuricemic (past 6 months)."""
+    """Whether or not a Patient has gout."""
 
     class Meta:
         proxy = True
 
     objects = GoutManager()
-    related_objects = GoutRelationsManager()
 
 
 class Heartattack(MedHistory):
