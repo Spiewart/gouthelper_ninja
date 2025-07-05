@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+{% block title %}
+  {% if object %}
+    Update
+  {% else %}
+    Create
+  {% endif %}
+  {{ form.mhtype.label }}
+{% endblock title %}
+{% block content %}
+  <h1>
+    {% if object %}
+      Update
+    {% else %}
+      Create
+    {% endif %}
+    {{ form.mhtype.label }}
+  </h1>
+  {% if object %}
+    <form method="post" action="{% url 'medhistorys:update' object.id %}">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <button type="submit" class="btn btn-primary">Update</button>
+    </form>
+  {% else %}
+    <form method="post"
+          action="{% url 'medhistorys:create' patient=patient.id mhtype=mhtype %}">
+      {% csrf_token %}
+      {{ form|crispy }}
+      <button type="submit" class="btn btn-primary">Create</button>
+    </form>
+  {% endif %}
+{% endblock content %}

@@ -105,7 +105,7 @@ class TestPatientManager:
             gender=gender_data,
         )
 
-        patient = Patient.objects.create(data=patient_data)
+        patient = Patient.objects.gh_create(data=patient_data)
 
         assert patient.role == Roles.PSEUDOPATIENT
         assert patient.username is not None
@@ -143,7 +143,7 @@ class TestPatientManager:
             gender=gender_data,
         )
 
-        patient = Patient.objects.create(data=patient_data, provider_id=provider.id)
+        patient = Patient.objects.gh_create(data=patient_data, provider_id=provider.id)
 
         assert patient.role == Roles.PSEUDOPATIENT
 
@@ -183,8 +183,8 @@ class TestPatientManager:
         )
 
         # Create another patient for the same provider to test alias increment
-        Patient.objects.create(data=patient_data, provider_id=provider.id)
-        patient2 = Patient.objects.create(data=patient_data, provider_id=provider.id)
+        Patient.objects.gh_create(data=patient_data, provider_id=provider.id)
+        patient2 = Patient.objects.gh_create(data=patient_data, provider_id=provider.id)
 
         assert patient2.role == Roles.PSEUDOPATIENT
         profile2 = PatientProfile.objects.get(user=patient2)

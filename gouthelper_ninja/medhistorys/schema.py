@@ -1,19 +1,18 @@
 from ninja import Schema
 
-from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.utils.schema import PatientIdSchema
 
 
-class GenderEditSchema(Schema):
-    gender: Genders
+class MedHistoryEditSchema(Schema):
+    history_of: bool
 
 
-class GenderSchema(PatientIdSchema, GenderEditSchema):
+class MedHistorySchema(MedHistoryEditSchema, PatientIdSchema):
     class Config:
         json_schema_extra = {
             "example": {
-                "gender": "male",
+                "mhtype": "diabetes",
                 "patient_id": "patient_id",
-                "id": "gender_id",
+                "id": "medhistory_id",
             },
         }

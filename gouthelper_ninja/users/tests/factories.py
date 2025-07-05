@@ -1,5 +1,6 @@
 from collections.abc import Sequence
 from datetime import date
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
 from uuid import UUID
@@ -7,17 +8,22 @@ from uuid import UUID
 from factory import Faker
 from factory import post_generation
 from factory.django import DjangoModelFactory
+from ninja import Schema
 
 from gouthelper_ninja.dateofbirths.tests.factories import DateOfBirthFactory
 from gouthelper_ninja.ethnicitys.choices import Ethnicitys
 from gouthelper_ninja.ethnicitys.tests.factories import EthnicityFactory
 from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.genders.tests.factories import GenderFactory
+from gouthelper_ninja.medhistorys.tests.factories import MedHistoryFactory
 from gouthelper_ninja.profiles.helpers import get_provider_alias
 from gouthelper_ninja.profiles.tests.factories import PatientProfileFactory
 from gouthelper_ninja.users.models import User
 from gouthelper_ninja.utils.helpers import age_calc
 from gouthelper_ninja.utils.helpers import yearsago_date
+
+if TYPE_CHECKING:
+    from gouthelper_ninja.medhistorys.choices import MHTypes
 
 
 class UserFactory(DjangoModelFactory[User]):
@@ -119,6 +125,46 @@ class PatientFactory(UserFactory):
                     Genders(extracted) if isinstance(extracted, str) else extracted
                 )
             GenderFactory(patient=self, **kwargs)
+
+    @post_generation
+    def medhistorys(
+        self,
+        create: Literal[True, False],
+        extracted: dict[
+            "MHTypes",
+            dict[str, Any] | bool,
+        ]
+        | Schema
+        | None = None,
+    ) -> None:
+        """Post-generation hook to create MedHistory instances for the patient.
+        args:
+            extracted (dict[MHTypes, dict[str, Any] | bool | Schema] | None):
+                A dictionary where keys are MHTypes and values are either
+                a dictionary of fields to set or a boolean indicating whether to create
+                the MedHistory with default values.
+        """
+        if create and extracted is not None:
+            if isinstance(extracted, Schema):
+                # If extracted is a Schema, convert to dict
+                extracted = extracted.dict()
+
+            for mhtype, fields in extracted.items():
+                if isinstance(fields, bool):
+                    # If fields is a boolean, create with default values and
+                    # random history_of
+                    MedHistoryFactory(
+                        patient=self,
+                        mhtype=mhtype,
+                        history_of=fields,  # True or False
+                    )
+                else:
+                    # Otherwise, assume it's a dict of fields
+                    MedHistoryFactory(
+                        patient=self,
+                        mhtype=mhtype,
+                        **fields,
+                    )
 
     @post_generation
     def provider(

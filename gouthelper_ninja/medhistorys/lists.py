@@ -1,102 +1,102 @@
-from .choices import MedHistoryTypes
+from .choices import MHTypes
 
 CV_DISEASES = [
-    MedHistoryTypes.ANGINA,  # Angina
-    MedHistoryTypes.CAD,  # Coronary Artery Disease
-    MedHistoryTypes.CHF,  # Congestive Heart Failure
-    MedHistoryTypes.HEARTATTACK,  # Heart Attack
+    MHTypes.ANGINA,  # Angina
+    MHTypes.CAD,  # Coronary Artery Disease
+    MHTypes.CHF,  # Congestive Heart Failure
+    MHTypes.HEARTATTACK,  # Heart Attack
     # Hypertension is ommitted because it is not used for some prediction models.
     # It can be added as needed in other methods.
-    MedHistoryTypes.STROKE,  # Stroke
-    MedHistoryTypes.PVD,  # Peripheral Vascular Disease
+    MHTypes.STROKE,  # Stroke
+    MHTypes.PAD,  # Peripheral Vascular Disease
 ]
 
-GOALURATE_MEDHISTORYS: list[MedHistoryTypes] = [
-    MedHistoryTypes.EROSIONS,  # Erosions
-    MedHistoryTypes.TOPHI,  # Tophi
+GOALURATE_MEDHISTORYS: list[MHTypes] = [
+    MHTypes.EROSIONS,  # Erosions
+    MHTypes.TOPHI,  # Tophi
 ]
 
-FLARE_MEDHISTORYS: list[MedHistoryTypes] = [
-    MedHistoryTypes.ANGINA,  # Angina
-    MedHistoryTypes.CAD,  # Coronary Artery Disease
-    MedHistoryTypes.CHF,  # Congestive Heart Failure
-    MedHistoryTypes.CKD,  # Chronic Kidney Disease
-    MedHistoryTypes.GOUT,  # Gout
-    MedHistoryTypes.HEARTATTACK,  # Heart Attack
-    MedHistoryTypes.HYPERTENSION,  # Hypertension
-    MedHistoryTypes.MENOPAUSE,  # Post-Menopausal
-    MedHistoryTypes.PVD,  # Peripheral Vascular Disease
-    MedHistoryTypes.STROKE,  # Stroke
+FLARE_MEDHISTORYS: list[MHTypes] = [
+    MHTypes.ANGINA,  # Angina
+    MHTypes.CAD,  # Coronary Artery Disease
+    MHTypes.CHF,  # Congestive Heart Failure
+    MHTypes.CKD,  # Chronic Kidney Disease
+    MHTypes.GOUT,  # Gout
+    MHTypes.HEARTATTACK,  # Heart Attack
+    MHTypes.HYPERTENSION,  # Hypertension
+    MHTypes.MENOPAUSE,  # Post-Menopausal
+    MHTypes.PAD,  # Peripheral Vascular Disease
+    MHTypes.STROKE,  # Stroke
 ]
 
-FLAREAID_MEDHISTORYS: list[MedHistoryTypes] = [
-    MedHistoryTypes.ANGINA,  # Angina
-    MedHistoryTypes.ANTICOAGULATION,  # Anticoagulation
-    MedHistoryTypes.BLEED,  # History of Serious Bleeding
-    MedHistoryTypes.CAD,  # Coronary Artery Disease
-    MedHistoryTypes.CHF,  # Congestive Heart Failure
-    MedHistoryTypes.CKD,  # Chronic Kidney Disease
-    MedHistoryTypes.COLCHICINEINTERACTION,  # Colchicine Interaction
-    MedHistoryTypes.DIABETES,  # Diabetes
-    MedHistoryTypes.GASTRICBYPASS,  # Gastric Bypass
-    MedHistoryTypes.HEARTATTACK,  # Heart Attack
-    MedHistoryTypes.HYPERTENSION,  # Hypertension
-    MedHistoryTypes.IBD,  # Inflammatory Bowel Disease
-    MedHistoryTypes.ORGANTRANSPLANT,  # Organ Transplant
-    MedHistoryTypes.PUD,  # Peptic Ulcer Disease
-    MedHistoryTypes.PVD,  # Peripheral Vascular Disease
-    MedHistoryTypes.STROKE,  # Stroke
+FLAREAID_MEDHISTORYS: list[MHTypes] = [
+    MHTypes.ANGINA,  # Angina
+    MHTypes.ANTICOAGULATION,  # Anticoagulation
+    MHTypes.BLEED,  # History of Serious Bleeding
+    MHTypes.CAD,  # Coronary Artery Disease
+    MHTypes.CHF,  # Congestive Heart Failure
+    MHTypes.CKD,  # Chronic Kidney Disease
+    MHTypes.COLCHICINEINTERACTION,  # Colchicine Interaction
+    MHTypes.DIABETES,  # Diabetes
+    MHTypes.GASTRICBYPASS,  # Gastric Bypass
+    MHTypes.HEARTATTACK,  # Heart Attack
+    MHTypes.HYPERTENSION,  # Hypertension
+    MHTypes.IBD,  # Inflammatory Bowel Disease
+    MHTypes.ORGANTRANSPLANT,  # Organ Transplant
+    MHTypes.PUD,  # Peptic Ulcer Disease
+    MHTypes.PAD,  # Peripheral Vascular Disease
+    MHTypes.STROKE,  # Stroke
 ]
 
-OTHER_NSAID_CONTRAS: list[MedHistoryTypes] = [
-    MedHistoryTypes.ANTICOAGULATION,  # Anticoagulation
-    MedHistoryTypes.BLEED,  # History of Serious Bleeding
-    MedHistoryTypes.GASTRICBYPASS,  # Gastric Bypass
-    MedHistoryTypes.IBD,  # Inflammatory Bowel Disease
-    MedHistoryTypes.PUD,  # Peptic Ulcer Disease
+OTHER_NSAID_CONTRAS: list[MHTypes] = [
+    MHTypes.ANTICOAGULATION,  # Anticoagulation
+    MHTypes.BLEED,  # History of Serious Bleeding
+    MHTypes.GASTRICBYPASS,  # Gastric Bypass
+    MHTypes.IBD,  # Inflammatory Bowel Disease
+    MHTypes.PUD,  # Peptic Ulcer Disease
 ]
 
-PPX_MEDHISTORYS: list[MedHistoryTypes] = [
-    MedHistoryTypes.GOUT,  # Gout
+PPX_MEDHISTORYS: list[MHTypes] = [
+    MHTypes.GOUT,  # Gout
 ]
 
-PPXAID_MEDHISTORYS: list[MedHistoryTypes] = [
-    MedHistoryTypes.ANGINA,  # Angina
-    MedHistoryTypes.ANTICOAGULATION,  # Anticoagulation
-    MedHistoryTypes.BLEED,  # History of Serious Bleeding
-    MedHistoryTypes.CAD,  # Coronary Artery Disease
-    MedHistoryTypes.CHF,  # Congestive Heart Failure
-    MedHistoryTypes.CKD,  # Chronic Kidney Disease
-    MedHistoryTypes.COLCHICINEINTERACTION,  # Colchicine Interaction
-    MedHistoryTypes.DIABETES,  # Diabetes
-    MedHistoryTypes.GASTRICBYPASS,  # Gastric Bypass
-    MedHistoryTypes.HEARTATTACK,  # Heart Attack
-    MedHistoryTypes.HYPERTENSION,  # Hypertension
-    MedHistoryTypes.IBD,  # Inflammatory Bowel Disease
-    MedHistoryTypes.ORGANTRANSPLANT,  # Organ Transplant
-    MedHistoryTypes.PUD,  # Peptic Ulcer Disease
-    MedHistoryTypes.PVD,  # Peripheral Vascular Disease
-    MedHistoryTypes.STROKE,  # Stroke
+PPXAID_MEDHISTORYS: list[MHTypes] = [
+    MHTypes.ANGINA,  # Angina
+    MHTypes.ANTICOAGULATION,  # Anticoagulation
+    MHTypes.BLEED,  # History of Serious Bleeding
+    MHTypes.CAD,  # Coronary Artery Disease
+    MHTypes.CHF,  # Congestive Heart Failure
+    MHTypes.CKD,  # Chronic Kidney Disease
+    MHTypes.COLCHICINEINTERACTION,  # Colchicine Interaction
+    MHTypes.DIABETES,  # Diabetes
+    MHTypes.GASTRICBYPASS,  # Gastric Bypass
+    MHTypes.HEARTATTACK,  # Heart Attack
+    MHTypes.HYPERTENSION,  # Hypertension
+    MHTypes.IBD,  # Inflammatory Bowel Disease
+    MHTypes.ORGANTRANSPLANT,  # Organ Transplant
+    MHTypes.PUD,  # Peptic Ulcer Disease
+    MHTypes.PAD,  # Peripheral Vascular Disease
+    MHTypes.STROKE,  # Stroke
 ]
 
-ULT_MEDHISTORYS: list[MedHistoryTypes] = [
-    MedHistoryTypes.CKD,  # Chronic Kidney Disease
-    MedHistoryTypes.EROSIONS,  # Erosions
-    MedHistoryTypes.HYPERURICEMIA,  # Hyperuricemia
-    MedHistoryTypes.TOPHI,  # Tophi
-    MedHistoryTypes.URATESTONES,  # Urate Stones
+ULT_MEDHISTORYS: list[MHTypes] = [
+    MHTypes.CKD,  # Chronic Kidney Disease
+    MHTypes.EROSIONS,  # Erosions
+    MHTypes.HYPERURICEMIA,  # Hyperuricemia
+    MHTypes.TOPHI,  # Tophi
+    MHTypes.URATESTONES,  # Urate Stones
 ]
 
-ULTAID_MEDHISTORYS: list[MedHistoryTypes] = [
-    MedHistoryTypes.ANGINA,  # Angina
-    MedHistoryTypes.CAD,  # Coronary Artery Disease
-    MedHistoryTypes.CHF,  # Congestive Heart Failure
-    MedHistoryTypes.CKD,  # Chronic Kidney Disease
-    MedHistoryTypes.HEARTATTACK,  # Heart Attack
-    MedHistoryTypes.HEPATITIS,  # Hepatitis or Cirrhosis
-    MedHistoryTypes.ORGANTRANSPLANT,  # Organ Transplant
-    MedHistoryTypes.PVD,  # Peripheral Vascular Disease
-    MedHistoryTypes.STROKE,  # Stroke
-    MedHistoryTypes.URATESTONES,  # Urate Stones
-    MedHistoryTypes.XOIINTERACTION,  # XOI Interaction
+ULTAID_MEDHISTORYS: list[MHTypes] = [
+    MHTypes.ANGINA,  # Angina
+    MHTypes.CAD,  # Coronary Artery Disease
+    MHTypes.CHF,  # Congestive Heart Failure
+    MHTypes.CKD,  # Chronic Kidney Disease
+    MHTypes.HEARTATTACK,  # Heart Attack
+    MHTypes.HEPATITIS,  # Hepatitis or Cirrhosis
+    MHTypes.ORGANTRANSPLANT,  # Organ Transplant
+    MHTypes.PAD,  # Peripheral Vascular Disease
+    MHTypes.STROKE,  # Stroke
+    MHTypes.URATESTONES,  # Urate Stones
+    MHTypes.XOIINTERACTION,  # XOI Interaction
 ]

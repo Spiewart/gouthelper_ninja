@@ -23,7 +23,6 @@ from gouthelper_ninja.users.forms import PatientForm
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.users.models import User
 from gouthelper_ninja.users.querysets import patient_qs
-from gouthelper_ninja.users.schema import PatientEditSchema
 from gouthelper_ninja.users.schema import PatientSchema
 from gouthelper_ninja.utils.views import GoutHelperCreateMixin
 from gouthelper_ninja.utils.views import GoutHelperUpdateMixin
@@ -55,7 +54,6 @@ class PatientCreateView(
     this app is implemented."""
 
     model = Patient
-    schema = PatientEditSchema
 
     @cached_property
     def patient(self) -> None:

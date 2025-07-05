@@ -4,7 +4,6 @@ from django.views.generic import UpdateView
 
 from gouthelper_ninja.genders.forms import GenderForm
 from gouthelper_ninja.genders.models import Gender
-from gouthelper_ninja.genders.schema import GenderEditSchema
 from gouthelper_ninja.utils.views import GoutHelperEditMixin
 from gouthelper_ninja.utils.views import GoutHelperUpdateMixin
 from gouthelper_ninja.utils.views import PatientObjectMixin
@@ -15,7 +14,6 @@ class GenderEditMixin(GoutHelperEditMixin):
 
     model = Gender
     form_class = GenderForm
-    schema = GenderEditSchema
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)

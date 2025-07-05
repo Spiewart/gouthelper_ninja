@@ -3,7 +3,7 @@ from factory import fuzzy
 from factory.django import DjangoModelFactory
 from factory.faker import faker
 
-from gouthelper_ninja.medhistorys.choices import MedHistoryTypes
+from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.medhistorys.models import Angina
 from gouthelper_ninja.medhistorys.models import Anticoagulation
 from gouthelper_ninja.medhistorys.models import Bleed
@@ -24,13 +24,12 @@ from gouthelper_ninja.medhistorys.models import MedHistory
 from gouthelper_ninja.medhistorys.models import Menopause
 from gouthelper_ninja.medhistorys.models import Organtransplant
 from gouthelper_ninja.medhistorys.models import Osteoporosis
+from gouthelper_ninja.medhistorys.models import Pad
 from gouthelper_ninja.medhistorys.models import Pud
-from gouthelper_ninja.medhistorys.models import Pvd
 from gouthelper_ninja.medhistorys.models import Stroke
 from gouthelper_ninja.medhistorys.models import Tophi
 from gouthelper_ninja.medhistorys.models import Uratestones
 from gouthelper_ninja.medhistorys.models import Xoiinteraction
-from gouthelper_ninja.users.tests.factories import PatientFactory
 
 fake = faker.Faker()
 
@@ -39,9 +38,9 @@ class MedHistoryFactory(DjangoModelFactory):
     class Meta:
         model = MedHistory
 
-    medhistorytype = fuzzy.FuzzyChoice(MedHistoryTypes.values)
+    mhtype = fuzzy.FuzzyChoice(MHTypes.values)
     history_of = fake.boolean()
-    patient = SubFactory(PatientFactory)
+    patient = SubFactory("gouthelper_ninja.users.tests.factories.PatientFactory")
 
 
 class AnginaFactory(MedHistoryFactory):
@@ -139,9 +138,9 @@ class OsteoporosisFactory(MedHistoryFactory):
         model = Osteoporosis
 
 
-class PvdFactory(MedHistoryFactory):
+class PadFactory(MedHistoryFactory):
     class Meta:
-        model = Pvd
+        model = Pad
 
 
 class StrokeFactory(MedHistoryFactory):

@@ -1,7 +1,10 @@
+import pytest
 from django.test import TestCase
 
 from gouthelper_ninja.ethnicitys.choices import Ethnicitys
 from gouthelper_ninja.genders.choices import Genders
+from gouthelper_ninja.medhistorys.choices import MHTypes
+from gouthelper_ninja.medhistorys.tests.factories import MedHistoryFactory
 from gouthelper_ninja.users.choices import Roles
 from gouthelper_ninja.users.models import Admin
 from gouthelper_ninja.users.models import Patient
@@ -121,3 +124,31 @@ class TestUser(TestCase):
 
         assert user.role == Roles.PROVIDER
         assert user.__class__ == Provider
+
+    def test_get_medhistory_returns_correct_instance(self):
+        medhistory = MedHistoryFactory(patient=self.patient, mhtype=MHTypes.DIABETES)
+        result = self.patient.get_medhistory(MHTypes.DIABETES)
+        assert result == medhistory
+
+    def test_get_medhistory_returns_none_if_not_exists(self):
+        result = self.patient.get_medhistory(MHTypes.DIABETES)
+        assert result is None
+
+    def test_get_medhistory_raises_for_non_patient(self):
+        provider = self.user
+        with pytest.raises(AttributeError) as excinfo:
+            provider.get_medhistory(MHTypes.DIABETES)
+        assert "is not a Patient" in str(excinfo.value)
+
+    def test_get_medhistory_with_pseudopatient_role(self):
+        patient = PatientFactory(role=Roles.PSEUDOPATIENT)
+        medhistory = MedHistoryFactory(patient=patient, mhtype=MHTypes.DIABETES)
+        result = patient.get_medhistory(MHTypes.DIABETES)
+        assert result == medhistory
+
+    def test_get_medhistory_uses_medhistorys_qs_if_present(self):
+        medhistory = MedHistoryFactory(patient=self.patient, mhtype=MHTypes.DIABETES)
+        # Simulate a custom queryset attribute
+        self.patient.medhistorys_qs = self.patient.medhistory_set.all()
+        result = self.patient.get_medhistory(MHTypes.DIABETES)
+        assert result == medhistory

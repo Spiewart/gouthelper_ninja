@@ -7,7 +7,7 @@ from .models import MedHistory
 @admin.register(MedHistory)
 class MedHistoryHistoryAdmin(SimpleHistoryAdmin):
     list_display = (
-        "medhistorytype",
+        "mhtype",
         "history_of",
         "patient",
         "modified",

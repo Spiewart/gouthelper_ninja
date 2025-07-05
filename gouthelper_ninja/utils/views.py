@@ -10,6 +10,7 @@ from django.http import HttpResponseRedirect
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_htmx.http import HttpResponseClientRefresh
+from pydantic import ValidationError as PydanticValidationError
 from rules.contrib.views import AutoPermissionRequiredMixin
 
 from gouthelper_ninja.users.models import Patient
@@ -30,7 +31,6 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
     form_class: "GoutHelperForm"
     model: "Model"
     patient: Union["User", "Patient", None]
-    schema: "BaseModel"
 
     def get_permission_object(self):
         """The view's permission_object is the patient, which is either an attribute
@@ -68,7 +68,7 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
                 field.name
                 for field in self.object._meta.get_fields()  # noqa: SLF001
             ]
-            for field in self.schema.model_fields:
+            for field in self.model.edit_schema.model_fields:
                 if field in initial:
                     continue
                 if field in obj_field_names:
@@ -107,9 +107,12 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
         if self.post_forms_valid():
             self.post_process_forms()
         else:
-            self.errors = self.render_errors()
+            self.errors = self.render_errors(
+                errors_context=self.form_errors_context(),
+            )
 
         if self.errors:
+            # If there are form errors, render them
             return self.errors
 
         data = {}
@@ -123,7 +126,15 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
             else:
                 data.update(form.cleaned_data)
 
-        schema = self.create_schema(data)
+        try:
+            schema = self.create_schema(data)
+        except PydanticValidationError as e:
+            # If the schema validation fails, we catch the error
+            self.errors = self.render_errors(
+                errors_context=self.schema_errors_context(
+                    schema_errors=e.errors(),
+                ),
+            )
 
         if self.errors:
             return self.errors
@@ -145,7 +156,6 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
 
         for form in self.forms.values():
             forms_valid = form.is_valid() and forms_valid
-
         return forms_valid
 
     def post_process_forms(self) -> None:
@@ -154,16 +164,16 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
         # Can process for post errors and set self.errors to self.render_errors()
         self.errors = False
 
-    def render_errors(self) -> "HttpResponse":
+    def render_errors(self, errors_context: dict[str, Any]) -> "HttpResponse":
         """Renders forms with errors in multiple locations in post()."""
-        context = self.get_errors_context()
+
         return self.render_to_response(
             self.get_context_data(
-                **context,
+                **errors_context,
             ),
         )
 
-    def get_errors_context(self) -> dict[str, Any]:
+    def form_errors_context(self) -> dict[str, Any]:
         """To be overwritten by child classes to add additional
         forms to the errors context."""
         return self.get_context_data(
@@ -175,7 +185,24 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
         attribute using the data passed in. Can be overwritten in child classes
         for additional functionality or processing."""
 
-        return self.schema(**data)
+        try:
+            return self.model.edit_schema(**data)
+        except PydanticValidationError as e:
+            # If the schema validation fails, we catch the error
+            raise e from PydanticValidationError(
+                _(f"{self.model.edit_schema.__name__} validation failed."),  # noqa: INT001
+            )
+
+    def schema_errors_context(
+        self,
+        schema_errors: list[dict[str, Any]],
+    ) -> dict[str, Any]:
+        """Adds Pydantic schema ValidationErrors to the context data
+        for rendering a 200 error response."""
+
+        # TODO: figure out how to render the schema errors in the correct forms
+
+        return {}
 
     def form_valid(
         self,
@@ -204,20 +231,50 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
 
 
 class PatientKwargMixin:
+    """Mixin for CRUD views that have a patient kwarg in the URL.
+    Fetches the Patient and adds to the context and the object
+    creation method. MUST BE FIRST IN THE MRO."""
+
     @cached_property
     def patient(self) -> "User":
         """Returns the Patient whose pk is equal to the patient kwarg,
         which is passed in the URL."""
 
-        return Patient.objects.filter(pk=self.kwargs.get("patient")).get()
+        return (
+            Patient.objects.select_related(
+                "patientprofile__provider",
+            )
+            .filter(pk=self.kwargs.get("patient"))
+            .get()
+        )
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        """Overwritten to add the patient to the context data."""
+        context = super().get_context_data(**kwargs)
+        context["patient"] = self.patient
+        return context
+
+    def create_object(
+        self,
+        schema: "BaseModel",
+        **kwargs: dict[str, Any],
+    ) -> "Patient":
+        """Overwritten to create a Patient with the patient kwarg
+        passed in the URL, which is required for creating a Patient."""
+        kwargs.update(
+            {
+                "patient_id": self.patient.id,
+            },
+        )
+        return super().create_object(schema, **kwargs)
 
 
 class PatientObjectMixin(AutoPermissionRequiredMixin):
     """Mixin for handling objects that have a OneToOne relationship
-    with a Patient via a patient field. Used to set the object on dispatch,
-    which is then used to check object-level permissions. get_object()
-    can be called multiple times without re-querying the database
-    if the object is already set on the view."""
+    with a Patient via a patient field. MUST BE FIRST IN MRO.
+    Patient used to set the object on dispatch, which is then used to
+    check object-level permissions. get_object() can be called multiple
+    times without re-querying the database if the object is already set on the view."""
 
     object: Any
 
@@ -285,7 +342,7 @@ class GoutHelperCreateMixin(GoutHelperEditMixin):
         Can be overwritten in child classes to add additional
         functionality or processing."""
 
-        return self.model.objects.create(data=schema, **kwargs)
+        return self.model.objects.gh_create(data=schema, **kwargs)
 
 
 class GoutHelperUpdateMixin(GoutHelperEditMixin):

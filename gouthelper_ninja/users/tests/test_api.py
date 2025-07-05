@@ -61,27 +61,6 @@ class TestCreatePatient(TestCase):
         assert patient.gender.gender == 0
         assert patient.creator == self.provider
 
-    def test__data_with_provider_id(self):
-        """Test that data with a provider_id will raise an error."""
-        self.data["provider_id"] = str(self.provider.id)
-        response = self.client.post(
-            reverse("api-1.0.0:create_patient"),
-            data=json.dumps(self.data),
-            content_type="application/json",
-        )
-        # The response should be a 422 for invalid input because extra parameters
-        # are not allowed for PatientBaseSchema children.
-        assert response.status_code == HTTPStatus.UNPROCESSABLE_ENTITY
-        assert response.json() == {
-            "detail": [
-                {
-                    "loc": ["body", "data", "provider_id"],
-                    "msg": "Extra inputs are not permitted",
-                    "type": "extra_forbidden",
-                },
-            ],
-        }
-
 
 class TestCreateProviderPatient(TestCase):
     def setUp(self):

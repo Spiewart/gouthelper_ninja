@@ -22,8 +22,8 @@ from gouthelper_ninja.medhistorys.tests.factories import MedHistoryFactory
 from gouthelper_ninja.medhistorys.tests.factories import MenopauseFactory
 from gouthelper_ninja.medhistorys.tests.factories import OrgantransplantFactory
 from gouthelper_ninja.medhistorys.tests.factories import OsteoporosisFactory
+from gouthelper_ninja.medhistorys.tests.factories import PadFactory
 from gouthelper_ninja.medhistorys.tests.factories import PudFactory
-from gouthelper_ninja.medhistorys.tests.factories import PvdFactory
 from gouthelper_ninja.medhistorys.tests.factories import StrokeFactory
 from gouthelper_ninja.medhistorys.tests.factories import TophiFactory
 from gouthelper_ninja.medhistorys.tests.factories import UratestonesFactory
@@ -35,7 +35,7 @@ def test_medhistory_str():
     obj = MedHistoryFactory()
     s = str(obj)
     assert obj.patient.username in s
-    assert str(obj.get_medhistorytype_display()) in s
+    assert str(obj.get_mhtype_display()) in s
     assert str(obj.history_of) in s
 
 
@@ -45,7 +45,7 @@ def test_unique_constraint():
     with pytest.raises(IntegrityError):
         MedHistory.objects.create(
             patient=obj.patient,
-            medhistorytype=obj.medhistorytype,
+            mhtype=obj.mhtype,
             history_of=True,
         )
 
@@ -74,7 +74,7 @@ def test_proxy_models_str():
         OrgantransplantFactory,
         OsteoporosisFactory,
         PudFactory,
-        PvdFactory,
+        PadFactory,
         StrokeFactory,
         TophiFactory,
         UratestonesFactory,
@@ -83,5 +83,5 @@ def test_proxy_models_str():
         obj = factory()
         s = str(obj)
         assert obj.patient.username in s
-        assert str(obj.get_medhistorytype_display()) in s
+        assert str(obj.get_mhtype_display()) in s
         assert str(obj.history_of) in s

@@ -70,7 +70,11 @@ class PatientManager(GoutHelperUserManager):
         results = super().get_queryset(*args, **kwargs)
         return results.filter(role=Roles.PSEUDOPATIENT)
 
-    def create(self, data: PatientEditSchema, provider_id: Union["UUID", None] = None):
+    def gh_create(
+        self,
+        data: PatientEditSchema,
+        provider_id: Union["UUID", None] = None,
+    ):
         dateofbirth = data.dateofbirth.dateofbirth
         gender = data.gender.gender
 

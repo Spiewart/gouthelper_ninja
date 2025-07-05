@@ -2,7 +2,7 @@ from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
 
 
-class MedHistoryTypes(TextChoices):
+class MHTypes(TextChoices):
     ANGINA = "ANGINA", _("Angina")
     ANTICOAGULATION = "ANTICOAGULATION", _("Anticoagulation")
     BLEED = "BLEED", _("Bleed")
@@ -26,7 +26,7 @@ class MedHistoryTypes(TextChoices):
     ORGANTRANSPLANT = "ORGANTRANSPLANT", _("Organ Transplant")
     OSTEOPOROSIS = "OSTEOPOROSIS", _("Osteoporosis")
     PUD = "PUD", _("Peptic Ulcer Disease")
-    PVD = "PVD", _("Peripheral Vascular Disease")
+    PAD = "PAD", _("Peripheral Vascular Disease")
     STROKE = "STROKE", _("Stroke")
     TOPHI = "TOPHI", _("Tophi")
     URATESTONES = "URATESTONES", _("Urate kidney stones")
@@ -37,9 +37,9 @@ class MedHistoryTypes(TextChoices):
 
 
 class CVDiseases(TextChoices):
-    ANGINA = MedHistoryTypes.ANGINA, _("Angina")
-    CAD = MedHistoryTypes.CAD, _("Coronary Artery Disease")
-    CHF = MedHistoryTypes.CHF, _("Congestive Heart Failure")
-    HEARTATTACK = MedHistoryTypes.HEARTATTACK, _("Heart Attack")
-    STROKE = MedHistoryTypes.STROKE, _("Stroke")
-    PVD = MedHistoryTypes.PVD, _("Peripheral Vascular Disease")
+    ANGINA = MHTypes.ANGINA, _("Angina")
+    CAD = MHTypes.CAD, _("Coronary Artery Disease")
+    CHF = MHTypes.CHF, _("Congestive Heart Failure")
+    HEARTATTACK = MHTypes.HEARTATTACK, _("Heart Attack")
+    STROKE = MHTypes.STROKE, _("Stroke")
+    PAD = MHTypes.PAD, _("Peripheral Vascular Disease")

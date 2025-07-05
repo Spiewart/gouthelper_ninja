@@ -1,6 +1,6 @@
 import pytest
 
-from gouthelper_ninja.medhistorys.choices import MedHistoryTypes
+from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.medhistorys.models import Angina
 from gouthelper_ninja.medhistorys.models import Anticoagulation
 from gouthelper_ninja.medhistorys.models import Bleed
@@ -20,11 +20,12 @@ from gouthelper_ninja.medhistorys.models import Ibd
 from gouthelper_ninja.medhistorys.models import Menopause
 from gouthelper_ninja.medhistorys.models import Organtransplant
 from gouthelper_ninja.medhistorys.models import Osteoporosis
-from gouthelper_ninja.medhistorys.models import Pvd
+from gouthelper_ninja.medhistorys.models import Pad
 from gouthelper_ninja.medhistorys.models import Stroke
 from gouthelper_ninja.medhistorys.models import Tophi
 from gouthelper_ninja.medhistorys.models import Uratestones
 from gouthelper_ninja.medhistorys.models import Xoiinteraction
+from gouthelper_ninja.medhistorys.schema import MedHistoryEditSchema
 from gouthelper_ninja.medhistorys.tests.factories import AnginaFactory
 from gouthelper_ninja.medhistorys.tests.factories import AnticoagulationFactory
 from gouthelper_ninja.medhistorys.tests.factories import BleedFactory
@@ -44,7 +45,7 @@ from gouthelper_ninja.medhistorys.tests.factories import IbdFactory
 from gouthelper_ninja.medhistorys.tests.factories import MenopauseFactory
 from gouthelper_ninja.medhistorys.tests.factories import OrgantransplantFactory
 from gouthelper_ninja.medhistorys.tests.factories import OsteoporosisFactory
-from gouthelper_ninja.medhistorys.tests.factories import PvdFactory
+from gouthelper_ninja.medhistorys.tests.factories import PadFactory
 from gouthelper_ninja.medhistorys.tests.factories import StrokeFactory
 from gouthelper_ninja.medhistorys.tests.factories import TophiFactory
 from gouthelper_ninja.medhistorys.tests.factories import UratestonesFactory
@@ -52,75 +53,84 @@ from gouthelper_ninja.medhistorys.tests.factories import XoiinteractionFactory
 from gouthelper_ninja.users.tests.factories import PatientFactory
 
 
+def make_schema(history_of=True):  # noqa: FBT002
+    return MedHistoryEditSchema(history_of=history_of)
+
+
 @pytest.mark.django_db
-def test_angina_manager_queryset_and_create():
+def test_angina_manager_queryset_and_gh_create():
     obj = AnginaFactory()
     assert Angina.objects.filter(pk=obj.pk).exists()
-    assert obj.medhistorytype == MedHistoryTypes.ANGINA
+    assert obj.mhtype == MHTypes.ANGINA
     # Test create method
-    created = Angina.objects.create(patient=PatientFactory(), history_of=True)
-    assert created.medhistorytype == MedHistoryTypes.ANGINA
+    patient = PatientFactory()
+    schema = make_schema()
+    created = Angina.objects.gh_create(data=schema, patient_id=patient.id)
+    assert created.mhtype == MHTypes.ANGINA
     assert Angina.objects.filter(pk=created.pk).exists()
 
 
 @pytest.mark.django_db
-def test_anticoagulation_manager_queryset_and_create():
+def test_anticoagulation_manager_queryset_and_gh_create():
     obj = AnticoagulationFactory()
     assert Anticoagulation.objects.filter(pk=obj.pk).exists()
-    assert obj.medhistorytype == MedHistoryTypes.ANTICOAGULATION
-    created = Anticoagulation.objects.create(patient=PatientFactory(), history_of=True)
-    assert created.medhistorytype == MedHistoryTypes.ANTICOAGULATION
+    assert obj.mhtype == MHTypes.ANTICOAGULATION
+    patient = PatientFactory()
+    schema = make_schema()
+    created = Anticoagulation.objects.gh_create(data=schema, patient_id=patient.id)
+    assert created.mhtype == MHTypes.ANTICOAGULATION
     assert Anticoagulation.objects.filter(pk=created.pk).exists()
 
 
 @pytest.mark.django_db
-def test_bleed_manager_queryset_and_create():
+def test_bleed_manager_queryset_and_gh_create():
     obj = BleedFactory()
     assert Bleed.objects.filter(pk=obj.pk).exists()
-    assert obj.medhistorytype == MedHistoryTypes.BLEED
-    created = Bleed.objects.create(patient=PatientFactory(), history_of=True)
-    assert created.medhistorytype == MedHistoryTypes.BLEED
+    assert obj.mhtype == MHTypes.BLEED
+    patient = PatientFactory()
+    schema = make_schema()
+    created = Bleed.objects.gh_create(data=schema, patient_id=patient.id)
+    assert created.mhtype == MHTypes.BLEED
     assert Bleed.objects.filter(pk=created.pk).exists()
 
 
-# ...repeat for all other managers...
-
-
 @pytest.mark.parametrize(
-    ("model", "factory", "medhistorytype"),
+    ("model", "factory", "mhtype"),
     [
-        (Cad, CadFactory, MedHistoryTypes.CAD),
-        (Chf, ChfFactory, MedHistoryTypes.CHF),
-        (Ckd, CkdFactory, MedHistoryTypes.CKD),
+        (Cad, CadFactory, MHTypes.CAD),
+        (Chf, ChfFactory, MHTypes.CHF),
+        (Ckd, CkdFactory, MHTypes.CKD),
         (
             Colchicineinteraction,
             ColchicineinteractionFactory,
-            MedHistoryTypes.COLCHICINEINTERACTION,
+            MHTypes.COLCHICINEINTERACTION,
         ),
-        (Diabetes, DiabetesFactory, MedHistoryTypes.DIABETES),
-        (Erosions, ErosionsFactory, MedHistoryTypes.EROSIONS),
-        (Gastricbypass, GastricbypassFactory, MedHistoryTypes.GASTRICBYPASS),
-        (Gout, GoutFactory, MedHistoryTypes.GOUT),
-        (Heartattack, HeartattackFactory, MedHistoryTypes.HEARTATTACK),
-        (Hepatitis, HepatitisFactory, MedHistoryTypes.HEPATITIS),
-        (Hypertension, HypertensionFactory, MedHistoryTypes.HYPERTENSION),
-        (Hyperuricemia, HyperuricemiaFactory, MedHistoryTypes.HYPERURICEMIA),
-        (Ibd, IbdFactory, MedHistoryTypes.IBD),
-        (Menopause, MenopauseFactory, MedHistoryTypes.MENOPAUSE),
-        (Organtransplant, OrgantransplantFactory, MedHistoryTypes.ORGANTRANSPLANT),
-        (Osteoporosis, OsteoporosisFactory, MedHistoryTypes.OSTEOPOROSIS),
-        (Pvd, PvdFactory, MedHistoryTypes.PVD),
-        (Stroke, StrokeFactory, MedHistoryTypes.STROKE),
-        (Tophi, TophiFactory, MedHistoryTypes.TOPHI),
-        (Uratestones, UratestonesFactory, MedHistoryTypes.URATESTONES),
-        (Xoiinteraction, XoiinteractionFactory, MedHistoryTypes.XOIINTERACTION),
+        (Diabetes, DiabetesFactory, MHTypes.DIABETES),
+        (Erosions, ErosionsFactory, MHTypes.EROSIONS),
+        (Gastricbypass, GastricbypassFactory, MHTypes.GASTRICBYPASS),
+        (Gout, GoutFactory, MHTypes.GOUT),
+        (Heartattack, HeartattackFactory, MHTypes.HEARTATTACK),
+        (Hepatitis, HepatitisFactory, MHTypes.HEPATITIS),
+        (Hypertension, HypertensionFactory, MHTypes.HYPERTENSION),
+        (Hyperuricemia, HyperuricemiaFactory, MHTypes.HYPERURICEMIA),
+        (Ibd, IbdFactory, MHTypes.IBD),
+        (Menopause, MenopauseFactory, MHTypes.MENOPAUSE),
+        (Organtransplant, OrgantransplantFactory, MHTypes.ORGANTRANSPLANT),
+        (Osteoporosis, OsteoporosisFactory, MHTypes.OSTEOPOROSIS),
+        (Pad, PadFactory, MHTypes.PAD),
+        (Stroke, StrokeFactory, MHTypes.STROKE),
+        (Tophi, TophiFactory, MHTypes.TOPHI),
+        (Uratestones, UratestonesFactory, MHTypes.URATESTONES),
+        (Xoiinteraction, XoiinteractionFactory, MHTypes.XOIINTERACTION),
     ],
 )
 @pytest.mark.django_db
-def test_manager_queryset_and_create(model, factory, medhistorytype):
+def test_manager_queryset_and_gh_create(model, factory, mhtype):
     obj = factory()
     assert model.objects.filter(pk=obj.pk).exists()
-    assert obj.medhistorytype == medhistorytype
-    created = model.objects.create(history_of=True, patient=PatientFactory())
-    assert created.medhistorytype == medhistorytype
+    assert obj.mhtype == mhtype
+    patient = PatientFactory()
+    schema = make_schema()
+    created = model.objects.gh_create(data=schema, patient_id=patient.id)
+    assert created.mhtype == mhtype
     assert model.objects.filter(pk=created.pk).exists()

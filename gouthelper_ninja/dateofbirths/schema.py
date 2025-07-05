@@ -1,17 +1,15 @@
 from datetime import date
-from uuid import UUID
 
 from ninja import Schema
+
+from gouthelper_ninja.utils.schema import PatientIdSchema
 
 
 class DateOfBirthEditSchema(Schema):
     dateofbirth: date
 
 
-class DateOfBirthSchema(DateOfBirthEditSchema):
-    id: UUID
-    patient_id: UUID
-
+class DateOfBirthSchema(DateOfBirthEditSchema, PatientIdSchema):
     class Config:
         json_schema_extra = {
             "example": {

@@ -45,6 +45,7 @@ class DummyModel:
     _meta.get_fields.return_value = [DummyField("foo"), DummyField("bar")]
     foo = "foo_val"
     bar = "bar_val"
+    edit_schema = DummySchema
 
 
 @pytest.mark.django_db
@@ -87,7 +88,7 @@ def test_get_initial_populates_from_object():
 
     class View(GoutHelperEditMixin, Base):  # Fix: Mixin first
         object = DummyModel()
-        schema = DummySchema
+        model = DummyModel
 
     v = View()
     initial = v.get_initial()
@@ -140,11 +141,14 @@ def test_request_user_returns_request_user():
 def test_patient_kwarg_mixin():
     class DummyPatient:
         objects = MagicMock()
-        objects.filter.return_value.get.return_value = "thepatient"
+
+    DummyPatient.objects.select_related.return_value = DummyPatient.objects
+    DummyPatient.objects.filter.return_value = DummyPatient.objects
+    DummyPatient.objects.get.return_value = "thepatient"
 
     class View(PatientKwargMixin):
         kwargs = {"patient": 1}
-        Patient = DummyPatient
+        # Do not set Patient here; rely on patch
 
     with patch("gouthelper_ninja.utils.views.Patient", DummyPatient):
         v = View()
@@ -153,14 +157,18 @@ def test_patient_kwarg_mixin():
 
 @pytest.mark.django_db
 def test_patient_object_mixin():
+    class DummyPatient:
+        objects = MagicMock()
+        objects.select_related.filter.return_value.get.return_value = "thepatient"
+
     class DummyObj:
-        patient = "thepatient"
+        patient = DummyPatient()
 
     class View(PatientObjectMixin):
         object = DummyObj()
 
     v = View()
-    assert v.patient == "thepatient"
+    assert v.patient == v.object.patient
 
 
 @pytest.mark.django_db

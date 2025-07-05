@@ -1,3 +1,4 @@
+from typing import TYPE_CHECKING
 from typing import Union
 
 from django.apps import apps
@@ -12,6 +13,8 @@ from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from simple_history.models import HistoricalRecords
 
+from gouthelper_ninja.medhistorys.choices import MHTypes
+from gouthelper_ninja.medhistorys.helpers import search_medhistorys_by_mhtype
 from gouthelper_ninja.users.choices import Roles
 from gouthelper_ninja.users.helpers import get_user_change
 from gouthelper_ninja.users.managers import AdminManager
@@ -26,6 +29,9 @@ from gouthelper_ninja.users.rules import view_patient
 from gouthelper_ninja.users.rules import view_user
 from gouthelper_ninja.users.schema import PatientEditSchema
 from gouthelper_ninja.utils.models import GoutHelperModel
+
+if TYPE_CHECKING:
+    from gouthelper_ninja.medhistorys.models import MedHistory
 
 
 class User(
@@ -108,6 +114,35 @@ class User(
             .history_user
         )
 
+    @cached_property
+    def diabetes(self) -> Union["MedHistory", None]:
+        """The Patient's diabetes MedHistory or None if
+        it does not exist."""
+        return self.get_medhistory(MHTypes.DIABETES)
+
+    def get_medhistory(self, mhtype: "MHTypes") -> Union["MedHistory", None]:
+        """Returns the instance's MedHistory of the given type,
+        if it exists. Raises AttributeError if the User is not a Patient."""
+        if self.role not in [self.Roles.PATIENT, self.Roles.PSEUDOPATIENT]:
+            msg = _(
+                f"User {self} is not a Patient, cannot get "  # noqa: INT001
+                f"MedHistory of type {mhtype}.",
+            )
+            raise AttributeError(
+                msg,
+            )
+        return (
+            search_medhistorys_by_mhtype(
+                self.medhistorys_qs,
+                mhtype,
+            )
+            if hasattr(self, "medhistorys_qs")
+            else search_medhistorys_by_mhtype(
+                self.medhistory_set.all(),
+                mhtype,
+            )
+        )
+
 
 class Admin(User):
     # This sets the user type to ADMIN during record creation
@@ -131,6 +166,8 @@ class Patient(User):
 
     # Ensures queries on the Pseudopatient model return only Pseudopatients
     objects = PatientManager()
+
+    edit_schema = PatientEditSchema
 
     class Meta(User.Meta):
         proxy = True
