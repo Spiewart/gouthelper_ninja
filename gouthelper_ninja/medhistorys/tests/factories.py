@@ -97,6 +97,14 @@ class GoutFactory(MedHistoryFactory):
     class Meta:
         model = Gout
 
+    patient = SubFactory(
+        "gouthelper_ninja.users.tests.factories.PatientFactory",
+        # PatientFactory will create a Gout medhistory
+        # so we set it to None here
+        # to avoid creating a duplicate Gout medhistory
+        medhistorys={MHTypes.GOUT: None},
+    )
+
 
 class HeartattackFactory(MedHistoryFactory):
     class Meta:

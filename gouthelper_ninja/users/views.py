@@ -19,6 +19,7 @@ from rules.contrib.views import PermissionRequiredMixin
 from gouthelper_ninja.dateofbirths.views import DateOfBirthEditMixin
 from gouthelper_ninja.ethnicitys.views import EthnicityEditMixin
 from gouthelper_ninja.genders.views import GenderEditMixin
+from gouthelper_ninja.medhistorys.views import GoutMixin
 from gouthelper_ninja.users.forms import PatientForm
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.users.models import User
@@ -35,6 +36,7 @@ class PatientEditMixin(
     DateOfBirthEditMixin,
     EthnicityEditMixin,
     GenderEditMixin,
+    GoutMixin,
 ):
     """Mixin adding common elements for editing a Patient,
     including date of birth, ethnicity, and gender."""

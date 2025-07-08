@@ -24,9 +24,13 @@ class PatientForm(GoutHelperForm):
             form_model="gender",
         )
         # TODO: insert menopause form
-        # Insert ethnicity and
+        # Insert ethnicity form
         self.insert_extra_form(
             form_model="ethnicity",
+        )
+        # Insert gout form
+        self.insert_extra_form(
+            form_model="gout",
         )
         # TODO: insert gout/detail forms
 

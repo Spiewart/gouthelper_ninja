@@ -108,6 +108,10 @@ class PatientManager(GoutHelperUserManager):
             patient=patient,
             gender=gender,
         )
+        apps.get_model("medhistorys.Gout").objects.create(
+            patient=patient,
+            history_of=data.gout.history_of,
+        )
         return patient
 
     def create_user(self, username, email, password, role=Roles.PSEUDOPATIENT):

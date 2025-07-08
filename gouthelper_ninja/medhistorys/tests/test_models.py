@@ -1,6 +1,7 @@
 import pytest
 from django.db import IntegrityError
 
+from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.medhistorys.models import MedHistory
 from gouthelper_ninja.medhistorys.tests.factories import AnginaFactory
 from gouthelper_ninja.medhistorys.tests.factories import AnticoagulationFactory
@@ -28,6 +29,7 @@ from gouthelper_ninja.medhistorys.tests.factories import StrokeFactory
 from gouthelper_ninja.medhistorys.tests.factories import TophiFactory
 from gouthelper_ninja.medhistorys.tests.factories import UratestonesFactory
 from gouthelper_ninja.medhistorys.tests.factories import XoiinteractionFactory
+from gouthelper_ninja.users.tests.factories import PatientFactory
 
 
 @pytest.mark.django_db
@@ -41,7 +43,9 @@ def test_medhistory_str():
 
 @pytest.mark.django_db
 def test_unique_constraint():
-    obj = MedHistoryFactory()
+    obj = MedHistoryFactory(
+        patient=PatientFactory(medhistorys={MHTypes.GOUT: None}),
+    )
     with pytest.raises(IntegrityError):
         MedHistory.objects.create(
             patient=obj.patient,

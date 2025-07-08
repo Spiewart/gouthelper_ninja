@@ -9,6 +9,7 @@ from django.urls import reverse
 
 from gouthelper_ninja.ethnicitys.choices import Ethnicitys
 from gouthelper_ninja.genders.choices import Genders
+from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.users.choices import Roles
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.users.tests.factories import PatientFactory
@@ -23,6 +24,7 @@ class TestCreatePatient(TestCase):
             "dateofbirth": {"dateofbirth": "2000-06-12"},
             "ethnicity": {"ethnicity": "Caucasian"},
             "gender": {"gender": 0},
+            MHTypes.GOUT.name.lower(): {"history_of": True},
         }
 
     def test__api(self):
@@ -71,6 +73,7 @@ class TestCreateProviderPatient(TestCase):
             "dateofbirth": {"dateofbirth": "2000-06-12"},
             "ethnicity": {"ethnicity": "Caucasian"},
             "gender": {"gender": 0},
+            MHTypes.GOUT.name.lower(): {"history_of": True},
         }
 
     def test__auth_required(self):
@@ -342,6 +345,7 @@ class TestUpdatePatient(TestCase):
             "dateofbirth": {"dateofbirth": "2000-06-12"},
             "ethnicity": {"ethnicity": Ethnicitys.KOREAN},
             "gender": {"gender": Genders.MALE},
+            MHTypes.GOUT.name.lower(): {"history_of": True},
         }
 
     def test__patient_without_provider(self):

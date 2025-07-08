@@ -109,13 +109,10 @@ class MedHistoryProxyMixin(GoutHelperEditMixin):
         mhtype: MHTypes,
     ) -> dict[str, Any]:
         """Adds MedHistory forms to the context."""
-        context.update(
-            {
-                f"{mhtype.name.lower()}_form": MedHistoryForm(
-                    **self.get_mhform_kwargs(mhtype),
-                ),
-            },
-        )
+        if f"{mhtype.name.lower()}_form" not in context:
+            context[f"{mhtype.name.lower()}_form"] = MedHistoryForm(
+                **self.get_mhform_kwargs(mhtype),
+            )
         return context
 
     def get_mhform_kwargs(self, mhtype: MHTypes, **kwargs) -> dict[str, Any]:
@@ -123,6 +120,7 @@ class MedHistoryProxyMixin(GoutHelperEditMixin):
         return {
             "model": apps.get_model("medhistorys", mhtype.name.lower()),
             "initial": self.get_mh_initial(mhtype),
+            "prefix": mhtype.name.lower(),
             **kwargs,
             **self.subform_kwargs,
         }

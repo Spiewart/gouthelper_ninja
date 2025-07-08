@@ -103,7 +103,6 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
     def post(self, request, *args, **kwargs):
         self.forms: dict[str, GoutHelperForm] = {}
         self.post_init()
-
         if self.post_forms_valid():
             self.post_process_forms()
         else:
@@ -125,7 +124,6 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
                 )
             else:
                 data.update(form.cleaned_data)
-
         try:
             schema = self.create_schema(data)
         except PydanticValidationError as e:
@@ -168,9 +166,7 @@ class GoutHelperEditMixin(SuccessMessageMixin, GetStrAttrsMixin):
         """Renders forms with errors in multiple locations in post()."""
 
         return self.render_to_response(
-            self.get_context_data(
-                **errors_context,
-            ),
+            context=errors_context,
         )
 
     def form_errors_context(self) -> dict[str, Any]:

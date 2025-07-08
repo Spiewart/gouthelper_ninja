@@ -20,6 +20,8 @@ from gouthelper_ninja.ethnicitys.choices import Ethnicitys
 from gouthelper_ninja.ethnicitys.forms import EthnicityForm
 from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.genders.forms import GenderForm
+from gouthelper_ninja.medhistorys.choices import MHTypes
+from gouthelper_ninja.medhistorys.forms import MedHistoryForm
 from gouthelper_ninja.users.forms import UserAdminChangeForm
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.users.models import User
@@ -37,6 +39,7 @@ from gouthelper_ninja.users.views import user_detail_view
 from gouthelper_ninja.utils.helpers import get_str_attrs_dict
 from gouthelper_ninja.utils.helpers import yearsago_date
 from gouthelper_ninja.utils.tests.helpers import dummy_get_response
+from gouthelper_ninja.utils.tests.helpers import print_response_errors
 
 pytestmark = pytest.mark.django_db
 
@@ -52,6 +55,7 @@ class TestPatientCreateView(TestCase):
             "dateofbirth": 70,
             "ethnicity": Ethnicitys.CAUCASIAN,
             "gender": Genders.FEMALE,
+            "gout-history_of": False,
         }
 
         self.get = self.rf.get(
@@ -114,6 +118,8 @@ class TestPatientCreateView(TestCase):
         assert isinstance(context["ethnicity_form"], EthnicityForm)
         assert "gender_form" in context
         assert isinstance(context["gender_form"], GenderForm)
+        assert "gout_form" in context
+        assert isinstance(context["gout_form"], MedHistoryForm)
 
     def test__patient(self):
         assert self.get_view.patient is None
@@ -137,7 +143,7 @@ class TestPatientCreateView(TestCase):
         MessageMiddleware(dummy_get_response).process_request(self.post)
 
         response = self.post_view.post(self.post)
-
+        print_response_errors(response)
         assert isinstance(response, HttpResponseRedirect)
         assert response.status_code == HTTPStatus.FOUND
 
@@ -216,6 +222,7 @@ class TestPatientProviderCreateView(TestCase):
             "dateofbirth": 70,
             "ethnicity": Ethnicitys.CAUCASIAN,
             "gender": Genders.FEMALE,
+            "gout-history_of": False,
         }
 
         self.get = self.rf.get(
@@ -290,6 +297,8 @@ class TestPatientProviderCreateView(TestCase):
         assert isinstance(context["ethnicity_form"], EthnicityForm)
         assert "gender_form" in context
         assert isinstance(context["gender_form"], GenderForm)
+        assert "gout_form" in context
+        assert isinstance(context["gout_form"], MedHistoryForm)
 
     def test__patient(self):
         assert self.get_view.patient is None
@@ -641,11 +650,13 @@ class TestPatientUpdateView(TestCase):
             dateofbirth=50,
             ethnicity=Ethnicitys.AFRICANAMERICAN,
             gender=Genders.MALE,
+            medhistorys={MHTypes.GOUT: {"history_of": True}},
         )
         self.data = {
             "dateofbirth": 70,
             "ethnicity": Ethnicitys.CAUCASIAN,
             "gender": Genders.FEMALE,
+            "gout-history_of": False,
             "id": self.patient.id,
         }
         self.patient_with_provider = PatientFactory(
@@ -698,6 +709,11 @@ class TestPatientUpdateView(TestCase):
         assert response.context_data["gender_form"].initial == {
             "gender": self.patient.gender.gender,
         }
+        assert "gout_form" in response.context_data
+        assert isinstance(response.context_data["gout_form"], MedHistoryForm)
+        assert response.context_data["gout_form"].initial == {
+            "history_of": self.patient.gout.history_of,
+        }
         assert "object" in response.context_data
         assert response.context_data["object"] == self.patient
 
@@ -725,6 +741,9 @@ class TestPatientUpdateView(TestCase):
         )
         assert self.patient.ethnicity.ethnicity == self.data["ethnicity"]
         assert self.patient.gender.gender == self.data["gender"]
+
+        # Test that the Patient's gout history is updated correctly
+        assert self.patient.gout.history_of == self.data["gout-history_of"]
 
     def test__post_with_errors(self):
         # Test with invalid data
