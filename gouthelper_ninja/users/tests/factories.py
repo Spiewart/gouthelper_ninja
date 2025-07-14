@@ -14,6 +14,7 @@ from gouthelper_ninja.ethnicitys.choices import Ethnicitys
 from gouthelper_ninja.ethnicitys.tests.factories import EthnicityFactory
 from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.genders.tests.factories import GenderFactory
+from gouthelper_ninja.goutdetails.tests.factories import GoutDetailFactory
 from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.medhistorys.tests.factories import MedHistoryFactory
 from gouthelper_ninja.profiles.helpers import get_provider_alias
@@ -112,7 +113,7 @@ class PatientFactory(UserFactory):
         extracted: Genders | str | None | Literal[False] = None,
         **kwargs,
     ) -> None:
-        if not hasattr(self, "gender") and create:
+        if create:
             if extracted is False:
                 # If extracted is False, do not create
                 return
@@ -122,6 +123,26 @@ class PatientFactory(UserFactory):
                     Genders(extracted) if isinstance(extracted, str) else extracted
                 )
             GenderFactory(patient=self, **kwargs)
+
+    @post_generation
+    def goutdetail(
+        self,
+        create: Literal[True, False],
+        extracted: dict[str, Any] | None,
+        **kwargs,
+    ) -> None:
+        """Post-generation hook to create a GoutDetail instance for the patient.
+        args:
+            extracted (dict[str, Any] | None):
+                A dictionary of fields to set on the GoutDetail instance.
+        """
+        if create and extracted is not None:
+            if extracted is not None:
+                kwargs.update(extracted)
+            GoutDetailFactory(
+                patient=self,
+                **kwargs,
+            )
 
     @post_generation
     def medhistorys(

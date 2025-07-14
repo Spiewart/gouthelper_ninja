@@ -35,6 +35,10 @@ urlpatterns = [
         "medhistorys/",
         include("gouthelper_ninja.medhistorys.urls", namespace="medhistorys"),
     ),
+    path(
+        "goutdetails/",
+        include("gouthelper_ninja.goutdetails.urls", namespace="goutdetails"),
+    ),
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
 ]

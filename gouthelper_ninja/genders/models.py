@@ -40,8 +40,8 @@ class Gender(
     class Meta(GoutHelperModel.Meta):
         constraints = [
             models.CheckConstraint(
-                condition=models.Q(gender__in=Genders.values),
                 name="gender_valid",
+                condition=models.Q(gender__in=Genders.values),
             ),
         ]
         rules_permissions = {
