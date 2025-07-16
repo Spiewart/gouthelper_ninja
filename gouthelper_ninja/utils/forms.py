@@ -7,6 +7,7 @@ from crispy_forms.layout import Div
 from crispy_forms.layout import Fieldset
 from crispy_forms.layout import Layout
 from django.forms import Form
+from django.forms import ValidationError
 from django.utils.text import format_lazy
 
 from gouthelper_ninja.utils.helpers import is_iterable
@@ -14,6 +15,26 @@ from gouthelper_ninja.utils.models import GetStrAttrsMixin
 
 if TYPE_CHECKING:
     from django.db.models import Model
+
+
+def coerce_form_input_to_bool_or_none(value: Any) -> bool | None:
+    """Coerce form input to a boolean or None."""
+    if value in (True, "True", "true", "1"):
+        return True
+    if value in (False, "False", "false", "0"):
+        return False
+    if value in (None, "", "None"):
+        return None
+    msg = f"Invalid value for boolean field: {value}. Expected True, False, or None."
+    raise ValidationError(
+        msg,
+    )
+
+
+def coerce_form_input_to_bool(value: Any) -> bool:
+    """Coerce form input to a boolean."""
+    value = coerce_form_input_to_bool_or_none(value)
+    return value if value is not None else False
 
 
 class GoutHelperForm(Form, GetStrAttrsMixin):

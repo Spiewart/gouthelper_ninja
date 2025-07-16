@@ -352,6 +352,5 @@ class GoutHelperUpdateMixin(GoutHelperEditMixin):
         used as args for create/update methods. Returns typical
         HttpResponseRedirect if successful, or HTMX response if
         the request is HTMX."""
-
         self.object = self.object.update(data=schema)
         return super().form_valid(schema=schema, **kwargs)

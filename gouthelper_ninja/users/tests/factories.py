@@ -128,7 +128,7 @@ class PatientFactory(UserFactory):
     def goutdetail(
         self,
         create: Literal[True, False],
-        extracted: dict[str, Any] | None,
+        extracted: dict[str, Any] | None | Literal[False],
         **kwargs,
     ) -> None:
         """Post-generation hook to create a GoutDetail instance for the patient.
@@ -136,7 +136,10 @@ class PatientFactory(UserFactory):
             extracted (dict[str, Any] | None):
                 A dictionary of fields to set on the GoutDetail instance.
         """
-        if create and extracted is not None:
+        if create:
+            if extracted is False:
+                # If extracted is False, do not create a GoutDetail
+                return
             if extracted is not None:
                 kwargs.update(extracted)
             GoutDetailFactory(

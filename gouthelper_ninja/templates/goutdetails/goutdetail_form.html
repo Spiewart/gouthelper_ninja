@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% load crispy_forms_tags %}
+
+<!--GoutDetail's will only ever be updated, as they will be
+created during Patient creation/registration.-->
+{% block title %}
+  Update GoutDetail
+{% endblock title %}
+{% block content %}
+  <h1>Update GoutDetail</h1>
+  <form method="post" action="{% url 'goutdetails:update' object.id %}">
+    {% csrf_token %}
+    {{ form|crispy }}
+    <button type="submit" class="btn btn-primary">Update</button>
+  </form>
+{% endblock content %}
