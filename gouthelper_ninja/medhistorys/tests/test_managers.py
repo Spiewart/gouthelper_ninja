@@ -129,7 +129,7 @@ def test_manager_queryset_and_gh_create(model, factory, mhtype):
     obj = factory()
     assert model.objects.filter(pk=obj.pk).exists()
     assert obj.mhtype == mhtype
-    patient = PatientFactory(medhistorys={MHTypes.GOUT: None})
+    patient = PatientFactory(gout="OMIT")
     schema = make_schema()
     created = model.objects.gh_create(data=schema, patient_id=patient.id)
     assert created.mhtype == mhtype

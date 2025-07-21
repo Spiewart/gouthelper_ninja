@@ -20,7 +20,7 @@ from gouthelper_ninja.ethnicitys.choices import Ethnicitys
 from gouthelper_ninja.ethnicitys.forms import EthnicityForm
 from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.genders.forms import GenderForm
-from gouthelper_ninja.medhistorys.choices import MHTypes
+from gouthelper_ninja.goutdetails.forms import GoutDetailForm
 from gouthelper_ninja.medhistorys.forms import MedHistoryForm
 from gouthelper_ninja.users.forms import UserAdminChangeForm
 from gouthelper_ninja.users.models import Patient
@@ -56,6 +56,13 @@ class TestPatientCreateView(TestCase):
             "ethnicity": Ethnicitys.CAUCASIAN,
             "gender": Genders.FEMALE,
             "gout-history_of": False,
+            "at_goal": True,
+            "at_goal_long_term": True,
+            "flaring": False,
+            "on_ppx": True,
+            "on_ult": True,
+            "starting_ult": True,
+            "menopause-history_of": True,
         }
 
         self.get = self.rf.get(
@@ -120,6 +127,8 @@ class TestPatientCreateView(TestCase):
         assert isinstance(context["gender_form"], GenderForm)
         assert "gout_form" in context
         assert isinstance(context["gout_form"], MedHistoryForm)
+        assert "goutdetail_form" in context
+        assert isinstance(context["goutdetail_form"], GoutDetailForm)
 
     def test__patient(self):
         assert self.get_view.patient is None
@@ -147,13 +156,23 @@ class TestPatientCreateView(TestCase):
         assert isinstance(response, HttpResponseRedirect)
         assert response.status_code == HTTPStatus.FOUND
 
+        assert Patient.objects.count() == num_patients + 1
+
         patient = Patient.objects.order_by("created").last()
         assert response.url == reverse(
             "users:patient-detail",
             kwargs={"patient": patient.id},
         )
+        assert hasattr(patient, "goutdetail")
+        assert patient.goutdetail.at_goal == self.data["at_goal"]
+        assert patient.goutdetail.at_goal_long_term == self.data["at_goal_long_term"]
+        assert patient.goutdetail.flaring == self.data["flaring"]
+        assert patient.goutdetail.on_ppx == self.data["on_ppx"]
+        assert patient.goutdetail.on_ult == self.data["on_ult"]
+        assert patient.goutdetail.starting_ult == self.data["starting_ult"]
 
-        assert Patient.objects.count() == num_patients + 1
+        assert patient.menopause
+        assert patient.menopause.history_of == self.data["menopause-history_of"]
 
     def test__post_with_errors(self):
         # Test with invalid data
@@ -178,6 +197,10 @@ class TestPatientCreateView(TestCase):
         assert not response.context_data["ethnicity_form"].errors
         assert "gender_form" in response.context_data
         assert not response.context_data["gender_form"].errors
+        assert "gout_form" in response.context_data
+        assert not response.context_data["gout_form"].errors
+        assert "goutdetail_form" in response.context_data
+        assert not response.context_data["goutdetail_form"].errors
 
     def test__permission(self):
         """Test that the view can be accessed by anyone when there is no
@@ -223,6 +246,13 @@ class TestPatientProviderCreateView(TestCase):
             "ethnicity": Ethnicitys.CAUCASIAN,
             "gender": Genders.FEMALE,
             "gout-history_of": False,
+            "at_goal": True,
+            "at_goal_long_term": True,
+            "flaring": False,
+            "on_ppx": True,
+            "on_ult": True,
+            "starting_ult": True,
+            "menopause-history_of": True,
         }
 
         self.get = self.rf.get(
@@ -299,6 +329,8 @@ class TestPatientProviderCreateView(TestCase):
         assert isinstance(context["gender_form"], GenderForm)
         assert "gout_form" in context
         assert isinstance(context["gout_form"], MedHistoryForm)
+        assert "goutdetail_form" in context
+        assert isinstance(context["goutdetail_form"], GoutDetailForm)
 
     def test__patient(self):
         assert self.get_view.patient is None
@@ -330,6 +362,8 @@ class TestPatientProviderCreateView(TestCase):
         assert isinstance(response.context_data["gender_form"], GenderForm)
         assert "ethnicity_form" in response.context_data
         assert isinstance(response.context_data["ethnicity_form"], EthnicityForm)
+        assert "goutdetail_form" in response.context_data
+        assert isinstance(response.context_data["goutdetail_form"], GoutDetailForm)
 
     def test__post(self):
         num_patients = Patient.objects.count()
@@ -362,6 +396,17 @@ class TestPatientProviderCreateView(TestCase):
         new_patient = Patient.objects.order_by("created").last()
         assert new_patient.patientprofile.provider == self.provider
         assert new_patient.patientprofile.provider_alias == num_patients + 2
+        assert hasattr(new_patient, "goutdetail")
+        assert new_patient.goutdetail.at_goal == self.data["at_goal"]
+        assert (
+            new_patient.goutdetail.at_goal_long_term == self.data["at_goal_long_term"]
+        )
+        assert new_patient.goutdetail.flaring == self.data["flaring"]
+        assert new_patient.goutdetail.on_ppx == self.data["on_ppx"]
+        assert new_patient.goutdetail.on_ult == self.data["on_ult"]
+        assert new_patient.goutdetail.starting_ult == self.data["starting_ult"]
+        assert new_patient.menopause
+        assert new_patient.menopause.history_of == self.data["menopause-history_of"]
 
     def test__post_with_errors(self):
         # Test with invalid data
@@ -386,6 +431,8 @@ class TestPatientProviderCreateView(TestCase):
         assert not response.context_data["ethnicity_form"].errors
         assert "gender_form" in response.context_data
         assert not response.context_data["gender_form"].errors
+        assert "goutdetail_form" in response.context_data
+        assert not response.context_data["goutdetail_form"].errors
 
     def test__permission(self):
         """Test that the view can only be accessed by the provider
@@ -650,13 +697,19 @@ class TestPatientUpdateView(TestCase):
             dateofbirth=50,
             ethnicity=Ethnicitys.AFRICANAMERICAN,
             gender=Genders.MALE,
-            medhistorys={MHTypes.GOUT: {"history_of": True}},
         )
         self.data = {
             "dateofbirth": 70,
             "ethnicity": Ethnicitys.CAUCASIAN,
             "gender": Genders.FEMALE,
             "gout-history_of": False,
+            "at_goal": True,
+            "at_goal_long_term": True,
+            "flaring": not self.patient.goutdetail.flaring,
+            "on_ppx": True,
+            "on_ult": True,
+            "starting_ult": True,
+            "menopause-history_of": True,
             "id": self.patient.id,
         }
         self.patient_with_provider = PatientFactory(
@@ -714,6 +767,16 @@ class TestPatientUpdateView(TestCase):
         assert response.context_data["gout_form"].initial == {
             "history_of": self.patient.gout.history_of,
         }
+        assert "goutdetail_form" in response.context_data
+        assert isinstance(response.context_data["goutdetail_form"], GoutDetailForm)
+        assert response.context_data["goutdetail_form"].initial == {
+            "at_goal": self.patient.goutdetail.at_goal,
+            "at_goal_long_term": self.patient.goutdetail.at_goal_long_term,
+            "flaring": self.patient.goutdetail.flaring,
+            "on_ppx": self.patient.goutdetail.on_ppx,
+            "on_ult": self.patient.goutdetail.on_ult,
+            "starting_ult": self.patient.goutdetail.starting_ult,
+        }
         assert "object" in response.context_data
         assert response.context_data["object"] == self.patient
 
@@ -744,6 +807,9 @@ class TestPatientUpdateView(TestCase):
 
         # Test that the Patient's gout history is updated correctly
         assert self.patient.gout.history_of == self.data["gout-history_of"]
+
+        # Test that the goutdetail flaring field is updated correctly
+        assert self.patient.goutdetail.flaring == self.data["flaring"]
 
     def test__post_with_errors(self):
         # Test with invalid data

@@ -28,6 +28,14 @@ class TestPatient(TestCase):
             ethnicity={"ethnicity": Ethnicitys.KOREAN},
             gender={"gender": Genders.FEMALE},
             gout={"history_of": False},
+            goutdetail={
+                "at_goal": True,
+                "at_goal_long_term": True,
+                "flaring": False,
+                "on_ppx": True,
+                "on_ult": False,
+                "starting_ult": True,
+            },
         )
         patient = self.patient.update(data=data)
         assert patient.dateofbirth.dateofbirth.strftime("%Y-%m-%d") == "2000-01-01"

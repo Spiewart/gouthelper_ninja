@@ -126,6 +126,12 @@ class User(
         it does not exist."""
         return self.get_medhistory(MHTypes.GOUT)
 
+    @cached_property
+    def menopause(self) -> Union["MedHistory", None]:
+        """The Patient's menopause MedHistory or None if
+        it does not exist."""
+        return self.get_medhistory(MHTypes.MENOPAUSE)
+
     def get_medhistory(self, mhtype: "MHTypes") -> Union["MedHistory", None]:
         """Returns the instance's MedHistory of the given type,
         if it exists. Raises AttributeError if the User is not a Patient."""

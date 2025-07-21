@@ -3,8 +3,11 @@ from uuid import UUID
 
 import pytest
 
+from gouthelper_ninja.constants import MAX_MENOPAUSE_AGE
+from gouthelper_ninja.constants import MIN_MENOPAUSE_AGE
 from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.utils import helpers
+from gouthelper_ninja.utils.helpers import menopause_required
 
 
 class DummyPatient:
@@ -124,3 +127,44 @@ def test_get_user_change_authenticated():
     user2.is_authenticated = False
     request3 = DummyRequest(user2, "/users/~delete/")
     assert helpers.get_user_change(instance, request3) is None
+
+
+def make_birthdate(years_ago):
+    today = datetime.datetime.now(tz=datetime.UTC).date()
+    return today.replace(year=today.year - years_ago)
+
+
+def test_menopause_required_true():
+    # Female, age in range
+    age = (MIN_MENOPAUSE_AGE + MAX_MENOPAUSE_AGE) // 2
+    dob = make_birthdate(age)
+    assert menopause_required(dob, Genders.FEMALE) is True
+
+
+def test_menopause_required_false_wrong_gender():
+    # Male, age in range
+    age = (MIN_MENOPAUSE_AGE + MAX_MENOPAUSE_AGE) // 2
+    dob = make_birthdate(age)
+    assert menopause_required(dob, Genders.MALE) is False
+
+
+def test_menopause_required_false_too_young():
+    # Female, too young
+    dob = make_birthdate(MIN_MENOPAUSE_AGE - 1)
+    assert menopause_required(dob, Genders.FEMALE) is False
+
+
+def test_menopause_required_false_too_old():
+    # Female, too old
+    dob = make_birthdate(MAX_MENOPAUSE_AGE)
+    assert menopause_required(dob, Genders.FEMALE) is False
+
+
+def test_menopause_required_edge_cases():
+    # Female, exactly at min age
+    dob = make_birthdate(MIN_MENOPAUSE_AGE)
+    assert menopause_required(dob, Genders.FEMALE) is True
+    # Female, just below max age
+    dob = make_birthdate(MAX_MENOPAUSE_AGE - 1)
+    assert menopause_required(dob, Genders.FEMALE) is True
+    assert menopause_required(dob, Genders.FEMALE) is True

@@ -1,3 +1,4 @@
+from factory import LazyAttribute
 from factory import SubFactory
 from factory import fuzzy
 from factory.django import DjangoModelFactory
@@ -40,7 +41,19 @@ class MedHistoryFactory(DjangoModelFactory):
 
     mhtype = fuzzy.FuzzyChoice(MHTypes.values)
     history_of = fake.boolean()
-    patient = SubFactory("gouthelper_ninja.users.tests.factories.PatientFactory")
+    patient = SubFactory(
+        "gouthelper_ninja.users.tests.factories.PatientFactory",
+        # PatientFactory will create a Gout medhistory
+        # so we set gout to False if the mhtype is GOUT
+        # to avoid creating a duplicate Gout medhistory
+        gout=LazyAttribute(
+            # For some reason, we need to use the factory_parent.factory_parent
+            # to access the mhtype of the MedHistoryFactory
+            lambda o: False
+            if o.factory_parent.factory_parent.mhtype == MHTypes.GOUT
+            else None,
+        ),
+    )
 
 
 class AnginaFactory(MedHistoryFactory):
@@ -102,7 +115,7 @@ class GoutFactory(MedHistoryFactory):
         # PatientFactory will create a Gout medhistory
         # so we set it to None here
         # to avoid creating a duplicate Gout medhistory
-        medhistorys={MHTypes.GOUT: None},
+        gout="OMIT",
     )
 
 

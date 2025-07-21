@@ -13,13 +13,13 @@ pytestmark = pytest.mark.django_db
 class TestGoutDetailModel:
     def test_get_absolute_url(self):
         patient = PatientFactory()
-        gout_detail = GoutDetailFactory(patient=patient)
+        gout_detail = patient.goutdetail
         expected_url = patient.get_absolute_url()
         assert gout_detail.get_absolute_url() == expected_url
 
     def test_update_method_changes_fields(self):
-        patient = PatientFactory()
-        gout_detail = GoutDetailFactory(patient=patient, at_goal=False, flaring=True)
+        patient = PatientFactory(goutdetail__at_goal=False, goutdetail__flaring=True)
+        gout_detail = patient.goutdetail
         data = GoutDetailEditSchema(at_goal=True, flaring=False)
         updated = gout_detail.update(data)
         assert updated.at_goal is True
@@ -29,7 +29,7 @@ class TestGoutDetailModel:
         assert gout_detail.flaring is False
 
     def test_update_method_no_change(self):
-        patient = PatientFactory(goutdetail=None)
+        patient = PatientFactory(goutdetail=False)
         gout_detail = GoutDetailFactory(patient=patient, at_goal=True)
         data = GoutDetailEditSchema(
             at_goal=True,
@@ -59,7 +59,7 @@ class TestGoutDetailModel:
             GoutDetail.objects.create(
                 at_goal=False,
                 at_goal_long_term=False,
-                patient=PatientFactory(goutdetail=None),
+                patient=PatientFactory(goutdetail=False),
             )
         except IntegrityError:
             pytest.fail("IntegrityError raised for valid at_goal/at_goal_long_term")
@@ -67,7 +67,7 @@ class TestGoutDetailModel:
         try:
             GoutDetail.objects.create(
                 at_goal=True,
-                patient=PatientFactory(goutdetail=None),
+                patient=PatientFactory(goutdetail=False),
             )
         except IntegrityError:
             pytest.fail("IntegrityError raised for valid at_goal=True")
@@ -76,18 +76,18 @@ class TestGoutDetailModel:
             GoutDetail(
                 at_goal=None,
                 at_goal_long_term=True,
-                patient=PatientFactory(goutdetail=None),
+                patient=PatientFactory(goutdetail=False),
             ).save()
         # Invalid: at_goal=False, at_goal_long_term=True
         with pytest.raises(IntegrityError) as _, transaction.atomic() as _:
             GoutDetail(
                 at_goal=False,
                 at_goal_long_term=True,
-                patient=PatientFactory(goutdetail=None),
+                patient=PatientFactory(goutdetail=False),
             ).save()
 
     def test_historical_records(self):
-        patient = PatientFactory()
+        patient = PatientFactory(goutdetail=False)
         gout_detail = GoutDetailFactory(patient=patient, at_goal=False)
         expected_history_count = 1
         assert gout_detail.history.count() == expected_history_count

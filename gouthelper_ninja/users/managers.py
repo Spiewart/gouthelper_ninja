@@ -112,6 +112,21 @@ class PatientManager(GoutHelperUserManager):
             patient=patient,
             history_of=data.gout.history_of,
         )
+        apps.get_model("goutdetails.GoutDetail").objects.create(
+            patient=patient,
+            at_goal=data.goutdetail.at_goal,
+            at_goal_long_term=data.goutdetail.at_goal_long_term,
+            flaring=data.goutdetail.flaring,
+            on_ppx=data.goutdetail.on_ppx,
+            on_ult=data.goutdetail.on_ult,
+            starting_ult=data.goutdetail.starting_ult,
+        )
+        menopause = data.menopause
+        if menopause:
+            apps.get_model("medhistorys.Menopause").objects.create(
+                patient=patient,
+                history_of=menopause.history_of,
+            )
         return patient
 
     def create_user(self, username, email, password, role=Roles.PSEUDOPATIENT):

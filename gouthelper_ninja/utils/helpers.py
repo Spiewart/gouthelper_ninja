@@ -6,9 +6,13 @@ from uuid import UUID
 
 from django.urls import reverse
 
+from gouthelper_ninja.constants import MAX_MENOPAUSE_AGE
+from gouthelper_ninja.constants import MIN_MENOPAUSE_AGE
 from gouthelper_ninja.genders.choices import Genders
 
 if TYPE_CHECKING:
+    from datetime import date
+
     from gouthelper_ninja.users.models import Patient
     from gouthelper_ninja.users.models import User
 
@@ -59,6 +63,19 @@ def is_valid_uuid(value: str | UUID) -> UUID | Literal[False]:
             return False
     elif isinstance(value, UUID):
         return value
+    return False
+
+
+def menopause_required(
+    dateofbirth: "date",
+    gender: Genders,
+) -> bool:
+    """Checks if menopause status is required based on age and gender."""
+
+    if gender == Genders.FEMALE:
+        age = age_calc(dateofbirth)
+        if age >= MIN_MENOPAUSE_AGE and age < MAX_MENOPAUSE_AGE:
+            return True
     return False
 
 

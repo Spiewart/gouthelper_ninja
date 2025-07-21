@@ -169,3 +169,16 @@ class GoutMixin(MedHistoryProxyMixin):
     def post_init(self) -> None:
         self.update_forms(MHTypes.GOUT)
         super().post_init()
+
+
+class MenopauseMixin(MedHistoryProxyMixin):
+    """Mixin for editing Menopause MedHistory."""
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)
+        self.update_context(context, MHTypes.MENOPAUSE)
+        return context
+
+    def post_init(self) -> None:
+        self.update_forms(MHTypes.MENOPAUSE)
+        super().post_init()

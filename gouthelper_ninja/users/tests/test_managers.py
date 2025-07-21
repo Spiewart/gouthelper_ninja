@@ -9,7 +9,8 @@ from gouthelper_ninja.ethnicitys.schema import EthnicityEditSchema
 from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.genders.models import Gender
 from gouthelper_ninja.genders.schema import GenderEditSchema
-from gouthelper_ninja.medhistorys.schema import GoutEditSchema
+from gouthelper_ninja.goutdetails.schema import GoutDetailEditSchema
+from gouthelper_ninja.medhistorys.schema import MedHistoryEditSchema
 from gouthelper_ninja.profiles.models import AdminProfile
 from gouthelper_ninja.profiles.models import PatientProfile
 from gouthelper_ninja.profiles.models import ProviderProfile
@@ -100,14 +101,23 @@ class TestPatientManager:
         dob_data = DateOfBirthEditSchema(dateofbirth="2000-01-01")
         ethnicity_data = EthnicityEditSchema(ethnicity=Ethnicitys.THAI)
         gender_data = GenderEditSchema(gender=Genders.FEMALE)
-        gout_data = GoutEditSchema(
+        gout_data = MedHistoryEditSchema(
             history_of=False,
+        )
+        goutdetail_data = GoutDetailEditSchema(
+            at_goal=False,
+            at_goal_long_term=False,
+            flaring=False,
+            on_ppx=False,
+            on_ult=False,
+            starting_ult=False,
         )
         patient_data = PatientEditSchema(
             dateofbirth=dob_data,
             ethnicity=ethnicity_data,
             gender=gender_data,
             gout=gout_data,
+            goutdetail=goutdetail_data,
         )
 
         patient = Patient.objects.gh_create(data=patient_data)
@@ -142,14 +152,23 @@ class TestPatientManager:
         dob_data = DateOfBirthEditSchema(dateofbirth="1995-05-15")
         ethnicity_data = EthnicityEditSchema(ethnicity=Ethnicitys.CAUCASIAN)
         gender_data = GenderEditSchema(gender=Genders.MALE)
-        gout_data = GoutEditSchema(
+        gout_data = MedHistoryEditSchema(
             history_of=True,
+        )
+        goutdetail_data = GoutDetailEditSchema(
+            at_goal=False,
+            at_goal_long_term=False,
+            flaring=False,
+            on_ppx=False,
+            on_ult=False,
+            starting_ult=False,
         )
         patient_data = PatientEditSchema(
             dateofbirth=dob_data,
             ethnicity=ethnicity_data,
             gender=gender_data,
             gout=gout_data,
+            goutdetail=goutdetail_data,
         )
 
         patient = Patient.objects.gh_create(data=patient_data, provider_id=provider.id)
@@ -185,14 +204,23 @@ class TestPatientManager:
         dob_data = DateOfBirthEditSchema(dateofbirth="1980-07-20")
         ethnicity_data = EthnicityEditSchema(ethnicity=Ethnicitys.AFRICANAMERICAN)
         gender_data = GenderEditSchema(gender=Genders.MALE)
-        gout_data = GoutEditSchema(
+        gout_data = MedHistoryEditSchema(
             history_of=True,
+        )
+        goutdetail_data = GoutDetailEditSchema(
+            at_goal=False,
+            at_goal_long_term=False,
+            flaring=False,
+            on_ppx=False,
+            on_ult=False,
+            starting_ult=False,
         )
         patient_data = PatientEditSchema(
             dateofbirth=dob_data,
             ethnicity=ethnicity_data,
             gender=gender_data,
             gout=gout_data,
+            goutdetail=goutdetail_data,
         )
 
         # Create another patient for the same provider to test alias increment

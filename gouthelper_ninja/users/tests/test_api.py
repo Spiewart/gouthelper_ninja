@@ -25,6 +25,14 @@ class TestCreatePatient(TestCase):
             "ethnicity": {"ethnicity": "Caucasian"},
             "gender": {"gender": 0},
             MHTypes.GOUT.name.lower(): {"history_of": True},
+            "goutdetail": {
+                "at_goal": True,
+                "at_goal_long_term": True,
+                "flaring": False,
+                "on_ppx": True,
+                "on_ult": False,
+                "starting_ult": True,
+            },
         }
 
     def test__api(self):
@@ -74,6 +82,14 @@ class TestCreateProviderPatient(TestCase):
             "ethnicity": {"ethnicity": "Caucasian"},
             "gender": {"gender": 0},
             MHTypes.GOUT.name.lower(): {"history_of": True},
+            "goutdetail": {
+                "at_goal": True,
+                "at_goal_long_term": True,
+                "flaring": False,
+                "on_ppx": True,
+                "on_ult": False,
+                "starting_ult": True,
+            },
         }
 
     def test__auth_required(self):
@@ -346,6 +362,14 @@ class TestUpdatePatient(TestCase):
             "ethnicity": {"ethnicity": Ethnicitys.KOREAN},
             "gender": {"gender": Genders.MALE},
             MHTypes.GOUT.name.lower(): {"history_of": True},
+            "goutdetail": {
+                "at_goal": True,
+                "at_goal_long_term": True,
+                "flaring": False,
+                "on_ppx": True,
+                "on_ult": False,
+                "starting_ult": True,
+            },
         }
 
     def test__patient_without_provider(self):
@@ -358,6 +382,14 @@ class TestUpdatePatient(TestCase):
         patient = Patient.objects.get(id=self.patient.id)
         assert patient.ethnicity.ethnicity == Ethnicitys.KOREAN
         assert patient.gender.gender == Genders.MALE
+        assert patient.dateofbirth.dateofbirth.strftime("%Y-%m-%d") == "2000-06-12"
+        assert patient.gout.history_of is True
+        assert patient.goutdetail.at_goal is True
+        assert patient.goutdetail.at_goal_long_term is True
+        assert patient.goutdetail.flaring is False
+        assert patient.goutdetail.on_ppx is True
+        assert patient.goutdetail.on_ult is False
+        assert patient.goutdetail.starting_ult is True
 
     def test__patient_with_provider(self):
         response = self.client.post(
@@ -430,3 +462,11 @@ class TestUpdatePatient(TestCase):
         patient = Patient.objects.get(id=self.patient_with_creator.id)
         assert patient.ethnicity.ethnicity == Ethnicitys.KOREAN
         assert patient.gender.gender == Genders.MALE
+        assert patient.dateofbirth.dateofbirth.strftime("%Y-%m-%d") == "2000-06-12"
+        assert patient.gout.history_of is True
+        assert patient.goutdetail.at_goal is True
+        assert patient.goutdetail.at_goal_long_term is True
+        assert patient.goutdetail.flaring is False
+        assert patient.goutdetail.on_ppx is True
+        assert patient.goutdetail.on_ult is False
+        assert patient.goutdetail.starting_ult is True

@@ -5,9 +5,9 @@ from typing import Literal
 from uuid import UUID
 
 from factory import Faker
+from factory import RelatedFactory
 from factory import post_generation
 from factory.django import DjangoModelFactory
-from ninja import Schema
 
 from gouthelper_ninja.dateofbirths.tests.factories import DateOfBirthFactory
 from gouthelper_ninja.ethnicitys.choices import Ethnicitys
@@ -21,6 +21,7 @@ from gouthelper_ninja.profiles.helpers import get_provider_alias
 from gouthelper_ninja.profiles.tests.factories import PatientProfileFactory
 from gouthelper_ninja.users.models import User
 from gouthelper_ninja.utils.helpers import age_calc
+from gouthelper_ninja.utils.helpers import menopause_required
 from gouthelper_ninja.utils.helpers import yearsago_date
 
 
@@ -65,6 +66,16 @@ class UserFactory(DjangoModelFactory[User]):
 
 class PatientFactory(UserFactory):
     role = User.Roles.PSEUDOPATIENT
+    gout = RelatedFactory(
+        MedHistoryFactory,
+        factory_related_name="patient",
+        mhtype=MHTypes.GOUT,
+        history_of=True,
+    )
+    goutdetail = RelatedFactory(
+        GoutDetailFactory,
+        factory_related_name="patient",
+    )
 
     @post_generation
     def dateofbirth(
@@ -125,78 +136,32 @@ class PatientFactory(UserFactory):
             GenderFactory(patient=self, **kwargs)
 
     @post_generation
-    def goutdetail(
+    def menopause(
         self,
         create: Literal[True, False],
-        extracted: dict[str, Any] | None | Literal[False],
-        **kwargs,
+        extracted: Literal[True, False] | None = None,
     ) -> None:
-        """Post-generation hook to create a GoutDetail instance for the patient.
-        args:
-            extracted (dict[str, Any] | None):
-                A dictionary of fields to set on the GoutDetail instance.
-        """
-        if create:
-            if extracted is False:
-                # If extracted is False, do not create a GoutDetail
-                return
-            if extracted is not None:
-                kwargs.update(extracted)
-            GoutDetailFactory(
-                patient=self,
-                **kwargs,
-            )
-
-    @post_generation
-    def medhistorys(
-        self,
-        create: Literal[True, False],
-        extracted: dict[
-            MHTypes,
-            dict[str, Any] | bool,
-        ]
-        | Schema
-        | None = None,
-    ) -> None:
-        """Post-generation hook to create MedHistory instances for the patient.
-        args:
-            extracted (dict[MHTypes, dict[str, Any] | bool | Schema] | None):
-                A dictionary where keys are MHTypes and values are either
-                a dictionary of fields to set or a boolean indicating whether to create
-                the MedHistory with default values.
-        """
+        """Post-generation hook to create a Menopause MedHistory for the patient.
+        Evaluates the Patient's dateofbirth and gender to determine if menopause
+        is required. If menopause is required, creates a Menopause MedHistory."""
         if create:
             if extracted is not None:
-                if isinstance(extracted, Schema):
-                    # If extracted is a Schema, convert to dict
-                    extracted = extracted.dict()
-                if MHTypes.GOUT not in extracted:
-                    # If GOUT is not in the extracted, add it with default values
-                    extracted[MHTypes.GOUT] = True
-                for mhtype, fields in extracted.items():
-                    # Check for fields set to None, which indicate
-                    # MedHistorys that might otherwise be created
-                    # but are intended to be skipped.
-                    if fields is not None:
-                        if isinstance(fields, bool):
-                            # If fields is a boolean, create with default values and
-                            # random history_of
-                            MedHistoryFactory(
-                                patient=self,
-                                mhtype=mhtype,
-                                history_of=fields,  # True or False
-                            )
-                        else:
-                            # Otherwise, assume it's a dict of fields
-                            MedHistoryFactory(
-                                patient=self,
-                                mhtype=mhtype,
-                                **fields,
-                            )
-            else:
                 MedHistoryFactory(
                     patient=self,
-                    mhtype=MHTypes.GOUT,
+                    mhtype=MHTypes.MENOPAUSE,
+                    history_of=extracted,  # True or False
+                )
+            elif (
+                hasattr(self, "dateofbirth")
+                and hasattr(self, "gender")
+                and menopause_required(
+                    self.dateofbirth.dateofbirth,
+                    self.gender.gender,
+                )
+            ):
+                MedHistoryFactory(
+                    patient=self,
+                    mhtype=MHTypes.MENOPAUSE,
                 )
 
     @post_generation
@@ -246,3 +211,18 @@ class PatientFactory(UserFactory):
                 )
                 last_history.history_user = user
                 last_history.save()
+
+    @post_generation
+    def diabetes(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        """Post-generation hook to create a Diabetes MedHistory for the patient.
+        Defaults to creating a Diabetes MedHistory with history_of=True."""
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.DIABETES,
+                history_of=extracted,  # True or False
+            )
