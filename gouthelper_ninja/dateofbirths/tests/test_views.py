@@ -1,3 +1,4 @@
+import datetime
 from http import HTTPStatus
 
 from django.contrib.messages.middleware import MessageMiddleware
@@ -9,6 +10,7 @@ from django.urls import reverse
 from django_htmx.http import HttpResponseClientRefresh
 
 from gouthelper_ninja.dateofbirths.forms import DateOfBirthForm
+from gouthelper_ninja.dateofbirths.views import DateOfBirthEditMixin
 from gouthelper_ninja.dateofbirths.views import DateOfBirthUpdateView
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
@@ -156,3 +158,34 @@ class TestDateOfBirthUpdateView(TestCase):
 
         self.dob.refresh_from_db()
         assert age_calc(self.dob.dateofbirth) == self.new_age
+
+
+class DummyPatient:
+    def __init__(self, date):
+        class DOB:
+            dateofbirth = date
+
+        self.dateofbirth = DOB()
+
+
+class TestDateOfBirthEditMixin(TestCase):
+    def test_get_dateofbirth_initial_with_patient(self):
+        mixin = DateOfBirthEditMixin()
+        mixin.patient = DummyPatient(datetime.date(2000, 1, 1))
+        result = mixin.get_dateofbirth_initial()
+        assert result == {"dateofbirth": datetime.date(2000, 1, 1)}
+
+    def test_get_dateofbirth_initial_without_patient(self):
+        mixin = DateOfBirthEditMixin()
+        mixin.patient = None
+        result = mixin.get_dateofbirth_initial()
+        assert result == {}
+
+    def test_get_dateofbirth_initial_patient_no_dateofbirth(self):
+        class NoDOBPatient:
+            pass
+
+        mixin = DateOfBirthEditMixin()
+        mixin.patient = NoDOBPatient()
+        result = mixin.get_dateofbirth_initial()
+        assert result == {}

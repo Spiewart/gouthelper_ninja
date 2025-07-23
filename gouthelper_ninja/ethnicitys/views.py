@@ -1,4 +1,6 @@
+from typing import TYPE_CHECKING
 from typing import Any
+from typing import Literal
 
 from django.views.generic import UpdateView
 
@@ -7,6 +9,9 @@ from gouthelper_ninja.ethnicitys.models import Ethnicity
 from gouthelper_ninja.utils.views import GoutHelperEditMixin
 from gouthelper_ninja.utils.views import GoutHelperUpdateMixin
 from gouthelper_ninja.utils.views import PatientObjectMixin
+
+if TYPE_CHECKING:
+    from gouthelper_ninja.ethnicitys.choices import Ethnicitys
 
 
 class EthnicityEditMixin(GoutHelperEditMixin):
@@ -20,13 +25,17 @@ class EthnicityEditMixin(GoutHelperEditMixin):
 
         if self.model is not Ethnicity and "ethnicity_form" not in context:
             context["ethnicity_form"] = EthnicityForm(
-                initial={"ethnicity": self.patient.ethnicity.ethnicity}
-                if self.patient
-                else {},
+                initial=self.get_ethnicity_initial(),
                 **self.subform_kwargs,
             )
 
         return context
+
+    def get_ethnicity_initial(self) -> dict[Literal["ethnicity"], "Ethnicitys"]:
+        """Return initial data for the Ethnicity form."""
+        if self.patient and hasattr(self.patient, "ethnicity"):
+            return {"ethnicity": self.patient.ethnicity.ethnicity}
+        return {}
 
     def post_init(self) -> None:
         """Overwritten to add the EthnicityForm to the kwargs if
@@ -34,9 +43,7 @@ class EthnicityEditMixin(GoutHelperEditMixin):
 
         if self.model is not Ethnicity:
             self.forms["ethnicity_form"] = EthnicityForm(
-                initial={"ethnicity": self.patient.ethnicity.ethnicity}
-                if self.patient
-                else {},
+                initial=self.get_ethnicity_initial(),
                 data=self.request.POST,
                 **self.subform_kwargs,
             )

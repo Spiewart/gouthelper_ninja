@@ -10,6 +10,7 @@ from django_htmx.http import HttpResponseClientRefresh
 
 from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.genders.forms import GenderForm
+from gouthelper_ninja.genders.views import GenderEditMixin
 from gouthelper_ninja.genders.views import GenderUpdateView
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
@@ -163,3 +164,33 @@ class TestGenderUpdateView(TestCase):
         assert isinstance(response, HttpResponseClientRefresh)
         self.gender_obj.refresh_from_db()
         assert self.gender_obj.gender == self.new_gender_value
+
+
+class TestGenderEditMixin(TestCase):
+    def test_get_gender_initial_with_patient(self):
+        class DummyGender:
+            gender = Genders.FEMALE
+
+        class DummyPatient:
+            gender = DummyGender()
+
+        mixin = GenderEditMixin()
+        mixin.patient = DummyPatient()
+        result = mixin.get_gender_initial()
+        assert result == {"gender": Genders.FEMALE}
+
+    def test_get_gender_initial_without_patient(self):
+        mixin = GenderEditMixin()
+        mixin.patient = None
+        result = mixin.get_gender_initial()
+        assert result == {}
+
+    def test_get_gender_initial_patient_no_gender(self):
+        class NoGenderPatient:
+            pass
+
+        mixin = GenderEditMixin()
+        mixin.patient = NoGenderPatient()
+        result = mixin.get_gender_initial()
+        assert result == {}
+        assert result == {}

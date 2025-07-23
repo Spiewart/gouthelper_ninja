@@ -10,6 +10,7 @@ from django_htmx.http import HttpResponseClientRefresh
 
 from gouthelper_ninja.ethnicitys.choices import Ethnicitys
 from gouthelper_ninja.ethnicitys.forms import EthnicityForm
+from gouthelper_ninja.ethnicitys.views import EthnicityEditMixin
 from gouthelper_ninja.ethnicitys.views import EthnicityUpdateView
 from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
@@ -152,3 +153,35 @@ class TestEthnicityUpdateView(TestCase):
         assert isinstance(response, HttpResponseClientRefresh)
         self.ethnicity_obj.refresh_from_db()
         assert self.ethnicity_obj.ethnicity == self.new_ethnicity_value
+
+
+class TestEthnicityEditMixin(TestCase):
+    def test_get_ethnicity_initial_with_patient(self):
+        class DummyEthnicity:
+            ethnicity = Ethnicitys.AFRICANAMERICAN
+
+        class DummyPatient:
+            ethnicity = DummyEthnicity()
+
+        mixin = EthnicityEditMixin()
+        mixin.patient = DummyPatient()
+        result = mixin.get_ethnicity_initial()
+
+        assert result == {"ethnicity": Ethnicitys.AFRICANAMERICAN}
+
+    def test_get_ethnicity_initial_without_patient(self):
+        mixin = EthnicityEditMixin()
+        mixin.patient = None
+        result = mixin.get_ethnicity_initial()
+
+        assert result == {}
+
+    def test_get_ethnicity_initial_patient_no_ethnicity(self):
+        class NoEthnicityPatient:
+            pass
+
+        mixin = EthnicityEditMixin()
+        mixin.patient = NoEthnicityPatient()
+        result = mixin.get_ethnicity_initial()
+
+        assert result == {}
