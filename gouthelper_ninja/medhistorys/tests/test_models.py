@@ -43,7 +43,7 @@ def test_medhistory_str():
 @pytest.mark.django_db
 def test_unique_constraint():
     obj = MedHistoryFactory(
-        patient=PatientFactory(gout=None),
+        patient=PatientFactory(gout=None, menopause="OMIT"),
     )
     with pytest.raises(IntegrityError):
         MedHistory.objects.create(

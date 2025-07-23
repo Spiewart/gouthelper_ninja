@@ -23,7 +23,9 @@ class PatientForm(GoutHelperForm):
         self.insert_extra_form(
             form_model="gender",
         )
-        # TODO: insert menopause form
+        self.insert_extra_form(
+            form_model="menopause",
+        )
         # Insert ethnicity form
         self.insert_extra_form(
             form_model="ethnicity",
@@ -32,7 +34,10 @@ class PatientForm(GoutHelperForm):
         self.insert_extra_form(
             form_model="gout",
         )
-        # TODO: insert gout/detail forms
+        # Insert gout detail form
+        self.insert_extra_form(
+            form_model="goutdetail",
+        )
 
 
 class UserAdminChangeForm(admin_forms.UserChangeForm):

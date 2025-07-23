@@ -169,6 +169,25 @@ class TestPatientCreateView(TestCase):
         assert "menopause_form" in response.context_data
         assert isinstance(response.context_data["menopause_form"], MedHistoryForm)
 
+    def test__get_url(self):
+        response = self.client.get(reverse("users:patient-create"))
+        assert response.status_code == HTTPStatus.OK
+        assert isinstance(response, HttpResponse)
+        assert "form" in response.context_data
+        assert isinstance(response.context_data["form"], PatientCreateView.form_class)
+        assert "dateofbirth_form" in response.context_data
+        assert isinstance(response.context_data["dateofbirth_form"], DateOfBirthForm)
+        assert "ethnicity_form" in response.context_data
+        assert isinstance(response.context_data["ethnicity_form"], EthnicityForm)
+        assert "gender_form" in response.context_data
+        assert isinstance(response.context_data["gender_form"], GenderForm)
+        assert "gout_form" in response.context_data
+        assert isinstance(response.context_data["gout_form"], MedHistoryForm)
+        assert "goutdetail_form" in response.context_data
+        assert isinstance(response.context_data["goutdetail_form"], GoutDetailForm)
+        assert "menopause_form" in response.context_data
+        assert isinstance(response.context_data["menopause_form"], MedHistoryForm)
+
     def test__post(self):
         num_patients = Patient.objects.count()
         assert num_patients == 0
@@ -226,6 +245,8 @@ class TestPatientCreateView(TestCase):
         assert not response.context_data["gout_form"].errors
         assert "goutdetail_form" in response.context_data
         assert not response.context_data["goutdetail_form"].errors
+        assert "menopause_form" in response.context_data
+        assert not response.context_data["menopause_form"].errors
 
     def test__post_with_schema_errors(self):
         """Tests that the view handles schema validation errors correctly.
@@ -251,6 +272,18 @@ class TestPatientCreateView(TestCase):
         assert not response.context_data["dateofbirth_form"].errors
         assert "menopause_form" in response.context_data
         assert response.context_data["menopause_form"].errors
+
+    def test__post_url(self):
+        response = self.client.post(
+            reverse("users:patient-create"),
+            data=self.data,
+        )
+        assert response.status_code == HTTPStatus.FOUND
+        new_patient = Patient.objects.order_by("created").last()
+        assert response.url == reverse(
+            "users:patient-detail",
+            kwargs={"patient": new_patient.id},
+        )
 
     def test__permission(self):
         """Test that the view can be accessed by anyone when there is no
@@ -381,6 +414,8 @@ class TestPatientProviderCreateView(TestCase):
         assert isinstance(context["gout_form"], MedHistoryForm)
         assert "goutdetail_form" in context
         assert isinstance(context["goutdetail_form"], GoutDetailForm)
+        assert "menopause_form" in context
+        assert isinstance(context["menopause_form"], MedHistoryForm)
 
     def test__patient(self):
         assert self.get_view.patient is None
@@ -414,6 +449,36 @@ class TestPatientProviderCreateView(TestCase):
         assert isinstance(response.context_data["ethnicity_form"], EthnicityForm)
         assert "goutdetail_form" in response.context_data
         assert isinstance(response.context_data["goutdetail_form"], GoutDetailForm)
+        assert "gout_form" in response.context_data
+        assert isinstance(response.context_data["gout_form"], MedHistoryForm)
+        assert "menopause_form" in response.context_data
+        assert isinstance(response.context_data["menopause_form"], MedHistoryForm)
+
+    def test__get_url(self):
+        self.client.force_login(self.provider)
+        response = self.client.get(
+            reverse(
+                "users:provider-patient-create",
+                kwargs={"provider": self.provider.username},
+            ),
+        )
+        assert response.status_code == HTTPStatus.OK
+        assert isinstance(response, HttpResponse)
+        assert "form" in response.context_data
+        assert isinstance(
+            response.context_data["form"],
+            PatientProviderCreateView.form_class,
+        )
+        assert "dateofbirth_form" in response.context_data
+        assert isinstance(response.context_data["dateofbirth_form"], DateOfBirthForm)
+        assert "gender_form" in response.context_data
+        assert isinstance(response.context_data["gender_form"], GenderForm)
+        assert "ethnicity_form" in response.context_data
+        assert isinstance(response.context_data["ethnicity_form"], EthnicityForm)
+        assert "goutdetail_form" in response.context_data
+        assert isinstance(response.context_data["goutdetail_form"], GoutDetailForm)
+        assert "menopause_form" in response.context_data
+        assert isinstance(response.context_data["menopause_form"], MedHistoryForm)
 
     def test__post(self):
         num_patients = Patient.objects.count()
@@ -483,6 +548,59 @@ class TestPatientProviderCreateView(TestCase):
         assert not response.context_data["gender_form"].errors
         assert "goutdetail_form" in response.context_data
         assert not response.context_data["goutdetail_form"].errors
+        assert "gout_form" in response.context_data
+        assert not response.context_data["gout_form"].errors
+        assert "menopause_form" in response.context_data
+        assert not response.context_data["menopause_form"].errors
+
+    def test__post_with_schema_errors(self):
+        """Tests that the view handles schema validation errors correctly.
+        This is the case where all the forms are valid, but the
+        Pydantic schema does not validate."""
+        self.data.update(
+            {
+                "dateofbirth": 50,  # Gray age where menopause is expected
+            },
+        )
+        self.data.pop("menopause-history_of")
+        self.post_view.request.POST = self.data
+        SessionMiddleware(dummy_get_response).process_request(self.post)
+        MessageMiddleware(dummy_get_response).process_request(self.post)
+        response = self.post_view.post(self.post)
+        print_response_errors(response)
+        assert response.status_code == HTTPStatus.OK
+        assert isinstance(response, HttpResponseRedirect) is False
+        assert isinstance(response, HttpResponse)
+        assert "form" in response.context_data
+        assert not response.context_data["form"].errors
+        assert "dateofbirth_form" in response.context_data
+        assert not response.context_data["dateofbirth_form"].errors
+        assert "menopause_form" in response.context_data
+        assert response.context_data["menopause_form"].errors
+        assert "goutdetail_form" in response.context_data
+        assert not response.context_data["goutdetail_form"].errors
+        assert "gout_form" in response.context_data
+        assert not response.context_data["gout_form"].errors
+        assert "gender_form" in response.context_data
+        assert not response.context_data["gender_form"].errors
+        assert "ethnicity_form" in response.context_data
+        assert not response.context_data["ethnicity_form"].errors
+
+    def test__post_url(self):
+        self.client.force_login(self.provider)
+        response = self.client.post(
+            reverse(
+                "users:provider-patient-create",
+                kwargs={"provider": self.provider.username},
+            ),
+            data=self.data,
+        )
+        assert response.status_code == HTTPStatus.FOUND
+        new_patient = Patient.objects.order_by("created").last()
+        assert response.url == reverse(
+            "users:patient-detail",
+            kwargs={"patient": new_patient.id},
+        )
 
     def test__permission(self):
         """Test that the view can only be accessed by the provider
@@ -830,6 +948,52 @@ class TestPatientUpdateView(TestCase):
         assert "object" in response.context_data
         assert response.context_data["object"] == self.patient
 
+    def test__get_url(self):
+        response = self.client.get(
+            reverse("users:patient-update", kwargs=self.patient_kwargs),
+        )
+        assert response.status_code == HTTPStatus.OK
+        assert isinstance(response, HttpResponse)
+        assert "form" in response.context_data
+        assert isinstance(response.context_data["form"], PatientUpdateView.form_class)
+        assert "dateofbirth_form" in response.context_data
+        assert isinstance(response.context_data["dateofbirth_form"], DateOfBirthForm)
+        assert response.context_data["dateofbirth_form"].initial == {
+            "dateofbirth": self.patient.dateofbirth.dateofbirth,
+        }
+        assert "gender_form" in response.context_data
+        assert isinstance(response.context_data["gender_form"], GenderForm)
+        assert response.context_data["gender_form"].initial == {
+            "gender": self.patient.gender.gender,
+        }
+        assert "ethnicity_form" in response.context_data
+        assert isinstance(response.context_data["ethnicity_form"], EthnicityForm)
+        assert response.context_data["ethnicity_form"].initial == {
+            "ethnicity": self.patient.ethnicity.ethnicity,
+        }
+        assert "goutdetail_form" in response.context_data
+        assert isinstance(response.context_data["goutdetail_form"], GoutDetailForm)
+        assert response.context_data["goutdetail_form"].initial == {
+            "at_goal": self.patient.goutdetail.at_goal,
+            "at_goal_long_term": self.patient.goutdetail.at_goal_long_term,
+            "flaring": self.patient.goutdetail.flaring,
+            "on_ppx": self.patient.goutdetail.on_ppx,
+            "on_ult": self.patient.goutdetail.on_ult,
+            "starting_ult": self.patient.goutdetail.starting_ult,
+        }
+        assert "gout_form" in response.context_data
+        assert isinstance(response.context_data["gout_form"], MedHistoryForm)
+        assert response.context_data["gout_form"].initial == {
+            "history_of": self.patient.gout.history_of,
+        }
+        assert "object" in response.context_data
+        assert response.context_data["object"] == self.patient
+        assert "menopause_form" in response.context_data
+        assert isinstance(response.context_data["menopause_form"], MedHistoryForm)
+        assert response.context_data["menopause_form"].initial == {
+            "history_of": self.patient.menopause.history_of,
+        }
+
     def test__post(self):
         num_patients = Patient.objects.count()
 
@@ -861,6 +1025,41 @@ class TestPatientUpdateView(TestCase):
         # Test that the goutdetail flaring field is updated correctly
         assert self.patient.goutdetail.flaring == self.data["flaring"]
 
+    def test__post_with_schema_errors(self):
+        """Tests that the view handles schema validation errors correctly.
+        This is the case where all the forms are valid, but the
+        Pydantic schema does not validate."""
+        self.data.update(
+            {
+                "dateofbirth": 50,  # Gray age where menopause is expected
+            },
+        )
+        self.data.pop("menopause-history_of")
+        self.post_view.request.POST = self.data
+        SessionMiddleware(dummy_get_response).process_request(self.post)
+        MessageMiddleware(dummy_get_response).process_request(self.post)
+        response = self.post_view.post(self.post)
+        print_response_errors(response)
+        assert response.status_code == HTTPStatus.OK
+        assert isinstance(response, HttpResponseRedirect) is False
+        assert isinstance(response, HttpResponse)
+        assert "form" in response.context_data
+        assert not response.context_data["form"].errors
+        assert "dateofbirth_form" in response.context_data
+        assert not response.context_data["dateofbirth_form"].errors
+        assert "menopause_form" in response.context_data
+        assert response.context_data["menopause_form"].errors
+        assert "goutdetail_form" in response.context_data
+        assert not response.context_data["goutdetail_form"].errors
+        assert "gout_form" in response.context_data
+        assert not response.context_data["gout_form"].errors
+        assert "goutdetail_form" in response.context_data
+        assert not response.context_data["goutdetail_form"].errors
+        assert "gender_form" in response.context_data
+        assert not response.context_data["gender_form"].errors
+        assert "ethnicity_form" in response.context_data
+        assert not response.context_data["ethnicity_form"].errors
+
     def test__post_with_errors(self):
         # Test with invalid data
         invalid_data = self.data.copy()
@@ -880,6 +1079,35 @@ class TestPatientUpdateView(TestCase):
         assert not response.context_data["form"].errors
         assert "dateofbirth_form" in response.context_data
         assert response.context_data["dateofbirth_form"].errors
+
+    def test__post_url(self):
+        response = self.client.post(
+            reverse("users:patient-update", kwargs=self.patient_kwargs),
+            data=self.data,
+        )
+        assert response.status_code == HTTPStatus.FOUND
+        assert isinstance(response, HttpResponseRedirect)
+        assert response.url == reverse(
+            "users:patient-detail",
+            kwargs={"patient": self.patient.id},
+        )
+
+        self.patient.refresh_from_db()
+        assert self.patient.dateofbirth.dateofbirth == yearsago_date(
+            self.data["dateofbirth"],
+        )
+        assert self.patient.ethnicity.ethnicity == self.data["ethnicity"]
+        assert self.patient.gender.gender == self.data["gender"]
+        assert self.patient.menopause.history_of == self.data["menopause-history_of"]
+        assert self.patient.gout.history_of == self.data["gout-history_of"]
+        assert self.patient.goutdetail.flaring == self.data["flaring"]
+        assert self.patient.goutdetail.at_goal == self.data["at_goal"]
+        assert (
+            self.patient.goutdetail.at_goal_long_term == self.data["at_goal_long_term"]
+        )
+        assert self.patient.goutdetail.on_ppx == self.data["on_ppx"]
+        assert self.patient.goutdetail.on_ult == self.data["on_ult"]
+        assert self.patient.goutdetail.starting_ult == self.data["starting_ult"]
 
     def test__permission(self):
         """Test that the view can only be accessed by the patient,
