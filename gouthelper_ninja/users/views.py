@@ -54,10 +54,7 @@ class PatientCreateView(
     CreateView,
 ):
     """View for creating new Patients with their associated profile,
-    date of birth, ethnicity, and gender.
-
-    TODO: Add required MedHistorys (i.e. menopause as needed) once
-    this app is implemented."""
+    date of birth, ethnicity, gender, and gout-oriented medical history."""
 
     model = Patient
 

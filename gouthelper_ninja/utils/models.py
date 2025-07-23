@@ -66,7 +66,7 @@ class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
 
         for attr_name, attr_data in data.model_dump().items():
             attr: Model | Field = getattr(self, attr_name)
-            if isinstance(attr, Model):
+            if isinstance(attr, Model) and attr_data is not None:
                 attr.update(data=attr.edit_schema(**attr_data))
             else:
                 attr_val = getattr(self, attr_name, None)

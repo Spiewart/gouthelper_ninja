@@ -115,7 +115,7 @@ class GoutFactory(MedHistoryFactory):
         # PatientFactory will create a Gout medhistory
         # so we set it to None here
         # to avoid creating a duplicate Gout medhistory
-        gout="OMIT",
+        gout=None,
     )
 
 
@@ -147,6 +147,14 @@ class IbdFactory(MedHistoryFactory):
 class MenopauseFactory(MedHistoryFactory):
     class Meta:
         model = Menopause
+
+    patient = SubFactory(
+        "gouthelper_ninja.users.tests.factories.PatientFactory",
+        # PatientFactory may create a Menopause medhistory
+        # so we set it to "OMIT" here
+        # to avoid creating a duplicate Menopause medhistory
+        menopause="OMIT",
+    )
 
 
 class OrgantransplantFactory(MedHistoryFactory):

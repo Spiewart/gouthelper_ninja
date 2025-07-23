@@ -129,6 +129,8 @@ class TestPatientCreateView(TestCase):
         assert isinstance(context["gout_form"], MedHistoryForm)
         assert "goutdetail_form" in context
         assert isinstance(context["goutdetail_form"], GoutDetailForm)
+        assert "menopause_form" in context
+        assert isinstance(context["menopause_form"], MedHistoryForm)
 
     def test__patient(self):
         assert self.get_view.patient is None
@@ -143,6 +145,29 @@ class TestPatientCreateView(TestCase):
             None,
             self.get_view.request_user,
         )
+
+    def test__get(self):
+        response = self.get_view.get(self.get)
+        assert response.status_code == HTTPStatus.OK
+        assert isinstance(response, HttpResponse)
+        assert "form" in response.context_data
+        assert not response.context_data["form"].errors
+        assert isinstance(
+            response.context_data["form"],
+            PatientCreateView.form_class,
+        )
+        assert "dateofbirth_form" in response.context_data
+        assert isinstance(response.context_data["dateofbirth_form"], DateOfBirthForm)
+        assert "ethnicity_form" in response.context_data
+        assert isinstance(response.context_data["ethnicity_form"], EthnicityForm)
+        assert "gender_form" in response.context_data
+        assert isinstance(response.context_data["gender_form"], GenderForm)
+        assert "gout_form" in response.context_data
+        assert isinstance(response.context_data["gout_form"], MedHistoryForm)
+        assert "goutdetail_form" in response.context_data
+        assert isinstance(response.context_data["goutdetail_form"], GoutDetailForm)
+        assert "menopause_form" in response.context_data
+        assert isinstance(response.context_data["menopause_form"], MedHistoryForm)
 
     def test__post(self):
         num_patients = Patient.objects.count()
@@ -174,7 +199,7 @@ class TestPatientCreateView(TestCase):
         assert patient.menopause
         assert patient.menopause.history_of == self.data["menopause-history_of"]
 
-    def test__post_with_errors(self):
+    def test__post_with_form_errors(self):
         # Test with invalid data
         invalid_data = self.data.copy()
         invalid_data["dateofbirth"] = "invalid_date"
@@ -201,6 +226,31 @@ class TestPatientCreateView(TestCase):
         assert not response.context_data["gout_form"].errors
         assert "goutdetail_form" in response.context_data
         assert not response.context_data["goutdetail_form"].errors
+
+    def test__post_with_schema_errors(self):
+        """Tests that the view handles schema validation errors correctly.
+        This is the case where all the forms are valid, but the
+        Pydantic schema does not validate."""
+        self.data.update(
+            {
+                "dateofbirth": 50,  # Gray age where a woman could be post-menopausal
+            },
+        )
+        self.data.pop("menopause-history_of")
+        self.post_view.request.POST = self.data
+        SessionMiddleware(dummy_get_response).process_request(self.post)
+        MessageMiddleware(dummy_get_response).process_request(self.post)
+        response = self.post_view.post(self.post)
+        print_response_errors(response)
+        assert response.status_code == HTTPStatus.OK
+        assert isinstance(response, HttpResponseRedirect) is False
+        assert isinstance(response, HttpResponse)
+        assert "form" in response.context_data
+        assert not response.context_data["form"].errors
+        assert "dateofbirth_form" in response.context_data
+        assert not response.context_data["dateofbirth_form"].errors
+        assert "menopause_form" in response.context_data
+        assert response.context_data["menopause_form"].errors
 
     def test__permission(self):
         """Test that the view can be accessed by anyone when there is no
@@ -694,9 +744,9 @@ class TestPatientUpdateView(TestCase):
         self.rf = RequestFactory()
         self.provider = UserFactory()
         self.patient = PatientFactory(
-            dateofbirth=50,
-            ethnicity=Ethnicitys.AFRICANAMERICAN,
-            gender=Genders.MALE,
+            dateofbirth__dateofbirth=50,
+            ethnicity__ethnicity=Ethnicitys.AFRICANAMERICAN,
+            gender__gender=Genders.MALE,
         )
         self.data = {
             "dateofbirth": 70,
@@ -713,9 +763,9 @@ class TestPatientUpdateView(TestCase):
             "id": self.patient.id,
         }
         self.patient_with_provider = PatientFactory(
-            dateofbirth=50,
-            ethnicity=Ethnicitys.AFRICANAMERICAN,
-            gender=Genders.MALE,
+            dateofbirth__dateofbirth=50,
+            ethnicity__ethnicity=Ethnicitys.AFRICANAMERICAN,
+            gender__gender=Genders.MALE,
             provider=self.provider,
         )
 

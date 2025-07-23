@@ -19,8 +19,8 @@ class TestGetProviderAlias:
         with freeze_time("2023-10-25"):
             PatientFactory(
                 provider=provider,
-                dateofbirth=30,  # Results in age 30 on 2023-10-25
-                gender=Genders.MALE,
+                dateofbirth__dateofbirth=30,  # Results in age 30 on 2023-10-25
+                gender__gender=Genders.MALE,
             )
 
         alias = get_provider_alias(
@@ -35,8 +35,8 @@ class TestGetProviderAlias:
         provider = UserFactory()
         PatientFactory(
             provider=provider,
-            dateofbirth=30,  # Results in age 30 on 2023-10-26
-            gender=Genders.MALE,
+            dateofbirth__dateofbirth=30,  # Results in age 30 on 2023-10-26
+            gender__gender=Genders.MALE,
         )  # Created today due to outer freeze_time
 
         alias = get_provider_alias(
@@ -51,13 +51,13 @@ class TestGetProviderAlias:
         provider = UserFactory()
         PatientFactory(
             provider=provider,
-            dateofbirth=30,
-            gender=Genders.MALE,
+            dateofbirth__dateofbirth=30,
+            gender__gender=Genders.MALE,
         )
         PatientFactory(
             provider=provider,
-            dateofbirth=30,
-            gender=Genders.MALE,
+            dateofbirth__dateofbirth=30,
+            gender__gender=Genders.MALE,
         )
 
         alias = get_provider_alias(
@@ -72,8 +72,8 @@ class TestGetProviderAlias:
         provider = UserFactory()
         PatientFactory(
             provider=provider,
-            dateofbirth=35,  # Age 35
-            gender=Genders.MALE,
+            dateofbirth__dateofbirth=35,  # Age 35
+            gender__gender=Genders.MALE,
         )
 
         alias = get_provider_alias(
@@ -88,8 +88,8 @@ class TestGetProviderAlias:
         provider = UserFactory()
         PatientFactory(
             provider=provider,
-            dateofbirth=30,
-            gender=Genders.FEMALE,  # Female
+            dateofbirth__dateofbirth=30,
+            gender__gender=Genders.FEMALE,  # Female
         )
 
         alias = get_provider_alias(
@@ -106,8 +106,8 @@ class TestGetProviderAlias:
         with freeze_time(date(2023, 10, 25)):  # Patient created yesterday
             PatientFactory(
                 provider=provider,
-                dateofbirth=30,
-                gender=Genders.MALE,
+                dateofbirth__dateofbirth=30,
+                gender__gender=Genders.MALE,
             )
 
         alias = get_provider_alias(
@@ -124,8 +124,8 @@ class TestGetProviderAlias:
 
         PatientFactory(
             provider=provider2,  # Belongs to provider2
-            dateofbirth=30,
-            gender=Genders.MALE,
+            dateofbirth__dateofbirth=30,
+            gender__gender=Genders.MALE,
         )
 
         alias = get_provider_alias(
@@ -139,7 +139,11 @@ class TestGetProviderAlias:
     def test_get_provider_alias_no_patients_for_provider(self):
         provider_with_no_patients = UserFactory()
         # Create a patient for another provider to ensure DB isn't empty
-        PatientFactory(provider=UserFactory(), dateofbirth=25, gender=Genders.FEMALE)
+        PatientFactory(
+            provider=UserFactory(),
+            dateofbirth__dateofbirth=25,
+            gender__gender=Genders.FEMALE,
+        )
 
         alias = get_provider_alias(
             provider_id=provider_with_no_patients.id,

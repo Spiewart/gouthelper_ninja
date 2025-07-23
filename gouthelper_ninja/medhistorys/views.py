@@ -115,6 +115,19 @@ class MedHistoryProxyMixin(GoutHelperEditMixin):
             )
         return context
 
+    def update_context_optional(
+        self,
+        context: dict[str, Any],
+        mhtype: MHTypes,
+    ) -> dict[str, Any]:
+        """Adds MedHistory forms to the context."""
+        if f"{mhtype.name.lower()}_form" not in context:
+            context[f"{mhtype.name.lower()}_form"] = MedHistoryForm(
+                **self.get_mhform_kwargs(mhtype),
+                optional=True,
+            )
+        return context
+
     def get_mhform_kwargs(self, mhtype: MHTypes, **kwargs) -> dict[str, Any]:
         """Returns kwargs for a MedHistoryForm based on the mhtype."""
         return {
@@ -141,6 +154,13 @@ class MedHistoryProxyMixin(GoutHelperEditMixin):
         """Updates the forms dictionary with the MedHistoryForm."""
         self.forms[f"{mhtype.name.lower()}_form"] = MedHistoryForm(
             **self.get_mhform_kwargs(mhtype),
+            data=self.request.POST,
+        )
+
+    def update_forms_optional(self, mhtype: MHTypes) -> None:
+        """Updates the forms dictionary with the optional MedHistoryForm."""
+        self.forms[f"{mhtype.name.lower()}_form"] = MedHistoryForm(
+            **self.get_mhform_kwargs(mhtype, optional=True),
             data=self.request.POST,
         )
 
@@ -177,8 +197,9 @@ class MenopauseMixin(MedHistoryProxyMixin):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         self.update_context(context, MHTypes.MENOPAUSE)
+        self.update_context_optional(context, MHTypes.MENOPAUSE)
         return context
 
     def post_init(self) -> None:
-        self.update_forms(MHTypes.MENOPAUSE)
+        self.update_forms_optional(MHTypes.MENOPAUSE)
         super().post_init()

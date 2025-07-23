@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-from datetime import date
 from typing import Any
 from typing import Literal
 from uuid import UUID
@@ -10,9 +9,7 @@ from factory import post_generation
 from factory.django import DjangoModelFactory
 
 from gouthelper_ninja.dateofbirths.tests.factories import DateOfBirthFactory
-from gouthelper_ninja.ethnicitys.choices import Ethnicitys
 from gouthelper_ninja.ethnicitys.tests.factories import EthnicityFactory
-from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.genders.tests.factories import GenderFactory
 from gouthelper_ninja.goutdetails.tests.factories import GoutDetailFactory
 from gouthelper_ninja.medhistorys.choices import MHTypes
@@ -21,8 +18,6 @@ from gouthelper_ninja.profiles.helpers import get_provider_alias
 from gouthelper_ninja.profiles.tests.factories import PatientProfileFactory
 from gouthelper_ninja.users.models import User
 from gouthelper_ninja.utils.helpers import age_calc
-from gouthelper_ninja.utils.helpers import menopause_required
-from gouthelper_ninja.utils.helpers import yearsago_date
 
 
 class UserFactory(DjangoModelFactory[User]):
@@ -66,6 +61,18 @@ class UserFactory(DjangoModelFactory[User]):
 
 class PatientFactory(UserFactory):
     role = User.Roles.PSEUDOPATIENT
+    dateofbirth = RelatedFactory(
+        DateOfBirthFactory,
+        factory_related_name="patient",
+    )
+    ethnicity = RelatedFactory(
+        EthnicityFactory,
+        factory_related_name="patient",
+    )
+    gender = RelatedFactory(
+        GenderFactory,
+        factory_related_name="patient",
+    )
     gout = RelatedFactory(
         MedHistoryFactory,
         factory_related_name="patient",
@@ -78,90 +85,25 @@ class PatientFactory(UserFactory):
     )
 
     @post_generation
-    def dateofbirth(
-        self,
-        create: Literal[True, False],
-        extracted: date | str | None | Literal[False] = None,
-        **kwargs,
-    ):
-        if create:
-            if extracted is False:
-                # If extracted is False, do not create a DateOfBirth
-                return
-            # If extracted is not None or True, it must be a date or age
-            if extracted is not None:
-                if isinstance(extracted, int):
-                    # If extracted is an int, assume it's a number of years ago
-                    extracted = yearsago_date(extracted)
-                elif isinstance(extracted, str):
-                    # If extracted is a string,
-                    # assume it's a date in "YYYY-MM-DD" format
-                    extracted = date(*map(int, extracted.split("-")))
-                kwargs["dateofbirth"] = extracted
-            DateOfBirthFactory(patient=self, **kwargs)
-
-    @post_generation
-    def ethnicity(
-        self,
-        create: Literal[True, False],
-        extracted: Ethnicitys | str | None | Literal[False] = None,
-        **kwargs,
-    ) -> None:
-        if create:
-            # If extracted is False, do not create
-            if extracted is False:
-                return
-            if extracted is not None:
-                kwargs["ethnicity"] = (
-                    Ethnicitys(extracted) if isinstance(extracted, str) else extracted
-                )
-            EthnicityFactory(patient=self, **kwargs)
-
-    @post_generation
-    def gender(
-        self,
-        create: Literal[True, False],
-        extracted: Genders | str | None | Literal[False] = None,
-        **kwargs,
-    ) -> None:
-        if create:
-            if extracted is False:
-                # If extracted is False, do not create
-                return
-            # Cannot check for Truth because values of Genders include 0
-            if extracted is not None:
-                kwargs["gender"] = (
-                    Genders(extracted) if isinstance(extracted, str) else extracted
-                )
-            GenderFactory(patient=self, **kwargs)
-
-    @post_generation
     def menopause(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = None,
+        extracted: Literal[True, False, "OMIT"] | None = True,  # noqa: FBT002
+        **kwargs,
     ) -> None:
         """Post-generation hook to create a Menopause MedHistory for the patient.
-        Evaluates the Patient's dateofbirth and gender to determine if menopause
-        is required. If menopause is required, creates a Menopause MedHistory."""
+        Because extracted will always be passed None in the absence of a value,
+        we use "OMIT" to indicate that we do not want to create a Menopause
+        MedHistory for the patient."""
+
         if create:
-            if extracted is not None:
+            if extracted != "OMIT":
+                if extracted is not None:
+                    kwargs["history_of"] = extracted
                 MedHistoryFactory(
                     patient=self,
                     mhtype=MHTypes.MENOPAUSE,
-                    history_of=extracted,  # True or False
-                )
-            elif (
-                hasattr(self, "dateofbirth")
-                and hasattr(self, "gender")
-                and menopause_required(
-                    self.dateofbirth.dateofbirth,
-                    self.gender.gender,
-                )
-            ):
-                MedHistoryFactory(
-                    patient=self,
-                    mhtype=MHTypes.MENOPAUSE,
+                    **kwargs,
                 )
 
     @post_generation
