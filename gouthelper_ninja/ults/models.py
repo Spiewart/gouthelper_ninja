@@ -44,7 +44,13 @@ class Ult(
                 name="%(app_label)s_%(class)s_freq_num_flares_valid",
                 condition=(
                     (Q(num_flares=FlareNums.TWOPLUS) & Q(freq_flares__isnull=False))
-                    | (Q(num_flares=FlareNums.ONE) & Q(freq_flares__isnull=True))
+                    | (
+                        Q(num_flares=FlareNums.ONE)
+                        & (
+                            Q(freq_flares__isnull=True)
+                            | Q(freq_flares=FlareFreqs.ONEORLESS)
+                        )
+                    )
                     | (Q(num_flares=FlareNums.ZERO) & Q(freq_flares__isnull=True))
                 ),
             ),
