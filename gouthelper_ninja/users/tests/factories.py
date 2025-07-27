@@ -155,6 +155,97 @@ class PatientFactory(UserFactory):
                 last_history.save()
 
     @post_generation
+    def angina(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.ANGINA,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def anticoagulation(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.ANTICOAGULATION,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def bleed(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.BLEED,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def cad(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.CAD,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def chf(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.CHF,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def ckd(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.CKD,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def colchicineinteraction(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.COLCHICINEINTERACTION,
+                history_of=extracted,
+            )
+
+    @post_generation
     def diabetes(
         self,
         create: Literal[True, False],
@@ -167,4 +258,199 @@ class PatientFactory(UserFactory):
                 patient=self,
                 mhtype=MHTypes.DIABETES,
                 history_of=extracted,  # True or False
+            )
+
+    @post_generation
+    def erosions(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.EROSIONS,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def gastricbypass(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.GASTRICBYPASS,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def heartattack(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.HEARTATTACK,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def hepatitis(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.HEPATITIS,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def hypertension(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.HYPERTENSION,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def hyperuricemia(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.HYPERURICEMIA,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def ibd(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.IBD,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def organtransplant(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.ORGANTRANSPLANT,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def osteoporosis(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.OSTEOPOROSIS,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def pad(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.PAD,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def pud(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.PUD,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def stroke(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.STROKE,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def tophi(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.TOPHI,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def uratestones(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.URATESTONES,
+                history_of=extracted,
+            )
+
+    @post_generation
+    def xoiinteraction(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+    ) -> None:
+        if create and extracted is not None:
+            MedHistoryFactory(
+                patient=self,
+                mhtype=MHTypes.XOIINTERACTION,
+                history_of=extracted,
             )

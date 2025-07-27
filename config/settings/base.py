@@ -90,6 +90,7 @@ LOCAL_APPS = [
     "gouthelper_ninja.genders",
     "gouthelper_ninja.medhistorys",
     "gouthelper_ninja.goutdetails",
+    "gouthelper_ninja.ults",
     "gouthelper_ninja.utils.apps.UtilsConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
