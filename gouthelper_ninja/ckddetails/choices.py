@@ -8,7 +8,6 @@ class DialysisChoices(IntegerChoices):
 
 
 class DialysisDurations(IntegerChoices):
-    __empty__ = 0, _("-------")
     LESSTHANSIX = 1, _("Less than six months")
     LESSTHANYEAR = 2, _("Between six months and a year")
     MORETHANYEAR = 3, _("More than a year")

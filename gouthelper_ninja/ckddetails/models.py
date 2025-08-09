@@ -29,7 +29,7 @@ class CkdDetail(
         constraints = [
             CheckConstraint(
                 name="%(class)s_dialysis_valid",
-                check=(
+                condition=(
                     Q(
                         dialysis=False,
                         dialysis_duration__isnull=True,
@@ -45,15 +45,15 @@ class CkdDetail(
             ),
             CheckConstraint(
                 name="%(class)s_dialysis_duration_valid",
-                check=(Q(dialysis_duration__in=DialysisDurations.values)),
+                condition=(Q(dialysis_duration__in=DialysisDurations.values)),
             ),
             CheckConstraint(
                 name="%(class)s_dialysis_type_valid",
-                check=(Q(dialysis_type__in=DialysisChoices.values)),
+                condition=(Q(dialysis_type__in=DialysisChoices.values)),
             ),
             CheckConstraint(
                 name="%(class)s_stage_valid",
-                check=(Q(stage__in=Stages.values)),
+                condition=(Q(stage__in=Stages.values)),
             ),
         ]
 

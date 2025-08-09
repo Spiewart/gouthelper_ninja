@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from typing import TYPE_CHECKING
 from typing import Literal
 from typing import Union
@@ -259,6 +260,16 @@ def get_user_change(instance, request, **kwargs):  # pylint:disable=W0613
                 return None
         return request.user
     return None
+
+
+def round_decimal(value: Decimal, places: int) -> Decimal:
+    """Method that rounds a Decimal to a given number of places.
+    Does not facilitate negative places, as this is not currently needed."""
+    # https://docs.python.org/2/library/decimal.html#decimal.Decimal.quantize
+    if places < 0:
+        msg = "Negative places are not supported."
+        raise ValueError(msg)
+    return value.quantize(Decimal(10) ** -places)
 
 
 def yearsago_datetime(

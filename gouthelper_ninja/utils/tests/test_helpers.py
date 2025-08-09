@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from uuid import UUID
 
 import pytest
@@ -6,8 +7,17 @@ import pytest
 from gouthelper_ninja.constants import MAX_MENOPAUSE_AGE
 from gouthelper_ninja.constants import MIN_MENOPAUSE_AGE
 from gouthelper_ninja.genders.choices import Genders
-from gouthelper_ninja.utils import helpers
+from gouthelper_ninja.utils.helpers import age_calc
+from gouthelper_ninja.utils.helpers import check_for_datetime_and_convert_to_date
+from gouthelper_ninja.utils.helpers import get_str_attrs_dict
+from gouthelper_ninja.utils.helpers import get_user_change
+from gouthelper_ninja.utils.helpers import is_iterable
+from gouthelper_ninja.utils.helpers import is_valid_uuid
 from gouthelper_ninja.utils.helpers import menopause_required
+from gouthelper_ninja.utils.helpers import num_years
+from gouthelper_ninja.utils.helpers import round_decimal
+from gouthelper_ninja.utils.helpers import yearsago_date
+from gouthelper_ninja.utils.helpers import yearsago_datetime
 
 
 class DummyPatient:
@@ -34,29 +44,29 @@ def test_age_calc():
     today = datetime.datetime.now(tz=datetime.UTC).date()
     years_ago = 30
     dob = today.replace(year=today.year - years_ago)
-    assert helpers.age_calc(dob) == years_ago
+    assert age_calc(dob) == years_ago
 
 
 # check_for_datetime_and_convert_to_date
 def test_check_for_datetime_and_convert_to_date():
     d = datetime.date(2020, 1, 1)
     dt = datetime.datetime(2020, 1, 1, tzinfo=datetime.UTC)
-    assert helpers.check_for_datetime_and_convert_to_date(d) == d
-    assert helpers.check_for_datetime_and_convert_to_date(dt) == d
+    assert check_for_datetime_and_convert_to_date(d) == d
+    assert check_for_datetime_and_convert_to_date(dt) == d
 
 
 # is_iterable
 def test_is_iterable():
-    assert helpers.is_iterable([1, 2, 3])
-    assert not helpers.is_iterable(123)
+    assert is_iterable([1, 2, 3])
+    assert not is_iterable(123)
 
 
 # is_valid_uuid
 def test_is_valid_uuid():
     u = UUID("12345678-1234-5678-1234-567812345678")
-    assert helpers.is_valid_uuid(str(u)) == u
-    assert helpers.is_valid_uuid(u) == u
-    assert helpers.is_valid_uuid("not-a-uuid") is False
+    assert is_valid_uuid(str(u)) == u
+    assert is_valid_uuid(u) == u
+    assert is_valid_uuid("not-a-uuid") is False
 
 
 # num_years
@@ -66,8 +76,7 @@ def test_num_years():
     today = datetime.datetime.now(tz=datetime.UTC).date()
     d = today.replace(year=today.year - 10)
     assert (
-        helpers.num_years(d) == expected_years
-        or helpers.num_years(d) == expected_leap_years
+        num_years(d) == expected_years or num_years(d) == expected_leap_years
     )  # leap years
 
 
@@ -91,7 +100,7 @@ def test_get_str_attrs_dict(patient, request_user, gender, expected_subject):
     if expected_subject == "you":
         # Use the same object for both patient and request_user
         request_user = patient
-    d = helpers.get_str_attrs_dict(patient, request_user)
+    d = get_str_attrs_dict(patient, request_user)
     assert "subject" in d
     assert d["subject"].lower().startswith(expected_subject.lower())
 
@@ -100,9 +109,9 @@ def test_get_str_attrs_dict(patient, request_user, gender, expected_subject):
 def test_yearsago_datetime_and_date():
     expected_year = 2010
     now = datetime.datetime(2020, 6, 27, tzinfo=datetime.UTC)
-    dt = helpers.yearsago_datetime(10, now)
+    dt = yearsago_datetime(10, now)
     assert dt.year == expected_year
-    d = helpers.yearsago_date(10, now)
+    d = yearsago_date(10, now)
     assert d.year == expected_year
 
 
@@ -118,15 +127,15 @@ def test_get_user_change_authenticated():
     instance = type("Instance", (), {"patient": patient})()
     request = DummyRequest(user, "/users/~delete/")
     # Should return None if deleting self
-    assert helpers.get_user_change(instance, request) is None
+    assert get_user_change(instance, request) is None
     # Should return user if not deleting self
     request2 = DummyRequest(user, "/users/other/")
-    assert helpers.get_user_change(instance, request2) == user
+    assert get_user_change(instance, request2) == user
     # Should return None if not authenticated
     user2 = DummyUser(id=2)
     user2.is_authenticated = False
     request3 = DummyRequest(user2, "/users/~delete/")
-    assert helpers.get_user_change(instance, request3) is None
+    assert get_user_change(instance, request3) is None
 
 
 def make_birthdate(years_ago):
@@ -168,3 +177,27 @@ def test_menopause_required_edge_cases():
     dob = make_birthdate(MAX_MENOPAUSE_AGE - 1)
     assert menopause_required(dob, Genders.FEMALE) is True
     assert menopause_required(dob, Genders.FEMALE) is True
+
+
+class TestRoundDecimal:
+    def test_round_decimal_valid(self):
+        # Test rounding to 2 decimal places
+        value = Decimal("123.456")
+        rounded = round_decimal(value, 2)
+        assert rounded == Decimal("123.46")
+
+        # Test rounding to 0 decimal places
+        value = Decimal("123.456")
+        rounded = round_decimal(value, 0)
+        assert rounded == Decimal("123")
+
+        # Test rounding to 3 decimal places
+        value = Decimal("123.4567")
+        rounded = round_decimal(value, 3)
+        assert rounded == Decimal("123.457")
+
+    def test__round_negative_decimal_places(self):
+        # Test rounding with negative decimal places
+        value = Decimal("123.456")
+        with pytest.raises(ValueError, match="Negative places are not supported."):
+            round_decimal(value, -1)
