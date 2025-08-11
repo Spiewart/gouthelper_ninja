@@ -16,6 +16,7 @@ from simple_history.models import HistoricalRecords
 from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.medhistorys.helpers import search_medhistorys_by_mhtype
 from gouthelper_ninja.users.choices import Roles
+from gouthelper_ninja.users.helpers import get_user_change
 from gouthelper_ninja.users.managers import AdminManager
 from gouthelper_ninja.users.managers import GoutHelperUserManager
 from gouthelper_ninja.users.managers import PatientManager
@@ -27,7 +28,6 @@ from gouthelper_ninja.users.rules import delete_user
 from gouthelper_ninja.users.rules import view_patient
 from gouthelper_ninja.users.rules import view_user
 from gouthelper_ninja.users.schema import PatientEditSchema
-from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperModel
 
 if TYPE_CHECKING:

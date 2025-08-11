@@ -6,6 +6,7 @@ from uuid import UUID
 from factory import Faker
 from factory import RelatedFactory
 from factory import post_generation
+from factory.base import StubObject
 from factory.django import DjangoModelFactory
 
 from gouthelper_ninja.dateofbirths.tests.factories import DateOfBirthFactory
@@ -44,7 +45,12 @@ class UserFactory(DjangoModelFactory[User]):
                 lower_case=True,
             ).evaluate(None, None, extra={"locale": None})
         )
-        self.set_password(password)
+        # Set the password only if the instance is not a StubObject,
+        # as a StubObject does not have the set_password method.
+        # This is to avoid errors when using PatientFactory as a
+        # SubFactory in other factories.
+        if not isinstance(self, StubObject):
+            self.set_password(password)
 
     @classmethod
     def _after_postgeneration(cls, instance, create, results=None):
