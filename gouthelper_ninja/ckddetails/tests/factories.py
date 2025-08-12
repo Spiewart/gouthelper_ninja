@@ -23,7 +23,7 @@ class CkdDetailFactory(DjangoModelFactory):
             )
         ),
     )
-    dialysis = None
+    dialysis = False
     dialysis_type = Maybe(
         "dialysis",
         yes_declaration=fuzzy.FuzzyChoice(DialysisChoices),

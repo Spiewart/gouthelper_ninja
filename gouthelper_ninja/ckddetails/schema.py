@@ -4,6 +4,7 @@ from typing import Self
 from ninja import Schema
 from pydantic import Field
 from pydantic import computed_field
+from pydantic import field_validator
 from pydantic import model_validator
 
 from gouthelper_ninja.ckddetails.choices import DialysisChoices
@@ -41,6 +42,46 @@ class CkdDetailEditSchema(Schema):
         le=20.00,
     )
     gender: Genders | None = None
+
+    # There shouldn't be any dialysis_duration info if not on dialysis
+    @field_validator("dialysis_duration", mode="after")
+    @classmethod
+    def validate_dialysis_duration(cls, value, info):  # pylint: disable=E0213
+        """Ensure that dialysis_duration is only set if dialysis is True."""
+
+        if info.data:
+            if value is None and info.data.get("dialysis"):
+                msg = "dialysis_duration must be provided if dialysis is True."
+
+                raise ValueError(
+                    msg,
+                )
+            if value is not None and not info.data.get("dialysis"):
+                msg = "dialysis_duration should not be set if dialysis is False."
+                raise ValueError(
+                    msg,
+                )
+        return value
+
+    # There shouldn't be a dialysis_type info if not on dialysis
+    @field_validator("dialysis_type", mode="after")
+    @classmethod
+    def validate_dialysis_type(cls, value, info):  # pylint: disable=E0213
+        """Ensure that dialysis_type is only set if dialysis is True."""
+        if info.data:
+            if value is None and info.data.get("dialysis"):
+                # If dialysis is True, dialysis_type must be provided
+                msg = "dialysis_type must be provided if dialysis is True."
+                raise ValueError(
+                    msg,
+                )
+            if value is not None and not info.data.get("dialysis"):
+                # If dialysis is False, dialysis_type should not be set
+                msg = "dialysis_type should not be set if dialysis is False."
+                raise ValueError(
+                    msg,
+                )
+        return value
 
     @computed_field
     @property
@@ -95,18 +136,6 @@ class CkdDetailEditSchema(Schema):
                 msg = (
                     f"Provided stage: {self.stage} does not match "
                     f"calculated stage: {self.calculated_stage}.",
-                )
-                raise ValueError(msg)
-        return self
-
-    @model_validator(mode="after")
-    def dialysis_info_valid(self) -> Self:
-        """If dialysis is True, dialysis_duration and dialysis_type must be set."""
-        if self.dialysis:
-            if not self.dialysis_duration or not self.dialysis_type:
-                msg = (
-                    "If dialysis is True, both dialysis_duration and "
-                    "dialysis_type must be provided.",
                 )
                 raise ValueError(msg)
         return self
