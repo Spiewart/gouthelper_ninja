@@ -59,8 +59,3 @@ class Gender(
     def get_absolute_url(self):
         """Returns the absolute URL for the Ethnicity's patient."""
         return self.patient.get_absolute_url()
-
-    def update(self, data: GenderEditSchema) -> "Gender":
-        """Update the Gender instance with the given kwargs."""
-
-        return super().update(data=data)

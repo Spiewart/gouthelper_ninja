@@ -1,5 +1,6 @@
 import uuid
 from typing import TYPE_CHECKING
+from typing import Self
 
 from django.db.models import Manager
 from django.db.models import Model
@@ -59,17 +60,23 @@ class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
         self.delete_needed = False
         super().delete(*args, **kwargs)
 
-    def update(self, data: "Schema") -> Model:
+    def update(self, data: "Schema") -> Self:
         """Updates the Model instance and related models.
         Schema fields are Model fields or related models
         with their respective editing Schema."""
 
+        # Loop over the Schema fields
         for attr_name, attr_data in data.model_dump().items():
+            # Check if the Schema field is a Model or Field
             attr: Model | Field = getattr(self, attr_name)
+            # If it's a Model, update it with the Schema data
             if isinstance(attr, Model) and attr_data is not None:
                 attr.update(data=attr.edit_schema(**attr_data))
+            # Otherwise, it's a Field, so set the value directly
             else:
                 attr_val = getattr(self, attr_name, None)
+                # If the value is different, set it and mark the model as
+                # needing to be saved
                 if attr_val != attr_data:
                     setattr(self, attr_name, attr_data)
                     self.save_needed = True

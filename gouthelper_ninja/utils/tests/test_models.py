@@ -138,6 +138,10 @@ class TestGoutHelperModel(TestCase):
         assert obj.value == new_data.value
         assert related_obj.name == "Related New"
 
+    # https://docs.pytest.org/en/stable/reference/reference.html#:~:text=pytest.mark.filterwarnings
+    @pytest.mark.filterwarnings(
+        "ignore:.*Pydantic serializer warning.*:UserWarning",
+    )
     def test_update_calls_full_clean_before_save(self):
         obj = DummyModel.objects.create(name="Valid", value=1)
 

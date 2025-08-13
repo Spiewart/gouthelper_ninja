@@ -104,7 +104,3 @@ dose adjustment (titration) phase?",
     def get_absolute_url(self):
         """Returns the absolute URL for the Ethnicity's patient."""
         return self.patient.get_absolute_url()
-
-    def update(self, data: GoutDetailEditSchema) -> "GoutDetail":
-        """Update the GoutDetail instance with the given kwargs."""
-        return super().update(data=data)

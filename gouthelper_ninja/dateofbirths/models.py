@@ -61,8 +61,3 @@ class DateOfBirth(
     def get_absolute_url(self):
         """Return the absolute URL for the DateOfBirth instance."""
         return self.patient.get_absolute_url()
-
-    def update(self, data: DateOfBirthEditSchema) -> "DateOfBirth":
-        """Update the DateOfBirth instance with the given kwargs."""
-
-        return super().update(data=data)

@@ -10,4 +10,4 @@ if TYPE_CHECKING:
 
 class CkdDetailManager(Manager):
     def gh_create(self, data: CkdDetailEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
+        return self.create(**data.model_dump(), patient_id=patient_id)
