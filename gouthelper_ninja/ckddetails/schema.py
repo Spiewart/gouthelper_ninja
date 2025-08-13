@@ -1,10 +1,12 @@
 from decimal import Decimal
+from typing import Any
 from typing import Self
 
 from ninja import Schema
 from pydantic import Field
 from pydantic import computed_field
 from pydantic import field_validator
+from pydantic import model_serializer
 from pydantic import model_validator
 
 from gouthelper_ninja.ckddetails.choices import DialysisChoices
@@ -20,7 +22,6 @@ class CkdDetailEditSchema(Schema):
     dialysis: bool = False
     dialysis_duration: DialysisDurations | None = None
     dialysis_type: DialysisChoices | None = None
-    stage: Stages | None = None
     age: int | None = Field(
         default=None,
         description=(
@@ -42,45 +43,59 @@ class CkdDetailEditSchema(Schema):
         le=20.00,
     )
     gender: Genders | None = None
+    stage: Stages | None = None
+
+    @model_serializer
+    def serialize_ckddetail(self) -> dict[str, Any]:
+        return {
+            "dialysis": self.dialysis,
+            "dialysis_duration": self.dialysis_duration,
+            "dialysis_type": self.dialysis_type,
+            "stage": (
+                Stages.FIVE
+                if self.dialysis
+                else self.stage
+                if self.stage
+                else self.calculated_stage
+            ),
+        }
 
     # There shouldn't be any dialysis_duration info if not on dialysis
     @field_validator("dialysis_duration", mode="after")
     @classmethod
-    def validate_dialysis_duration(cls, value, info):  # pylint: disable=E0213
+    def validate_dialysis_duration(cls, value, info):
         """Ensure that dialysis_duration is only set if dialysis is True."""
 
-        if info.data:
-            if value is None and info.data.get("dialysis"):
-                msg = "dialysis_duration must be provided if dialysis is True."
+        if value is None and info.data.get("dialysis"):
+            msg = "dialysis_duration must be provided if dialysis is True."
 
-                raise ValueError(
-                    msg,
-                )
-            if value is not None and not info.data.get("dialysis"):
-                msg = "dialysis_duration should not be set if dialysis is False."
-                raise ValueError(
-                    msg,
-                )
+            raise ValueError(
+                msg,
+            )
+        if value is not None and not info.data.get("dialysis"):
+            msg = "dialysis_duration should not be set if dialysis is False."
+            raise ValueError(
+                msg,
+            )
         return value
 
     # There shouldn't be a dialysis_type info if not on dialysis
     @field_validator("dialysis_type", mode="after")
     @classmethod
-    def validate_dialysis_type(cls, value, info):  # pylint: disable=E0213
+    def validate_dialysis_type(cls, value, info):
         """Ensure that dialysis_type is only set if dialysis is True."""
-        if info.data:
-            if value is None and info.data.get("dialysis"):
-                # If dialysis is True, dialysis_type must be provided
-                msg = "dialysis_type must be provided if dialysis is True."
-                raise ValueError(
-                    msg,
-                )
-            if value is not None and not info.data.get("dialysis"):
-                # If dialysis is False, dialysis_type should not be set
-                msg = "dialysis_type should not be set if dialysis is False."
-                raise ValueError(
-                    msg,
-                )
+        if value is None and info.data.get("dialysis"):
+            # If dialysis is True, dialysis_type must be provided
+            msg = "dialysis_type must be provided if dialysis is True."
+            raise ValueError(
+                msg,
+            )
+        if value is not None and not info.data.get("dialysis"):
+            # If dialysis is False, dialysis_type should not be set
+            msg = "dialysis_type should not be set if dialysis is False."
+            raise ValueError(
+                msg,
+            )
         return value
 
     @computed_field
@@ -97,6 +112,14 @@ class CkdDetailEditSchema(Schema):
                 ),
             )
         return None
+
+    @field_validator("stage", mode="after")
+    @classmethod
+    def validate_stage(cls, value, info):
+        """If dialysis is True and stage is not provided, set stage to 5."""
+        if info.data.get("dialysis") and value is None:
+            return Stages.FIVE
+        return value
 
     @model_validator(mode="after")
     def stage_dialysis_valid(self) -> Self:

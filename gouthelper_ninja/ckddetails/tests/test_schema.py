@@ -39,6 +39,46 @@ class TestCkdDetailEditSchema:
         )
         assert schema.calculated_stage is None
 
+    def test__serializer_ckddetail(self):
+        # Schema with dialysis returns stage 5
+        schema = CkdDetailEditSchema(
+            dialysis=True,
+            dialysis_duration=DialysisDurations.LESSTHANSIX,
+            dialysis_type=DialysisChoices.HEMODIALYSIS,
+            stage=None,
+        )
+        serialized = schema.model_dump()
+        assert serialized["stage"] == Stages.FIVE
+        assert serialized["dialysis"] is True
+        assert serialized["dialysis_duration"] == DialysisDurations.LESSTHANSIX
+        assert serialized["dialysis_type"] == DialysisChoices.HEMODIALYSIS
+
+        # Schema with a calculated stage but no stage or dialysis
+        # returns calculated stage
+        schema = CkdDetailEditSchema(
+            age=50,
+            creatinine=Decimal("1.0"),
+            gender=Genders.MALE,
+            stage=None,
+            dialysis=False,
+        )
+        serialized = schema.model_dump()
+        assert serialized["stage"] == schema.calculated_stage
+        assert serialized["dialysis"] is False
+        assert serialized["dialysis_duration"] is None
+        assert serialized["dialysis_type"] is None
+
+        # Schema with a stage and no dialysis returns stage
+        schema = CkdDetailEditSchema(
+            stage=Stages.FOUR,
+            dialysis=False,
+        )
+        serialized = schema.model_dump()
+        assert serialized["stage"] == Stages.FOUR
+        assert serialized["dialysis"] is False
+        assert serialized["dialysis_duration"] is None
+        assert serialized["dialysis_type"] is None
+
     def test_stage_dialysis_valid(self):
         ckddetail_kwargs = CkdDetailFactory.stub(
             dialysis=True,
@@ -155,3 +195,17 @@ class TestCkdDetailEditSchema:
                 dialysis_type=DialysisChoices.HEMODIALYSIS,
             )
         assert "dialysis_type should not be set if dialysis is False." in str(exc.value)
+
+    def test__validate_stage(self):
+        # Schema with a stage is valid
+        assert CkdDetailEditSchema(stage=Stages.THREE)
+
+        # Schema without a stage but with dialysis=True is valid
+        valid_ckddetail = CkdDetailEditSchema(
+            dialysis=True,
+            dialysis_duration=DialysisDurations.LESSTHANSIX,
+            dialysis_type=DialysisChoices.HEMODIALYSIS,
+            stage=None,
+        )
+        # If dialysis is True and no stage is provided, stage is set to 5
+        assert valid_ckddetail.stage == Stages.FIVE
