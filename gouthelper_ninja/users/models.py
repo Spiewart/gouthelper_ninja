@@ -189,12 +189,6 @@ class Patient(User):
             "view": view_patient,
         }
 
-    def update(self, data: PatientEditSchema) -> "Patient":
-        """Updates the Patient instance and related models.
-        Overwritten to use PatientEditSchema for validation."""
-
-        return super().update(data=data)
-
 
 class Provider(User):
     # This sets the user type to PROVIDER during record creation

@@ -39,5 +39,5 @@ def update_dateofbirth(
             403,
             message=msg,
         )
-    dob.update(data=data)
+    dob.gh_update(data=data)
     return dob

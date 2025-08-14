@@ -10,4 +10,7 @@ if TYPE_CHECKING:
 
 class CkdDetailManager(Manager):
     def gh_create(self, data: CkdDetailEditSchema, patient_id: "UUID"):
+        """Uses Pydantic schema CkdDetailEditSchema to validate and create a
+        CKD detail for a patient."""
+
         return self.create(**data.model_dump(), patient_id=patient_id)

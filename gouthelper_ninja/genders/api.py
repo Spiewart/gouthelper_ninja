@@ -39,5 +39,5 @@ def update_gender(
             403,
             message=msg,
         )
-    gender.update(data=data)
+    gender.gh_update(data=data)
     return gender

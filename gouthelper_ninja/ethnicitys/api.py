@@ -39,5 +39,5 @@ def update_ethnicity(
             403,
             message=msg,
         )
-    ethnicity.update(data=data)
+    ethnicity.gh_update(data=data)
     return ethnicity

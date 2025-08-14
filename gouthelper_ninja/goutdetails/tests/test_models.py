@@ -21,7 +21,7 @@ class TestGoutDetailModel:
         patient = PatientFactory(goutdetail__at_goal=False, goutdetail__flaring=True)
         gout_detail = patient.goutdetail
         data = GoutDetailEditSchema(at_goal=True, flaring=False)
-        updated = gout_detail.update(data)
+        updated = gout_detail.gh_update(data)
         assert updated.at_goal is True
         assert updated.flaring is False
         gout_detail.refresh_from_db()
@@ -48,7 +48,7 @@ class TestGoutDetailModel:
             original_save(*args, **kwargs)
 
         gout_detail.save = mock_save
-        updated = gout_detail.update(data)
+        updated = gout_detail.gh_update(data)
         assert updated.at_goal is True
         assert not save_called
         gout_detail.save = original_save
@@ -96,7 +96,7 @@ class TestGoutDetailModel:
         assert initial_history.at_goal is False
         # Update
         data = GoutDetailEditSchema(at_goal=True)
-        gout_detail.update(data)
+        gout_detail.gh_update(data)
         expected_history_count = 2
         assert gout_detail.history.count() == expected_history_count
         latest_history = gout_detail.history.first()

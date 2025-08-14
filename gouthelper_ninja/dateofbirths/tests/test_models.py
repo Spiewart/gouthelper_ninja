@@ -26,7 +26,7 @@ class TestDateOfBirthModel:
         dob = DateOfBirthFactory(dateofbirth=date(1990, 5, 15))
         new_date = date(1992, 8, 20)
         data = DateOfBirthEditSchema(dateofbirth=new_date)
-        updated_dob = dob.update(data)
+        updated_dob = dob.gh_update(data)
 
         assert updated_dob.dateofbirth == new_date
         # Verify it's saved in the database
@@ -48,7 +48,7 @@ class TestDateOfBirthModel:
         dob.save = mock_save
 
         data = DateOfBirthEditSchema(dateofbirth=original_date)
-        updated_dob = dob.update(data)
+        updated_dob = dob.gh_update(data)
 
         assert updated_dob.dateofbirth == original_date
         assert not save_called

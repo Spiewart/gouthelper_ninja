@@ -46,7 +46,7 @@ class TestGenderModel:
             new_gender_enum = Genders.MALE  # Should not happen with current setup
 
         data = GenderEditSchema(gender=new_gender_enum)
-        updated_gender = gender_obj.update(data)
+        updated_gender = gender_obj.gh_update(data)
 
         assert updated_gender.gender == new_gender_enum.value
         gender_obj.refresh_from_db()
@@ -71,7 +71,7 @@ class TestGenderModel:
         gender_obj.save = mock_save
 
         data = GenderEditSchema(gender=original_gender_enum)
-        updated_gender = gender_obj.update(data)
+        updated_gender = gender_obj.gh_update(data)
 
         assert updated_gender.gender == original_gender_value
         assert not save_called  # Save should not be called if value hasn't changed
@@ -109,7 +109,7 @@ class TestGenderModel:
             new_gender_enum = Genders.MALE  # Should not happen
 
         data = GenderEditSchema(gender=new_gender_enum)
-        gender_obj.update(data)  # This calls save if changed
+        gender_obj.gh_update(data)  # This calls save if changed
 
         expected_history_count = 2
         assert gender_obj.history.count() == expected_history_count

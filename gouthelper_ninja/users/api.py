@@ -82,5 +82,5 @@ def update_patient(request, patient_id: str, data: PatientEditSchema) -> Patient
             403,
             f"{request.user} does not have permission to edit this patient.",
         )
-    patient.update(data=data)
+    patient.gh_update(data=data)
     return patient

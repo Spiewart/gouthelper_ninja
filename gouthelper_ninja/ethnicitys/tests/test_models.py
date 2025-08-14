@@ -49,7 +49,7 @@ class TestEthnicityModel:
             new_ethnicity_enum = Ethnicitys.KOREAN  # Pick another different one
 
         data = EthnicityEditSchema(ethnicity=new_ethnicity_enum)
-        updated_ethnicity = ethnicity_obj.update(data)
+        updated_ethnicity = ethnicity_obj.gh_update(data)
 
         assert updated_ethnicity.ethnicity == new_ethnicity_enum.value
         ethnicity_obj.refresh_from_db()
@@ -77,7 +77,7 @@ class TestEthnicityModel:
         ethnicity_obj.save = mock_save
 
         data = EthnicityEditSchema(ethnicity=original_ethnicity_enum)
-        updated_ethnicity = ethnicity_obj.update(data)
+        updated_ethnicity = ethnicity_obj.gh_update(data)
 
         assert updated_ethnicity.ethnicity == original_ethnicity_value
         assert not save_called
@@ -118,7 +118,7 @@ class TestEthnicityModel:
             new_ethnicity_enum = Ethnicitys.THAI  # Ensure different
 
         data = EthnicityEditSchema(ethnicity=new_ethnicity_enum)
-        ethnicity_obj.update(data)  # This calls save if changed
+        ethnicity_obj.gh_update(data)  # This calls save if changed
 
         expecrted_history_count = 2
         assert ethnicity_obj.history.count() == expecrted_history_count

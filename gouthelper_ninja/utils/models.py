@@ -60,10 +60,10 @@ class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
         self.delete_needed = False
         super().delete(*args, **kwargs)
 
-    def update(self, data: "Schema") -> Self:
-        """Updates the Model instance and related models.
-        Schema fields are Model fields or related models
-        with their respective editing Schema."""
+    def gh_update(self, data: "Schema") -> Self:
+        """Updates the Model instance and related models using
+        data via a Pydantic Schema. Schema fields are Model fields
+        or related models with their respective editing Schema."""
 
         # Loop over the Schema fields
         for attr_name, attr_data in data.model_dump().items():
@@ -71,7 +71,7 @@ class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
             attr: Model | Field = getattr(self, attr_name)
             # If it's a Model, update it with the Schema data
             if isinstance(attr, Model) and attr_data is not None:
-                attr.update(data=attr.edit_schema(**attr_data))
+                attr.gh_update(data=attr.edit_schema(**attr_data))
             # Otherwise, it's a Field, so set the value directly
             else:
                 attr_val = getattr(self, attr_name, None)

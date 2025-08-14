@@ -37,7 +37,7 @@ class TestPatient(TestCase):
                 "starting_ult": True,
             },
         )
-        patient = self.patient.update(data=data)
+        patient = self.patient.gh_update(data=data)
         assert patient.dateofbirth.dateofbirth.strftime("%Y-%m-%d") == "2000-01-01"
         assert patient.ethnicity.ethnicity == Ethnicitys.KOREAN
         assert patient.gender.gender == Genders.FEMALE

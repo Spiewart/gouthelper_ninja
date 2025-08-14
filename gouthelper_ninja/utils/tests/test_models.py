@@ -26,10 +26,10 @@ class DummySchema(Schema):
 class DummyRelatedModel(GoutHelperModel):
     name = models.CharField(max_length=255)
 
-    # This is required by GoutHelperModel.update()
+    # This is required by GoutHelperModel.gh_update()
     edit_schema = DummyRelatedSchema
 
-    def update(self, data: DummyRelatedSchema):
+    def gh_update(self, data: DummyRelatedSchema):
         # Simulate update logic for related model
         if self.name != data.name:
             self.name = data.name
@@ -83,7 +83,7 @@ class TestGoutHelperModel(TestCase):
         obj = DummyModel.objects.create(name="Old Name", value=10)
 
         new_data = DummySchema(name="New Name", value=20)
-        updated_obj = obj.update(data=new_data)
+        updated_obj = obj.gh_update(data=new_data)
 
         assert updated_obj.name == "New Name"
         assert updated_obj.value == new_data.value
@@ -99,7 +99,7 @@ class TestGoutHelperModel(TestCase):
         new_data = DummySchema(name="Same Name", value=10)
         # Patch save to ensure it's not called if no changes
         with patch.object(obj, "save") as mock_save:
-            updated_obj = obj.update(data=new_data)
+            updated_obj = obj.gh_update(data=new_data)
             mock_save.assert_not_called()
 
         assert updated_obj.name == "Same Name"
@@ -120,10 +120,10 @@ class TestGoutHelperModel(TestCase):
         # Patch the related model's update method to verify it's called
         with patch.object(
             related_obj,
-            "update",
-            wraps=related_obj.update,
+            "gh_update",
+            wraps=related_obj.gh_update,
         ) as mock_related_update:
-            updated_obj = obj.update(data=new_data)
+            updated_obj = obj.gh_update(data=new_data)
             mock_related_update.assert_called_once_with(data=new_related_data)
 
         assert updated_obj.name == "Main Updated"
@@ -148,14 +148,14 @@ class TestGoutHelperModel(TestCase):
         new_data = DummySchema(name="Name is just right", value=2)
         new_data.value = "But value is not valid int"
         with pytest.raises(ValidationError):
-            obj.update(data=new_data)
+            obj.gh_update(data=new_data)
 
     def test_update_with_none_related_model_remains_none(self):
         obj = DummyModel.objects.create(name="Main", value=1, related_model=None)
 
         # Update with new simple fields, related_model remains None
         new_data = DummySchema(name="Main Updated", value=2, related_model=None)
-        updated_obj = obj.update(data=new_data)
+        updated_obj = obj.gh_update(data=new_data)
 
         assert updated_obj.name == "Main Updated"
         assert updated_obj.value == new_data.value
@@ -179,7 +179,7 @@ class TestGoutHelperModel(TestCase):
         # This will fail because `setattr(self, 'related_model', new_related_data)`
         # is not a valid assignment for a ForeignKey field.
         with pytest.raises(ValueError, match="Cannot assign"):
-            obj.update(data=new_data)
+            obj.gh_update(data=new_data)
 
 
 class TestGetStrAttrsMixin(TestCase):
