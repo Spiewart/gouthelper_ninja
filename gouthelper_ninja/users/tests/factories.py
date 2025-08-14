@@ -14,6 +14,7 @@ from gouthelper_ninja.ethnicitys.tests.factories import EthnicityFactory
 from gouthelper_ninja.genders.tests.factories import GenderFactory
 from gouthelper_ninja.goutdetails.tests.factories import GoutDetailFactory
 from gouthelper_ninja.medhistorys.choices import MHTypes
+from gouthelper_ninja.medhistorys.helpers import menopause_required
 from gouthelper_ninja.medhistorys.tests.factories import MedHistoryFactory
 from gouthelper_ninja.profiles.helpers import get_provider_alias
 from gouthelper_ninja.profiles.tests.factories import PatientProfileFactory
@@ -103,7 +104,17 @@ class PatientFactory(UserFactory):
         MedHistory for the patient."""
 
         if create:
-            if extracted != "OMIT":
+            if extracted != "OMIT" and (
+                extracted is not None
+                or (
+                    hasattr(self, "dateofbirth")
+                    and hasattr(self, "gender")
+                    and menopause_required(
+                        gender=self.gender.gender,
+                        age=age_calc(self.dateofbirth.dateofbirth),
+                    )
+                )
+            ):
                 if extracted is not None:
                     kwargs["history_of"] = extracted
                 MedHistoryFactory(

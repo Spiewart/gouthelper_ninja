@@ -990,9 +990,7 @@ class TestPatientUpdateView(TestCase):
         assert response.context_data["object"] == self.patient
         assert "menopause_form" in response.context_data
         assert isinstance(response.context_data["menopause_form"], MedHistoryForm)
-        assert response.context_data["menopause_form"].initial == {
-            "history_of": self.patient.menopause.history_of,
-        }
+        assert self.patient.menopause is None
 
     def test__post(self):
         num_patients = Patient.objects.count()
@@ -1098,7 +1096,7 @@ class TestPatientUpdateView(TestCase):
         )
         assert self.patient.ethnicity.ethnicity == self.data["ethnicity"]
         assert self.patient.gender.gender == self.data["gender"]
-        assert self.patient.menopause.history_of == self.data["menopause-history_of"]
+        assert self.patient.menopause is None
         assert self.patient.gout.history_of == self.data["gout-history_of"]
         assert self.patient.goutdetail.flaring == self.data["flaring"]
         assert self.patient.goutdetail.at_goal == self.data["at_goal"]

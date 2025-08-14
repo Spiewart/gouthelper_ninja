@@ -1,11 +1,28 @@
 from typing import TYPE_CHECKING
 from typing import Union
 
+from gouthelper_ninja.constants import MAX_MENOPAUSE_AGE
+from gouthelper_ninja.constants import MIN_MENOPAUSE_AGE
+from gouthelper_ninja.genders.choices import Genders
+
 if TYPE_CHECKING:
     from django.db.models import QuerySet
 
     from gouthelper_ninja.medhistorys.choices import MHTypes
     from gouthelper_ninja.medhistorys.models import MedHistory
+
+
+def menopause_required(
+    gender: Genders,
+    age: int,
+) -> bool:
+    """Returns True if menopause is required for the provided
+    gender and age."""
+    return (
+        age >= MIN_MENOPAUSE_AGE
+        and age < MAX_MENOPAUSE_AGE
+        and gender == Genders.FEMALE
+    )
 
 
 def search_medhistorys_by_mhtype(
