@@ -46,7 +46,6 @@ class TestCreatePatient(TestCase):
         # Fetch patient by most recently created, will avoid problems
         # if fixtures are added later to create patients at test initialization.
         patient = Patient.objects.order_by("-created").first()
-        assert isinstance(patient, Patient)
         assert str(patient.id) == response.json()["id"]
         assert patient.patientprofile.provider is None
         assert patient.patientprofile.provider_alias is None

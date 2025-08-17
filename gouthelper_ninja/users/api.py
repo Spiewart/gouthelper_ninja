@@ -26,7 +26,7 @@ def get_patients(request) -> list[Patient]:
     )
 
 
-@router.post("/patients/create", response=PatientSchema)
+@router.post("/patients/create", response={200: PatientSchema})
 def create_patient(request, data: PatientEditSchema) -> Patient:
     return Patient.objects.gh_create(data=data)
 

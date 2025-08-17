@@ -19,6 +19,10 @@ from gouthelper_ninja.utils.schema import PatientIdSchema
 
 
 class CkdDetailEditSchema(Schema):
+    """Schema for editing CkdDetail instances. Includes age, creatinine,
+    and gender fields, which are not part of the CkdDetail model but are
+    required to edit or create a CkdDetail."""
+
     dialysis: bool = False
     dialysis_duration: DialysisDurations | None = None
     dialysis_type: DialysisChoices | None = None
@@ -45,27 +49,11 @@ class CkdDetailEditSchema(Schema):
     gender: Genders | None = None
     stage: Stages | None = None
 
-    @model_serializer
-    def serialize_ckddetail(self) -> dict[str, Any]:
-        return {
-            "dialysis": self.dialysis,
-            "dialysis_duration": self.dialysis_duration,
-            "dialysis_type": self.dialysis_type,
-            "stage": (
-                Stages.FIVE
-                if self.dialysis
-                else self.stage
-                if self.stage
-                else self.calculated_stage
-            ),
-        }
-
     # There shouldn't be any dialysis_duration info if not on dialysis
     @field_validator("dialysis_duration", mode="after")
     @classmethod
     def validate_dialysis_duration(cls, value, info):
         """Ensure that dialysis_duration is only set if dialysis is True."""
-
         if value is None and info.data.get("dialysis"):
             msg = "dialysis_duration must be provided if dialysis is True."
 
@@ -163,16 +151,44 @@ class CkdDetailEditSchema(Schema):
                 raise ValueError(msg)
         return self
 
+    @model_serializer
+    def serialize_ckddetail(self) -> dict[str, Any]:
+        """Returns only the fields relevant for editing a
+        CkdDetail instance."""
+
+        return {
+            "dialysis": self.dialysis,
+            "dialysis_duration": self.dialysis_duration,
+            "dialysis_type": self.dialysis_type,
+            "stage": (
+                Stages.FIVE
+                if self.dialysis
+                else self.stage
+                if self.stage
+                else self.calculated_stage
+            ),
+        }
+
 
 class CkdDetailSchema(PatientIdSchema, CkdDetailEditSchema):
     class Config:
         json_schema_extra = {
             "example": {
                 "patient_id": "patient_id",
-                "id": "gout_detail_id",
-                "stage": 3,
-                "dialysis": False,
-                "dialysis_duration": "nan",
-                "dialysis_type": "nan",
+                "id": "ckddetail_id",
+                "dialysis": True,
+                "dialysis_duration": DialysisDurations.MORETHANYEAR,
+                "dialysis_type": DialysisChoices.HEMODIALYSIS,
+                "stage": Stages.FIVE,
             },
+        }
+
+    @model_serializer
+    def serialize_ckddetail(self) -> dict[str, Any]:
+        """Returns all fields for serialization of a CkdDetail instance."""
+        serialized = super().serialize_ckddetail()
+        return {
+            **serialized,
+            "id": str(self.patient_id),
+            "patient_id": str(self.patient_id),
         }

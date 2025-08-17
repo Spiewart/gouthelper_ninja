@@ -9,6 +9,7 @@ from factory import post_generation
 from factory.base import StubObject
 from factory.django import DjangoModelFactory
 
+from gouthelper_ninja.ckddetails.tests.factories import CkdDetailFactory
 from gouthelper_ninja.dateofbirths.tests.factories import DateOfBirthFactory
 from gouthelper_ninja.ethnicitys.tests.factories import EthnicityFactory
 from gouthelper_ninja.genders.tests.factories import GenderFactory
@@ -247,6 +248,24 @@ class PatientFactory(UserFactory):
                 patient=self,
                 mhtype=MHTypes.CKD,
                 history_of=extracted,
+            )
+
+    @post_generation
+    def ckddetail(
+        self,
+        create: Literal[True, False],
+        extracted: dict[str, Any] | None = None,
+    ) -> None:
+        if create and extracted is not None:
+            if self.ckd is None:
+                MedHistoryFactory(
+                    patient=self,
+                    mhtype=MHTypes.CKD,
+                    history_of=True,
+                )
+            CkdDetailFactory(
+                patient=self,
+                **extracted,
             )
 
     @post_generation

@@ -4,7 +4,7 @@ from django.utils.translation import gettext_lazy as _
 
 class DialysisChoices(IntegerChoices):
     HEMODIALYSIS = 1, _("Hemodialysis")
-    PERITONEAL = 2, _("Peritoneal")
+    PERITONEAL = 2, _("Peritoneal Dialysis")
 
 
 class DialysisDurations(IntegerChoices):

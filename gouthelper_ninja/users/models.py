@@ -115,6 +115,12 @@ class User(
         )
 
     @cached_property
+    def ckd(self) -> Union["MedHistory", None]:
+        """The Patient's CKD MedHistory or None if
+        it does not exist."""
+        return self.get_medhistory(MHTypes.CKD)
+
+    @cached_property
     def diabetes(self) -> Union["MedHistory", None]:
         """The Patient's diabetes MedHistory or None if
         it does not exist."""

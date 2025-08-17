@@ -13,6 +13,7 @@ from gouthelper_ninja.choices import BOOL_CHOICES
 from gouthelper_ninja.ckddetails.choices import DialysisChoices
 from gouthelper_ninja.ckddetails.choices import DialysisDurations
 from gouthelper_ninja.ckddetails.choices import Stages
+from gouthelper_ninja.ckddetails.managers import CkdDetailManager
 from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperModel
 
@@ -97,12 +98,12 @@ class CkdDetail(
     )
     patient = OneToOneField(User, on_delete=CASCADE, editable=False)
     history = HistoricalRecords(get_user=get_user_change)
+    objects = CkdDetailManager()
 
     @property
     def explanation(self):
         if self.dialysis:
-            return f"CKD on {self.get_dialysis_type_display().lower()}\
-{' dialysis' if self.dialysis_type != 'HEMODIALYSIS' else ''}"
+            return f"CKD on {self.get_dialysis_type_display().lower()}"
         return f"CKD stage {self.get_stage_display()}"
 
     def __str__(self):
