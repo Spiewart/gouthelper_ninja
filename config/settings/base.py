@@ -89,6 +89,7 @@ LOCAL_APPS = [
     "gouthelper_ninja.ethnicitys",
     "gouthelper_ninja.genders",
     "gouthelper_ninja.ckddetails",
+    "gouthelper_ninja.labs",
     "gouthelper_ninja.medhistorys",
     "gouthelper_ninja.goutdetails",
     "gouthelper_ninja.ults",
