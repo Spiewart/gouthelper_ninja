@@ -10,7 +10,7 @@ class BaselineCreatinineHistoryAdmin(SimpleHistoryAdmin):
         "value",
         "patient",
         "created",
-        "updated",
+        "modified",
         "pk",
     )
     history_list_display = ["status"]

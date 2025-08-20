@@ -1,6 +1,8 @@
 from collections.abc import Sequence
+from typing import TYPE_CHECKING
 from typing import Any
 from typing import Literal
+from typing import Union
 from uuid import UUID
 
 from factory import Faker
@@ -14,6 +16,7 @@ from gouthelper_ninja.dateofbirths.tests.factories import DateOfBirthFactory
 from gouthelper_ninja.ethnicitys.tests.factories import EthnicityFactory
 from gouthelper_ninja.genders.tests.factories import GenderFactory
 from gouthelper_ninja.goutdetails.tests.factories import GoutDetailFactory
+from gouthelper_ninja.labs.tests.factories import BaselineCreatinineFactory
 from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.medhistorys.helpers import menopause_required
 from gouthelper_ninja.medhistorys.tests.factories import MedHistoryFactory
@@ -21,6 +24,9 @@ from gouthelper_ninja.profiles.helpers import get_provider_alias
 from gouthelper_ninja.profiles.tests.factories import PatientProfileFactory
 from gouthelper_ninja.users.models import User
 from gouthelper_ninja.utils.helpers import age_calc
+
+if TYPE_CHECKING:
+    from decimal import Decimal
 
 
 class UserFactory(DjangoModelFactory[User]):
@@ -96,7 +102,7 @@ class PatientFactory(UserFactory):
     def menopause(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False, "OMIT"] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False, "OMIT"] | None,
         **kwargs,
     ) -> None:
         """Post-generation hook to create a Menopause MedHistory for the patient.
@@ -152,7 +158,7 @@ class PatientFactory(UserFactory):
     def creator(
         self,
         create: Literal[True, False],
-        extracted: User | UUID | None = None,
+        extracted: User | UUID | None,
         **kwargs,
     ) -> None:
         """Post-generation hook to set the creator of the patient, which is a
@@ -176,7 +182,7 @@ class PatientFactory(UserFactory):
     def angina(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -189,7 +195,7 @@ class PatientFactory(UserFactory):
     def anticoagulation(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -202,7 +208,7 @@ class PatientFactory(UserFactory):
     def bleed(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -215,7 +221,7 @@ class PatientFactory(UserFactory):
     def cad(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -228,7 +234,7 @@ class PatientFactory(UserFactory):
     def chf(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -241,7 +247,7 @@ class PatientFactory(UserFactory):
     def ckd(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -254,25 +260,69 @@ class PatientFactory(UserFactory):
     def ckddetail(
         self,
         create: Literal[True, False],
-        extracted: dict[str, Any] | None = None,
+        # ckddetail argument can either be a dict of CkdDetail field values
+        # or True, indicating that a CkdDetail should be created
+        # without specific field values
+        extracted: dict[str, Any] | Literal[True] | None,
     ) -> None:
         if create and extracted is not None:
+            # If a CkdDetail is being created, the Patient
+            # should have CKD
             if self.ckd is None:
                 MedHistoryFactory(
                     patient=self,
                     mhtype=MHTypes.CKD,
                     history_of=True,
                 )
+            kwargs = {}
+            # If ckddetail arg is a dictionary of field values
+            # it should be unpacked into the CkdDetailFactory
+            if isinstance(extracted, dict):
+                kwargs = extracted
             CkdDetailFactory(
                 patient=self,
-                **extracted,
+                **kwargs,
             )
+
+    @post_generation
+    def baselinecreatinine(
+        self,
+        create: Literal[True, False],
+        # baselinecreatinine argument can either be a Decimal value
+        # or True, indicating that a BaselineCreatinine should be created
+        # without specific field values
+        extracted: Union["Decimal", Literal[True], None],
+    ) -> None:
+        if create and extracted is not None:
+            # If a BaselineCreatinine is being created, the Patient
+            # should have CKD
+            if self.ckd is None:
+                MedHistoryFactory(
+                    patient=self,
+                    mhtype=MHTypes.CKD,
+                    history_of=True,
+                )
+            if extracted is True:
+                # TODO: If Patient already has a CkdDetail, BaselineCreatinine
+                # TODO: value should be compatible with CKD stage
+                if self.ckddetail:  # pylint: disable=using-constant-test
+                    # Calculate range of creatinine values compatible with
+                    # the CKD stage
+                    pass
+                BaselineCreatinineFactory(
+                    patient=self,
+                )
+            else:
+                BaselineCreatinineFactory(
+                    patient=self,
+                    value=extracted,
+                )
 
     @post_generation
     def colchicineinteraction(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -285,7 +335,7 @@ class PatientFactory(UserFactory):
     def diabetes(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         """Post-generation hook to create a Diabetes MedHistory for the patient.
         Defaults to creating a Diabetes MedHistory with history_of=True."""
@@ -300,7 +350,7 @@ class PatientFactory(UserFactory):
     def erosions(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -313,7 +363,7 @@ class PatientFactory(UserFactory):
     def gastricbypass(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -326,7 +376,7 @@ class PatientFactory(UserFactory):
     def heartattack(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -339,7 +389,7 @@ class PatientFactory(UserFactory):
     def hepatitis(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -352,7 +402,7 @@ class PatientFactory(UserFactory):
     def hypertension(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -365,7 +415,7 @@ class PatientFactory(UserFactory):
     def hyperuricemia(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -378,7 +428,7 @@ class PatientFactory(UserFactory):
     def ibd(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -391,7 +441,7 @@ class PatientFactory(UserFactory):
     def organtransplant(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -404,7 +454,7 @@ class PatientFactory(UserFactory):
     def osteoporosis(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -417,7 +467,7 @@ class PatientFactory(UserFactory):
     def pad(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -430,7 +480,7 @@ class PatientFactory(UserFactory):
     def pud(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -443,7 +493,7 @@ class PatientFactory(UserFactory):
     def stroke(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -456,7 +506,7 @@ class PatientFactory(UserFactory):
     def tophi(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -469,7 +519,7 @@ class PatientFactory(UserFactory):
     def uratestones(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(
@@ -482,7 +532,7 @@ class PatientFactory(UserFactory):
     def xoiinteraction(
         self,
         create: Literal[True, False],
-        extracted: Literal[True, False] | None = True,  # noqa: FBT002
+        extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
             MedHistoryFactory(

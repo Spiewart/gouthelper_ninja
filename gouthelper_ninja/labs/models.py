@@ -71,7 +71,7 @@ class BaselineCreatinine(CreatinineBase, BaselineLab):
     class Meta:
         constraints = [
             CheckConstraint(
-                check=(
+                condition=(
                     Q(lower_limit=CreatinineLimits.LOWERMGDL)
                     & Q(units=Units.MGDL)
                     & Q(upper_limit=CreatinineLimits.UPPERMGDL)
@@ -81,4 +81,4 @@ class BaselineCreatinine(CreatinineBase, BaselineLab):
         ]
 
     def __str__(self):
-        return f"Baseline {self.__str__()}"
+        return f"Baseline {super().__str__()}"

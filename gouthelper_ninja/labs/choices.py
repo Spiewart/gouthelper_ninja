@@ -1,14 +1,13 @@
 from decimal import Decimal
 
 from django.db.models import Choices
-from django.db.models import IntegerChoices
 from django.db.models import TextChoices
 from django.utils.translation import gettext_lazy as _
 
 
-class Abnormalitys(IntegerChoices):
-    LOW = 0, _("Low")
-    HIGH = 1, _("High")
+class Abnormalitys(TextChoices):
+    LOW = "LOW", _("Low")
+    HIGH = "HIGH", _("High")
 
 
 class LabLimits(Decimal, Choices):
@@ -29,4 +28,4 @@ class UrateLimits(LabLimits):
 class Units(TextChoices):
     """Units of reference choices for Labs."""
 
-    MGDL = "MGDL", _("mg/dL (milligrams per deciliter)")
+    MGDL = "MGDL", _("mg/dL")
