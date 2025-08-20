@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 from factory import SubFactory
 from factory import fuzzy
 from factory.django import DjangoModelFactory
@@ -17,8 +15,8 @@ class BaselineCreatinineFactory(DjangoModelFactory):
     units = Units.MGDL
     upper_limit = CreatinineLimits.UPPERMGDL
     value = fuzzy.FuzzyDecimal(
-        low=Decimal("0.50"),
-        high=Decimal("3.00"),
+        low=0.50,
+        high=5.00,
         precision=2,
     )
     patient = SubFactory(

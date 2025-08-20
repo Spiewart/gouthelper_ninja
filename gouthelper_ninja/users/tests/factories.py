@@ -305,7 +305,7 @@ class PatientFactory(UserFactory):
                 )
             kwargs = {}
             if extracted is True:
-                if self.ckddetail:  # pylint: disable=using-constant-test
+                if hasattr(self, "ckddetail"):
                     # Calculate range of creatinine values compatible with
                     # the CKD stage
                     kwargs.update(
