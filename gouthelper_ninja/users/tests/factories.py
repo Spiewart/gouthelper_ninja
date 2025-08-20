@@ -16,6 +16,7 @@ from gouthelper_ninja.dateofbirths.tests.factories import DateOfBirthFactory
 from gouthelper_ninja.ethnicitys.tests.factories import EthnicityFactory
 from gouthelper_ninja.genders.tests.factories import GenderFactory
 from gouthelper_ninja.goutdetails.tests.factories import GoutDetailFactory
+from gouthelper_ninja.labs.helpers import BaselineCreatinineCalc
 from gouthelper_ninja.labs.tests.factories import BaselineCreatinineFactory
 from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.medhistorys.helpers import menopause_required
@@ -302,21 +303,28 @@ class PatientFactory(UserFactory):
                     mhtype=MHTypes.CKD,
                     history_of=True,
                 )
+            kwargs = {}
             if extracted is True:
-                # TODO: If Patient already has a CkdDetail, BaselineCreatinine
-                # TODO: value should be compatible with CKD stage
                 if self.ckddetail:  # pylint: disable=using-constant-test
                     # Calculate range of creatinine values compatible with
                     # the CKD stage
-                    pass
-                BaselineCreatinineFactory(
-                    patient=self,
-                )
+                    kwargs.update(
+                        {
+                            "value": BaselineCreatinineCalc(
+                                stage=self.ckddetail.stage,
+                                age=self.age,
+                                gender=self.gender,
+                            ).calculate(),
+                        },
+                    )
             else:
-                BaselineCreatinineFactory(
-                    patient=self,
-                    value=extracted,
+                kwargs.update(
+                    {"value": extracted},
                 )
+            BaselineCreatinineFactory(
+                patient=self,
+                **kwargs,
+            )
 
     @post_generation
     def colchicineinteraction(
