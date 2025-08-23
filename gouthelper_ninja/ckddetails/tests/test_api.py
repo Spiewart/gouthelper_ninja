@@ -22,9 +22,11 @@ class TestCreateCkdDetail(TestCase):
             "dialysis_duration": None,
             "dialysis_type": None,
             "stage": Stages.THREE,
-            "age": 45,
-            "gender": Genders.MALE,
-            "creatinine": Decimal("1.9"),
+            "dateofbirth": {
+                "dateofbirth": self.patient.dateofbirth.dateofbirth,
+            },
+            "gender": {"gender": Genders.MALE},
+            "baselinecreatinine": {"value": Decimal("1.9")},
         }
 
     def test__successful_create(self):
