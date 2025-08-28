@@ -1,4 +1,3 @@
-from typing import TYPE_CHECKING
 from typing import Any
 
 from django.views.generic import UpdateView
@@ -9,16 +8,12 @@ from gouthelper_ninja.utils.views import GoutHelperEditMixin
 from gouthelper_ninja.utils.views import GoutHelperUpdateMixin
 from gouthelper_ninja.utils.views import PatientObjectMixin
 
-if TYPE_CHECKING:
-    from django.db.models import Model
-    from django.forms import Form
-
 
 class GoutDetailEditMixin(GoutHelperEditMixin):
     """Mixin for updating GoutDetails."""
 
-    model: type["Model"] = GoutDetail
-    form_class: type["Form"] = GoutDetailForm
+    model = GoutDetail
+    form_class = GoutDetailForm
 
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)

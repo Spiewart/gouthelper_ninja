@@ -8,13 +8,9 @@ from gouthelper_ninja.ckddetails.choices import DialysisDurations
 from gouthelper_ninja.ckddetails.choices import Stages
 from gouthelper_ninja.ckddetails.schema import CkdDetailEditSchema
 from gouthelper_ninja.ckddetails.tests.factories import CkdDetailFactory
-from gouthelper_ninja.dateofbirths.schema import DateOfBirthEditSchema
 from gouthelper_ninja.genders.choices import Genders
-from gouthelper_ninja.genders.schema import GenderEditSchema
 from gouthelper_ninja.labs.helpers import egfr_calculator
 from gouthelper_ninja.labs.helpers import stage_calculator
-from gouthelper_ninja.labs.schema import BaselineCreatinineEditSchema
-from gouthelper_ninja.utils.helpers import dateofbirth_calc
 
 pytestmark = pytest.mark.django_db
 
@@ -23,13 +19,9 @@ class TestCkdDetailEditSchema:
     def test_calculated_stage(self):
         # Test that a schema with enough data returns the correct calculated stage
         schema = CkdDetailEditSchema(
-            dateofbirth=(
-                DateOfBirthEditSchema(
-                    dateofbirth=dateofbirth_calc(50),
-                )
-            ),
-            baselinecreatinine=(BaselineCreatinineEditSchema(value=Decimal("1.0"))),
-            gender=GenderEditSchema(gender=Genders.MALE),
+            age=50,
+            creatinine=Decimal("1.0"),
+            gender=Genders.MALE,
         )
         assert schema.calculated_stage == stage_calculator(
             egfr_calculator(
@@ -40,9 +32,9 @@ class TestCkdDetailEditSchema:
         )
         # Test that a schema without enough data returns None
         schema = CkdDetailEditSchema(
-            dateofbirth=None,
-            baselinecreatinine=(BaselineCreatinineEditSchema(value=Decimal("1.0"))),
-            gender=GenderEditSchema(gender=Genders.MALE),
+            age=None,
+            creatinine=Decimal("1.0"),
+            gender=Genders.MALE,
             stage=Stages.THREE,
         )
         assert schema.calculated_stage is None
@@ -64,13 +56,9 @@ class TestCkdDetailEditSchema:
         # Schema with a calculated stage but no stage or dialysis
         # returns calculated stage
         schema = CkdDetailEditSchema(
-            dateofbirth=(
-                DateOfBirthEditSchema(
-                    dateofbirth=dateofbirth_calc(50),
-                )
-            ),
-            baselinecreatinine=(BaselineCreatinineEditSchema(value=Decimal("1.0"))),
-            gender=GenderEditSchema(gender=Genders.MALE),
+            age=50,
+            creatinine=Decimal("1.0"),
+            gender=Genders.MALE,
             stage=None,
             dialysis=False,
         )
@@ -115,13 +103,9 @@ class TestCkdDetailEditSchema:
         # Test that a schema without dialysis but with enough data to
         # calculate stage is valid
         schema = CkdDetailEditSchema(
-            dateofbirth=(
-                DateOfBirthEditSchema(
-                    dateofbirth=dateofbirth_calc(50),
-                )
-            ),
-            baselinecreatinine=(BaselineCreatinineEditSchema(value=Decimal("1.0"))),
-            gender=GenderEditSchema(gender=Genders.MALE),
+            age=50,
+            creatinine=Decimal("1.0"),
+            gender=Genders.MALE,
         )
         assert schema.stage_dialysis_valid() == schema
 
@@ -129,7 +113,7 @@ class TestCkdDetailEditSchema:
         # stage raises ValidationError
         ckddetail_kwargs.update(
             dialysis=False,
-            dateofbirth=None,
+            age=None,
             stage=None,
             # Set dialysis_duration and dialysis_type to None
             # Avoids ValidationError from field validators
@@ -144,26 +128,21 @@ class TestCkdDetailEditSchema:
         )
 
     def test_stage_same_as_calculated(self):
-        # Test that a schema with stage and calculated stage being the
-        # same is valid
+        # Test that a schema with stage and calculated stage being the same is valid
         schema = CkdDetailEditSchema(
-            dateofbirth=DateOfBirthEditSchema(
-                dateofbirth=dateofbirth_calc(50),
-            ),
-            baselinecreatinine=(BaselineCreatinineEditSchema(value=Decimal("2.0"))),
-            gender=GenderEditSchema(gender=Genders.MALE),
+            age=50,
+            creatinine=Decimal("2.0"),
+            gender=Genders.MALE,
             stage=Stages.THREE,
         )
         assert schema.stage_same_as_calculated() == schema
-        # Test that a schema with stage and calculated stage being different
-        # raises ValidationError
+        # Test that a schema with stage and calculated stage being different raises
+        # ValidationError
         with pytest.raises(ValidationError) as exc:
             CkdDetailEditSchema(
-                dateofbirth=DateOfBirthEditSchema(
-                    dateofbirth=dateofbirth_calc(50),
-                ),
-                baselinecreatinine=(BaselineCreatinineEditSchema(value=Decimal("1.0"))),
-                gender=GenderEditSchema(gender=Genders.MALE),
+                age=50,
+                creatinine=Decimal("1.0"),
+                gender=Genders.MALE,
                 stage=Stages.THREE,
             )
         assert (
@@ -174,23 +153,20 @@ class TestCkdDetailEditSchema:
         )
 
     def test__validate_dialysis_duration(self):
-        # Test that a schema with dialysis set to True and dialysis_duration
-        # set
+        # Test that a schema with dialysis set to True and dialysis_duration set
         assert CkdDetailEditSchema(
             dialysis=True,
             dialysis_duration=DialysisDurations.LESSTHANSIX,
         )
 
-        # Test that a schema with dialysis set to True and no dialysis_duration
-        # raises
+        # Test that a schema with dialysis set to True and no dialysis_duration raises
         with pytest.raises(ValidationError) as exc:
             CkdDetailEditSchema(dialysis=True, dialysis_duration=None)
         assert "dialysis_duration must be provided if dialysis is True." in str(
             exc.value,
         )
 
-        # Test that a schema with dialysis set to False and dialysis_duration
-        # set raises
+        # Test that a schema with dialysis set to False and dialysis_duration set raises
         with pytest.raises(ValidationError) as exc:
             CkdDetailEditSchema(
                 dialysis=False,
@@ -207,14 +183,12 @@ class TestCkdDetailEditSchema:
             dialysis_type=DialysisChoices.HEMODIALYSIS,
         )
 
-        # Test that a schema with dialysis set to True and no dialysis_type
-        # raises
+        # Test that a schema with dialysis set to True and no dialysis_type raises
         with pytest.raises(ValidationError) as exc:
             CkdDetailEditSchema(dialysis=True, dialysis_type=None)
         assert "dialysis_type must be provided if dialysis is True." in str(exc.value)
 
-        # Test that a schema with dialysis set to False and dialysis_type set
-        # raises
+        # Test that a schema with dialysis set to False and dialysis_type set raises
         with pytest.raises(ValidationError) as exc:
             CkdDetailEditSchema(
                 dialysis=False,
