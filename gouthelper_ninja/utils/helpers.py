@@ -37,6 +37,28 @@ def age_calc(date_of_birth: datetime.date) -> int:
     )
 
 
+def dateofbirth_calc(age: int) -> datetime.date:
+    """Function that takes an age and returns a date of birth string.
+
+    Args:
+        age (int): age to calculate date of birth from
+
+    Returns:
+        date: date of birth as datetime object
+    """
+    today = datetime.datetime.now(tz=datetime.UTC).date()
+    try:
+        return today.replace(year=today.year - age)
+    except ValueError:
+        # Handle leap day: if today is Feb 29 and the target year is not a
+        # leap year, replace with Feb 28 to avoid ValueError.
+        return today.replace(
+            month=2,
+            day=28,
+            year=today.year - age,
+        )
+
+
 def check_for_datetime_and_convert_to_date(
     date_or_datetime: datetime.date | datetime.datetime,
 ) -> datetime.date:
@@ -95,7 +117,7 @@ def num_years(
     Returns:
         int: number of years since the begin date
     """
-    # TODO: this is not implemented anywhere, delete?
+    # TODO: unused? consider deleting
 
     if end is None:
         end = datetime.datetime.now(tz=tz).date()

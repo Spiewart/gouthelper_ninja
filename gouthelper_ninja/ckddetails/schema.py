@@ -1,9 +1,7 @@
-from decimal import Decimal
 from typing import Any
 from typing import Self
 
 from ninja import Schema
-from pydantic import Field
 from pydantic import computed_field
 from pydantic import field_validator
 from pydantic import model_serializer
@@ -12,41 +10,25 @@ from pydantic import model_validator
 from gouthelper_ninja.ckddetails.choices import DialysisChoices
 from gouthelper_ninja.ckddetails.choices import DialysisDurations
 from gouthelper_ninja.ckddetails.choices import Stages
-from gouthelper_ninja.genders.choices import Genders
+from gouthelper_ninja.dateofbirths.schema import DateOfBirthEditSchema
+from gouthelper_ninja.genders.schema import GenderEditSchema
 from gouthelper_ninja.labs.helpers import egfr_calculator
 from gouthelper_ninja.labs.helpers import stage_calculator
+from gouthelper_ninja.labs.schema import BaselineCreatinineEditSchema
 from gouthelper_ninja.utils.schema import PatientIdSchema
 
 
 class CkdDetailEditSchema(Schema):
-    """Schema for editing CkdDetail instances. Includes age, creatinine,
-    and gender fields, which are not part of the CkdDetail model but are
-    required to edit or create a CkdDetail."""
+    """Schema for editing CkdDetail instances. Includes dateofbirth,
+    gender, and baseline creatinine schema, which are not part of the
+    CkdDetail model but are required to edit or create a CkdDetail."""
 
     dialysis: bool = False
     dialysis_duration: DialysisDurations | None = None
     dialysis_type: DialysisChoices | None = None
-    age: int | None = Field(
-        default=None,
-        description=(
-            "Age of the patient in years. "
-            "Only required if the stage needs to be calculated.",
-        ),
-        ge=0,
-        le=120,
-    )
-    creatinine: Decimal | None = Field(
-        default=None,
-        description=(
-            "Serum creatinine level in mg/dL. "
-            "Only required if the stage needs to be calculated.",
-        ),
-        max_digits=4,
-        decimal_places=2,
-        ge=0.10,
-        le=20.00,
-    )
-    gender: Genders | None = None
+    dateofbirth: DateOfBirthEditSchema | None = None
+    baselinecreatinine: BaselineCreatinineEditSchema | None = None
+    gender: GenderEditSchema | None = None
     stage: Stages | None = None
 
     # There shouldn't be any dialysis_duration info if not on dialysis
@@ -91,12 +73,20 @@ class CkdDetailEditSchema(Schema):
     def calculated_stage(self) -> Stages | None:
         """Stage calculated based on age, creatinine, and gender. Returns None
         if the stage cannot be calculated."""
-        if self.age and self.creatinine and self.gender is not None:
+        # Need nested schema values: dateofbirth.age, baselinecreatinine.value,
+        # and gender.gender (GenderEditSchema stores the enum in `gender`).
+        if (
+            self.dateofbirth
+            and self.baselinecreatinine
+            and getattr(self.baselinecreatinine, "value", None) is not None
+            and self.gender is not None
+            and getattr(self.gender, "gender", None) is not None
+        ):
             return stage_calculator(
                 egfr_calculator(
-                    creatinine=self.creatinine,
-                    age=self.age,
-                    gender=self.gender,
+                    creatinine=self.baselinecreatinine.value,
+                    age=self.dateofbirth.age,
+                    gender=self.gender.gender,
                 ),
             )
         return None
