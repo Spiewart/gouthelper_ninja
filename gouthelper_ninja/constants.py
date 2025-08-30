@@ -2,6 +2,7 @@ from decimal import Decimal
 from enum import Enum
 
 # TODO: put this in some sort of User settings model
+MAX_BASELINECREATININE = Decimal("5.00")
 MIN_MENOPAUSE_AGE = 40
 MAX_MENOPAUSE_AGE = 60
 
