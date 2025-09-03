@@ -4,7 +4,6 @@ from django.db import transaction
 
 from gouthelper_ninja.ults.choices import FlareFreqs
 from gouthelper_ninja.ults.choices import FlareNums
-from gouthelper_ninja.ults.choices import Indications
 from gouthelper_ninja.ults.models import Ult
 from gouthelper_ninja.users.tests.factories import PatientFactory
 
@@ -17,7 +16,6 @@ class TestUltModel:
         Ult.objects.create(
             num_flares=FlareNums.ZERO,
             freq_flares=None,
-            indication=Indications.NOTINDICATED,
             patient=PatientFactory(),
         )
         # Invalid num_flares
@@ -25,7 +23,6 @@ class TestUltModel:
             Ult.objects.create(
                 num_flares=99,  # Not in FlareNums
                 freq_flares=None,
-                indication=Indications.NOTINDICATED,
                 patient=PatientFactory(),
             )
 
@@ -34,7 +31,6 @@ class TestUltModel:
         Ult.objects.create(
             num_flares=FlareNums.ONE,
             freq_flares=FlareFreqs.ONEORLESS,
-            indication=Indications.NOTINDICATED,
             patient=PatientFactory(),
         )
         # Invalid freq_flares
@@ -42,32 +38,12 @@ class TestUltModel:
             Ult.objects.create(
                 num_flares=FlareNums.ONE,
                 freq_flares=99,  # Not in FlareFreqs
-                indication=Indications.NOTINDICATED,
                 patient=PatientFactory(),
             )
         with pytest.raises(IntegrityError), transaction.atomic():
             Ult.objects.create(
                 num_flares=FlareNums.ONE,
                 freq_flares=FlareFreqs.TWOORMORE,  # Not valid for ONE flares
-                indication=Indications.NOTINDICATED,
-                patient=PatientFactory(),
-            )
-
-    def test_constraint_indication_valid(self):
-        # Valid indication
-        for value in Indications.values:
-            Ult.objects.create(
-                num_flares=FlareNums.ONE,
-                freq_flares=None,
-                indication=value,
-                patient=PatientFactory(),
-            )
-        # Invalid indication
-        with pytest.raises(IntegrityError), transaction.atomic():
-            Ult.objects.create(
-                num_flares=FlareNums.ONE,
-                freq_flares=None,
-                indication=99,  # Not in Indications
                 patient=PatientFactory(),
             )
 
@@ -76,25 +52,21 @@ class TestUltModel:
         Ult.objects.create(
             num_flares=FlareNums.ZERO,
             freq_flares=None,
-            indication=Indications.NOTINDICATED,
             patient=PatientFactory(),
         )
         Ult.objects.create(
             num_flares=FlareNums.ONE,
             freq_flares=FlareFreqs.ONEORLESS,
-            indication=Indications.NOTINDICATED,
             patient=PatientFactory(),
         )
         Ult.objects.create(
             num_flares=FlareNums.TWOPLUS,
             freq_flares=FlareFreqs.ONEORLESS,
-            indication=Indications.NOTINDICATED,
             patient=PatientFactory(),
         )
         Ult.objects.create(
             num_flares=FlareNums.TWOPLUS,
             freq_flares=FlareFreqs.TWOORMORE,
-            indication=Indications.NOTINDICATED,
             patient=PatientFactory(),
         )
         # Invalid num_flares
@@ -102,14 +74,12 @@ class TestUltModel:
             Ult.objects.create(
                 num_flares=99,  # Not in FlareNums
                 freq_flares=None,
-                indication=Indications.NOTINDICATED,
                 patient=PatientFactory(),
             )
         with pytest.raises(IntegrityError), transaction.atomic():
             Ult.objects.create(
                 num_flares=FlareNums.ONE,
                 freq_flares=FlareFreqs.TWOORMORE,  # Not valid for ONE flares
-                indication=Indications.NOTINDICATED,
                 patient=PatientFactory(),
             )
 
@@ -117,7 +87,6 @@ class TestUltModel:
         ult = Ult.objects.create(
             num_flares=FlareNums.ONE,
             freq_flares=None,
-            indication=Indications.NOTINDICATED,
             patient=PatientFactory(),
         )
         assert ult.history.count() == 1

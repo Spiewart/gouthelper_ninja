@@ -37,10 +37,6 @@ class Ult(
                 condition=(Q(freq_flares__in=FlareFreqs.values)),
             ),
             CheckConstraint(
-                name="%(app_label)s_%(class)s_indication_valid",
-                condition=(Q(indication__in=Indications.values)),
-            ),
-            CheckConstraint(
                 name="%(app_label)s_%(class)s_freq_num_flares_valid",
                 condition=(
                     (Q(num_flares=FlareNums.TWOPLUS) & Q(freq_flares__isnull=False))
@@ -73,13 +69,6 @@ class Ult(
         help_text="How many gout flares does the patient have per year?",
         blank=True,
         null=True,
-    )
-    indication = IntegerField(
-        _("Indication"),
-        validators=[MinValueValidator(0), MaxValueValidator(2)],
-        choices=Indications.choices,
-        help_text="Does the patient have an indication for ULT?",
-        default=Indications.NOTINDICATED,
     )
     num_flares = IntegerField(
         _("Total Number of Flares"),

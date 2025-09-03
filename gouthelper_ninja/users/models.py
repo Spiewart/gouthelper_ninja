@@ -127,16 +127,40 @@ class User(
         return self.get_medhistory(MHTypes.DIABETES)
 
     @cached_property
+    def erosions(self) -> Union["MedHistory", None]:
+        """The Patient's erosions MedHistory or None if
+        it does not exist."""
+        return self.get_medhistory(MHTypes.EROSIONS)
+
+    @cached_property
     def gout(self) -> Union["MedHistory", None]:
         """The Patient's gout MedHistory or None if
         it does not exist."""
         return self.get_medhistory(MHTypes.GOUT)
 
     @cached_property
+    def hyperuricemia(self) -> Union["MedHistory", None]:
+        """The Patient's hyperuricemia MedHistory or None if
+        it does not exist."""
+        return self.get_medhistory(MHTypes.HYPERURICEMIA)
+
+    @cached_property
     def menopause(self) -> Union["MedHistory", None]:
         """The Patient's menopause MedHistory or None if
         it does not exist."""
         return self.get_medhistory(MHTypes.MENOPAUSE)
+
+    @cached_property
+    def tophi(self) -> Union["MedHistory", None]:
+        """The Patient's tophi MedHistory or None if
+        it does not exist."""
+        return self.get_medhistory(MHTypes.TOPHI)
+
+    @cached_property
+    def uratestones(self) -> Union["MedHistory", None]:
+        """The Patient's uratestones MedHistory or None if
+        it does not exist."""
+        return self.get_medhistory(MHTypes.URATESTONES)
 
     def get_medhistory(self, mhtype: "MHTypes") -> Union["MedHistory", None]:
         """Returns the instance's MedHistory of the given type,

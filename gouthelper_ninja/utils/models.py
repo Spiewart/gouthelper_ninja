@@ -2,6 +2,7 @@ import uuid
 from typing import TYPE_CHECKING
 from typing import Self
 
+from django.apps import apps
 from django.db.models import Manager
 from django.db.models import Model
 from django.db.models import UUIDField
@@ -65,27 +66,48 @@ class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
         data via a Pydantic Schema. Schema fields are Model fields
         or related models with their respective editing Schema."""
 
-        # Loop over the Schema fields
-        for attr_name, attr_data in data.model_dump().items():
-            # Check if the Schema field is a Model or Field
-            attr: Model | Field = getattr(self, attr_name)
-            # If it's a Model, update it with the Schema data
-            if isinstance(attr, Model) and attr_data is not None:
-                attr.gh_update(data=attr.edit_schema(**attr_data))
-            # Otherwise, it's a Field, so set the value directly
-            else:
-                attr_val = getattr(self, attr_name, None)
-                # If the value is different, set it and mark the model as
-                # needing to be saved
-                if attr_val != attr_data:
-                    setattr(self, attr_name, attr_data)
-                    self.save_needed = True
-
+        for field_name, field_data in data.model_dump().items():
+            self.process_schema_field(field_name, field_data)
         if self.save_needed:
             self.full_clean()
             self.save()
-
         return self
+
+    def process_schema_field(
+        self,
+        field_name: str,
+        field_data: "Schema",
+    ) -> None:
+        # Check if the Schema is a Patient relationship
+        if (
+            hasattr(self, "patient")
+            and hasattr(self.patient, field_name)
+            and field_name != self.__class__.__name__.lower()
+        ):
+            patient_obj = getattr(self.patient, field_name, None)
+            # OneToOne or faux-OneToOne Patient object's will never be
+            # deleted (save for with deletion of the Patient)
+            if patient_obj is not None and field_data is not None:
+                patient_obj.gh_update(data=field_data)
+            elif field_data is not None:
+                apps.get_model(
+                    f"{field_name}s",
+                    f"{field_name}",
+                ).objects.gh_create(data=field_data)
+        else:
+            # Check if the Schema field is a Model or Field
+            attr: Model | Field = getattr(self, field_name)
+            # If it's a Model, update it with the Schema data
+            if isinstance(attr, Model) and field_data is not None:
+                attr.gh_update(data=attr.edit_schema(**field_data))
+            # Otherwise, it's a Field, so set the value directly
+            else:
+                attr_val = getattr(self, field_name, None)
+                # If the value is different, set it and mark the model as
+                # needing to be saved
+                if attr_val != field_data:
+                    setattr(self, field_name, field_data)
+                    self.save_needed = True
 
 
 class GetStrAttrsMixin:

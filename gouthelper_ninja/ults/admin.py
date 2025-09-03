@@ -10,7 +10,6 @@ class UltHistoryAdmin(SimpleHistoryAdmin):
         "patient",
         "num_flares",
         "freq_flares",
-        "indication",
         "modified",
         "created",
         "pk",

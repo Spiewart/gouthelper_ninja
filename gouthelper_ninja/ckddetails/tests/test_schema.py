@@ -23,11 +23,7 @@ class TestCkdDetailEditSchema:
     def test_calculated_stage(self):
         # Test that a schema with enough data returns the correct calculated stage
         schema = CkdDetailEditSchema(
-            dateofbirth=(
-                DateOfBirthEditSchema(
-                    dateofbirth=dateofbirth_calc(50),
-                )
-            ),
+            dateofbirth=DateOfBirthEditSchema(dateofbirth=dateofbirth_calc(50)),
             baselinecreatinine=(BaselineCreatinineEditSchema(value=Decimal("1.0"))),
             gender=GenderEditSchema(gender=Genders.MALE),
         )
@@ -64,11 +60,7 @@ class TestCkdDetailEditSchema:
         # Schema with a calculated stage but no stage or dialysis
         # returns calculated stage
         schema = CkdDetailEditSchema(
-            dateofbirth=(
-                DateOfBirthEditSchema(
-                    dateofbirth=dateofbirth_calc(50),
-                )
-            ),
+            dateofbirth=DateOfBirthEditSchema(dateofbirth=dateofbirth_calc(50)),
             baselinecreatinine=(BaselineCreatinineEditSchema(value=Decimal("1.0"))),
             gender=GenderEditSchema(gender=Genders.MALE),
             stage=None,
@@ -115,11 +107,7 @@ class TestCkdDetailEditSchema:
         # Test that a schema without dialysis but with enough data to
         # calculate stage is valid
         schema = CkdDetailEditSchema(
-            dateofbirth=(
-                DateOfBirthEditSchema(
-                    dateofbirth=dateofbirth_calc(50),
-                )
-            ),
+            dateofbirth=DateOfBirthEditSchema(dateofbirth=dateofbirth_calc(50)),
             baselinecreatinine=(BaselineCreatinineEditSchema(value=Decimal("1.0"))),
             gender=GenderEditSchema(gender=Genders.MALE),
         )
@@ -147,9 +135,7 @@ class TestCkdDetailEditSchema:
         # Test that a schema with stage and calculated stage being the
         # same is valid
         schema = CkdDetailEditSchema(
-            dateofbirth=DateOfBirthEditSchema(
-                dateofbirth=dateofbirth_calc(50),
-            ),
+            dateofbirth=DateOfBirthEditSchema(dateofbirth=dateofbirth_calc(50)),
             baselinecreatinine=(BaselineCreatinineEditSchema(value=Decimal("2.0"))),
             gender=GenderEditSchema(gender=Genders.MALE),
             stage=Stages.THREE,
@@ -159,9 +145,7 @@ class TestCkdDetailEditSchema:
         # raises ValidationError
         with pytest.raises(ValidationError) as exc:
             CkdDetailEditSchema(
-                dateofbirth=DateOfBirthEditSchema(
-                    dateofbirth=dateofbirth_calc(50),
-                ),
+                dateofbirth=DateOfBirthEditSchema(dateofbirth=dateofbirth_calc(50)),
                 baselinecreatinine=(BaselineCreatinineEditSchema(value=Decimal("1.0"))),
                 gender=GenderEditSchema(gender=Genders.MALE),
                 stage=Stages.THREE,
