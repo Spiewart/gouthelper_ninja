@@ -1,27 +1,23 @@
 from django.contrib.auth import get_user_model
-from django.db.models import CASCADE
 from django.db.models import BooleanField
 from django.db.models import CheckConstraint
 from django.db.models import IntegerField
-from django.db.models import OneToOneField
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.choices import BOOL_CHOICES
 from gouthelper_ninja.ckddetails.choices import DialysisChoices
 from gouthelper_ninja.ckddetails.choices import DialysisDurations
 from gouthelper_ninja.ckddetails.choices import Stages
 from gouthelper_ninja.ckddetails.managers import CkdDetailManager
-from gouthelper_ninja.utils.helpers import get_user_change
-from gouthelper_ninja.utils.models import GoutHelperModel
+from gouthelper_ninja.utils.models import GoutHelperOneToOne
 
 User = get_user_model()
 
 
 class CkdDetail(
-    GoutHelperModel,
+    GoutHelperOneToOne,
     TimeStampedModel,
 ):
     """Describes details of a patient's Chronic Kidney Disease (CKD)."""
@@ -96,8 +92,6 @@ class CkdDetail(
         ),
         verbose_name=_("CKD Stage"),
     )
-    patient = OneToOneField(User, on_delete=CASCADE, editable=False)
-    history = HistoricalRecords(get_user=get_user_change)
     objects = CkdDetailManager()
 
     @property

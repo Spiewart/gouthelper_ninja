@@ -1096,7 +1096,8 @@ class TestPatientUpdateView(TestCase):
         )
         assert self.patient.ethnicity.ethnicity == self.data["ethnicity"]
         assert self.patient.gender.gender == self.data["gender"]
-        assert self.patient.menopause is None
+        assert self.patient.menopause
+        assert self.patient.menopause.history_of == self.data["menopause-history_of"]
         assert self.patient.gout.history_of == self.data["gout-history_of"]
         assert self.patient.goutdetail.flaring == self.data["flaring"]
         assert self.patient.goutdetail.at_goal == self.data["at_goal"]

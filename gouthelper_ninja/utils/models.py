@@ -2,28 +2,38 @@ import uuid
 from typing import TYPE_CHECKING
 from typing import Self
 
-from django.apps import apps
 from django.core.exceptions import FieldDoesNotExist
-from django.db.models import Manager
+from django.db.models import CASCADE
+from django.db.models import ForeignKey
+from django.db.models import ManyToManyField
 from django.db.models import Model
 from django.db.models import OneToOneField
 from django.db.models import OneToOneRel
 from django.db.models import UUIDField
+from django_extensions.db.models import TimeStampedModel
+from pydantic import BaseModel as Schema
 from rules.contrib.models import RulesModelBase
 from rules.contrib.models import RulesModelMixin
+from simple_history.models import HistoricalRecords
 
-from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.rules import add_object
 from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
+from gouthelper_ninja.users.models import Patient
+from gouthelper_ninja.utils.helpers import get_user_change
+from gouthelper_ninja.utils.managers import GoutHelperManager
 
 if TYPE_CHECKING:
     from django.db.models import Field  # pragma: no_cover
-    from pydantic import BaseModel as Schema  # pragma: no_cover
 
 
-class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
+class GoutHelperOneToOne(
+    TimeStampedModel,
+    RulesModelMixin,
+    Model,
+    metaclass=RulesModelBase,
+):
     """
     Model Mixin to add UUID field for objects.
     """
@@ -34,8 +44,13 @@ class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
         editable=False,
         unique=True,
     )
-
-    objects = Manager()
+    patient = OneToOneField(
+        Patient,
+        on_delete=CASCADE,
+        editable=False,
+    )
+    objects = GoutHelperManager()
+    history = HistoricalRecords(get_user=get_user_change, inherit=True)
 
     # Flags to indicate if the model needs to be saved or deleted
     # These are used to track changes in the model and can be set by the service layer
@@ -65,12 +80,13 @@ class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
         self.delete_needed = False
         super().delete(*args, **kwargs)
 
-    def gh_update(self, data: "Schema") -> Self:
+    def gh_update(self, data: Schema | dict) -> Self:
         """Updates the Model instance and related models using
         data via a Pydantic Schema. Schema fields are Model fields
         or related models with their respective editing Schema."""
-
-        for field_name, field_data in data.model_dump().items():
+        if isinstance(data, Schema):
+            data = data.model_dump()
+        for field_name, field_data in data.items():
             self.process_schema_field(field_name, field_data)
         if self.save_needed:
             self.full_clean()
@@ -80,7 +96,7 @@ class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
     def process_schema_field(
         self,
         field_name: str,
-        field_data: "Schema",
+        field_data: Schema | dict | None,
     ) -> None:
         # Check if the Schema is a Patient relationship
         if (
@@ -92,27 +108,7 @@ class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
                 or self.patient.field_is_onetoone(field_name)
             )
         ):
-            if hasattr(self.patient, field_name):
-                patient_obj = getattr(self.patient, field_name, None)
-                # OneToOne or faux-OneToOne Patient object's will never be
-                # deleted (save for with deletion of the Patient)
-                if patient_obj is not None and field_data is not None:
-                    patient_obj.gh_update(data=field_data)
-                # MedHistorys getter should return None and True for hasattr
-                # thus should be created if there is data
-                elif field_data is not None:
-                    if field_name in MHTypes.values:
-                        apps.get_model(
-                            "medhistorys",
-                            f"{field_name}",
-                        ).objects.gh_create(data=field_data)
-            else:
-                # If the field is a OneToOne relationship that doesn't exist,
-                # create it
-                apps.get_model(
-                    f"{field_name}s",
-                    f"{field_name}",
-                ).objects.gh_create(data=field_data)
+            self.patient.update_or_create_relation(field_name, field_data)
         else:
             # Check if the Schema field is a Model or Field
             attr: Model | Field = getattr(self, field_name)
@@ -128,10 +124,28 @@ class GoutHelperModel(RulesModelMixin, Model, metaclass=RulesModelBase):
                     setattr(self, field_name, field_data)
                     self.save_needed = True
 
-    def field_is_onetoone(self, field_name: str) -> bool:
+    @classmethod
+    def field_is_related_model(cls, field_name: str) -> bool:
+        """Check if the field is a OneToOne, ForeignKey, or ManyToMany
+        relationship."""
+        try:
+            field = cls._meta.get_field(field_name)
+        except FieldDoesNotExist:
+            return False
+        return isinstance(
+            field,
+            (
+                OneToOneField,
+                ForeignKey,
+                ManyToManyField,
+            ),
+        )
+
+    @classmethod
+    def field_is_onetoone(cls, field_name: str) -> bool:
         """Check if the field is a OneToOne relationship."""
         try:
-            field = self._meta.get_field(field_name)
+            field = cls._meta.get_field(field_name)
         except FieldDoesNotExist:
             return False
         return isinstance(field, (OneToOneField, OneToOneRel))

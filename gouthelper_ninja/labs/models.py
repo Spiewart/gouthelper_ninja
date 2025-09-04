@@ -1,32 +1,25 @@
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
-from django.db.models import CASCADE
 from django.db.models import CharField
 from django.db.models import CheckConstraint
 from django.db.models import DecimalField
 from django.db.models import Model
-from django.db.models import OneToOneField
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.labs.choices import CreatinineLimits
 from gouthelper_ninja.labs.choices import Units
-from gouthelper_ninja.utils.helpers import get_user_change
-from gouthelper_ninja.utils.models import GoutHelperModel
+from gouthelper_ninja.utils.models import GoutHelperOneToOne
 
 User = get_user_model()
 
 
 class BaselineLab(
-    GoutHelperModel,
+    GoutHelperOneToOne,
     TimeStampedModel,
 ):
-    patient = OneToOneField(User, on_delete=CASCADE, editable=False)
-    history = HistoricalRecords(get_user=get_user_change, inherit=True)
-
     class Meta:
         abstract = True
 

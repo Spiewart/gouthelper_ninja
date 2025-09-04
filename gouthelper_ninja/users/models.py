@@ -1,16 +1,27 @@
+import uuid
 from typing import TYPE_CHECKING
+from typing import Self
 from typing import Union
 
 from django.apps import apps
 from django.contrib.auth.models import AbstractUser
+from django.core.exceptions import FieldDoesNotExist
 from django.db.models import CharField
 from django.db.models import CheckConstraint
+from django.db.models import ForeignKey
 from django.db.models import IntegerField
+from django.db.models import ManyToManyField
+from django.db.models import Model
+from django.db.models import OneToOneField
+from django.db.models import OneToOneRel
 from django.db.models import Q
+from django.db.models import UUIDField
 from django.urls import reverse
 from django.utils.functional import cached_property
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from rules.contrib.models import RulesModelBase
+from rules.contrib.models import RulesModelMixin
 from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.medhistorys.choices import MHTypes
@@ -28,22 +39,50 @@ from gouthelper_ninja.users.rules import delete_user
 from gouthelper_ninja.users.rules import view_patient
 from gouthelper_ninja.users.rules import view_user
 from gouthelper_ninja.users.schema import PatientEditSchema
-from gouthelper_ninja.utils.models import GoutHelperModel
 
 if TYPE_CHECKING:
+    from pydantic import BaseModel as Schema
+
     from gouthelper_ninja.medhistorys.models import MedHistory
 
 
 class User(
-    GoutHelperModel,
+    RulesModelMixin,
     TimeStampedModel,
     AbstractUser,
+    metaclass=RulesModelBase,
 ):
     """
     Default custom user model for gouthelper.
     If adding fields that need to be filled at user signup,
     check forms.SignupForm and forms.SocialSignupForms accordingly.
     """
+
+    id = UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+    )
+
+    # Flags to indicate if the model needs to be saved or deleted
+    # These are used to track changes in the model and can be set by the service layer
+    save_needed = False
+    delete_needed = False
+
+    Roles = Roles
+
+    # Cookiecutter defaults
+    name = CharField(_("Name of User"), blank=True, max_length=255)
+    first_name = None  # type: ignore[assignment]
+    last_name = None  # type: ignore[assignment]
+    # GoutHelper specific fields
+    role = IntegerField(_("Role"), choices=Roles.choices, default=Roles.PROVIDER)
+    # GoutHelper managers and other attributes
+    objects: GoutHelperUserManager = GoutHelperUserManager()
+    history = HistoricalRecords(
+        get_user=get_user_change,
+    )
 
     class Meta:
         constraints = [
@@ -57,20 +96,6 @@ class User(
             "delete": delete_user,
             "view": view_user,
         }
-
-    Roles = Roles
-
-    # Cookiecutter defaults
-    name = CharField(_("Name of User"), blank=True, max_length=255)
-    first_name = None  # type: ignore[assignment]
-    last_name = None  # type: ignore[assignment]
-    # GoutHelper specific fields
-    role = IntegerField(_("Role"), choices=Roles.choices, default=Roles.PROVIDER)
-    # GoutHelper managers and other attributes
-    objects = GoutHelperUserManager()
-    history = HistoricalRecords(
-        get_user=get_user_change,
-    )
 
     def get_absolute_url(self) -> str:
         """Get URL for user's detail view.
@@ -91,6 +116,7 @@ class User(
         # history model correctly (HistoricalUser)
         # and then change it back to the specific role model
         self.__class__ = User
+        self.save_needed = False
         super().save(*args, **kwargs)
         # The Pseudopatient role does not have a separate model,
         # so we need to change the class to Patient if the role is Pseudopatient.
@@ -100,6 +126,13 @@ class User(
             else (self.Roles(self.role).name.lower())
         )
         self.__class__ = apps.get_model(f"users.{role}")
+
+    def delete(self, *args, **kwargs):
+        """
+        Override delete method to remove the delete_needed flag.
+        """
+        self.delete_needed = False
+        super().delete(*args, **kwargs)
 
     @cached_property
     def creator(self) -> Union["User", None]:
@@ -185,6 +218,36 @@ class User(
             )
         )
 
+    def update_or_create_relation(
+        self,
+        field_name: str,
+        field_data: Union["Schema", dict | None],
+    ) -> Model | None:
+        if hasattr(self, field_name):
+            obj = getattr(self, field_name, None)
+            # OneToOne or faux-OneToOne Patient object's will never be
+            # deleted (save for with deletion of the Patient)
+            if obj is not None and field_data is not None:
+                obj.gh_update(data=field_data)
+            # MedHistorys getter should return None and True for hasattr
+            # thus should be created if there is data
+            elif field_data is not None:
+                # TODO: add model to Schema, use to create
+                obj = apps.get_model(
+                    "medhistorys",
+                    f"{field_name}",
+                ).objects.gh_create(data=field_data, patient_id=self.id)
+        elif field_data:
+            # If the field is a OneToOne relationship that doesn't exist,
+            # create it
+            obj = apps.get_model(
+                f"{field_name}s",
+                f"{field_name}",
+            ).objects.gh_create(data=field_data, patient_id=self.id)
+        else:
+            obj = None
+        return obj
+
 
 class Admin(User):
     # This sets the user type to ADMIN during record creation
@@ -218,6 +281,72 @@ class Patient(User):
             "delete": delete_patient,
             "view": view_patient,
         }
+
+    def gh_update(self, data: Union["Schema", dict]) -> Self:
+        """Updates the Model instance and related models using
+        data via a Pydantic Schema. Schema fields are Model fields
+        or related models with their respective editing Schema."""
+
+        if not isinstance(data, dict):
+            data = data.model_dump()
+
+        for field_name, field_data in data.items():
+            self.process_schema_field(field_name, field_data)
+        if self.save_needed:
+            self.full_clean()
+            self.save()
+        return self
+
+    def process_schema_field(
+        self,
+        field_name: str,
+        field_data: Union["Schema", dict, None],
+    ) -> None:
+        # Check if the Schema is a Patient relationship
+        if field_data and (
+            hasattr(self, field_name) or self.field_is_onetoone(field_name)
+        ):
+            self.update_or_create_relation(field_name, field_data)
+        else:
+            # Check if the Schema field is a Model or Field
+            attr: Model = getattr(self, field_name)
+            # If it's a Model, update it with the Schema data
+            if isinstance(attr, Model) and field_data is not None:
+                attr.gh_update(data=field_data)
+            # Otherwise, it's a Field, so set the value directly
+            else:
+                attr_val = getattr(self, field_name, None)
+                # If the value is different, set it and mark the model as
+                # needing to be saved
+                if attr_val != field_data:
+                    setattr(self, field_name, field_data)
+                    self.save_needed = True
+
+    @classmethod
+    def field_is_related_model(cls, field_name: str) -> bool:
+        """Check if the field is a OneToOne, ForeignKey, or ManyToMany
+        relationship."""
+        try:
+            field = cls._meta.get_field(field_name)
+        except FieldDoesNotExist:
+            return False
+        return isinstance(
+            field,
+            (
+                OneToOneField,
+                ForeignKey,
+                ManyToManyField,
+            ),
+        )
+
+    @classmethod
+    def field_is_onetoone(cls, field_name: str) -> bool:
+        """Check if the field is a OneToOne relationship."""
+        try:
+            field = cls._meta.get_field(field_name)
+        except FieldDoesNotExist:
+            return False
+        return isinstance(field, (OneToOneField, OneToOneRel))
 
 
 class Provider(User):

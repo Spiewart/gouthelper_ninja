@@ -1,12 +1,9 @@
 from django.contrib.auth import get_user_model
-from django.db.models import CASCADE
 from django.db.models import CheckConstraint
-from django.db.models import OneToOneField
 from django.db.models import Q
 from django.db.models.fields import BooleanField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.choices import BOOL_CHOICES
 from gouthelper_ninja.goutdetails.schema import GoutDetailEditSchema
@@ -14,14 +11,13 @@ from gouthelper_ninja.rules import add_object
 from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
-from gouthelper_ninja.utils.helpers import get_user_change
-from gouthelper_ninja.utils.models import GoutHelperModel
+from gouthelper_ninja.utils.models import GoutHelperOneToOne
 
 User = get_user_model()
 
 
 class GoutDetail(
-    GoutHelperModel,
+    GoutHelperOneToOne,
     TimeStampedModel,
 ):
     """Describes whether a Patient with a history of gout is actively
@@ -96,8 +92,6 @@ Goal is typically < 6.0 mg/dL.",
         help_text="Is the patient starting ULT or is he or she still in the initial \
 dose adjustment (titration) phase?",
     )
-    patient = OneToOneField(User, on_delete=CASCADE, editable=False)
-    history = HistoricalRecords(get_user=get_user_change)
 
     edit_schema = GoutDetailEditSchema
 

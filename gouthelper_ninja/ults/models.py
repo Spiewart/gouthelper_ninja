@@ -1,14 +1,11 @@
 from django.contrib.auth import get_user_model
 from django.core.validators import MaxValueValidator
 from django.core.validators import MinValueValidator
-from django.db.models import CASCADE
 from django.db.models import CheckConstraint
 from django.db.models import IntegerField
-from django.db.models import OneToOneField
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.rules import add_object
 from gouthelper_ninja.rules import change_object
@@ -17,13 +14,13 @@ from gouthelper_ninja.rules import view_object
 from gouthelper_ninja.ults.choices import FlareFreqs
 from gouthelper_ninja.ults.choices import FlareNums
 from gouthelper_ninja.ults.choices import Indications
-from gouthelper_ninja.utils.models import GoutHelperModel
+from gouthelper_ninja.utils.models import GoutHelperOneToOne
 
 User = get_user_model()
 
 
 class Ult(
-    GoutHelperModel,
+    GoutHelperOneToOne,
     TimeStampedModel,
 ):
     class Meta:
@@ -76,5 +73,3 @@ class Ult(
         validators=[MinValueValidator(0), MaxValueValidator(2)],
         help_text="How many gout flares has the patient had?",
     )
-    patient = OneToOneField(User, on_delete=CASCADE, editable=False)
-    history = HistoricalRecords()

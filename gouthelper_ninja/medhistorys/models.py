@@ -1,10 +1,8 @@
 from django.apps import apps
-from django.conf import settings
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
-from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.medhistorys.managers import AnginaManager
@@ -37,19 +35,19 @@ from gouthelper_ninja.rules import add_object
 from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
-from gouthelper_ninja.utils.helpers import get_user_change
-from gouthelper_ninja.utils.models import GoutHelperModel
+from gouthelper_ninja.users.models import Patient
+from gouthelper_ninja.utils.models import GoutHelperOneToOne
 
 
 class MedHistory(
-    GoutHelperModel,
+    GoutHelperOneToOne,
     TimeStampedModel,
 ):
     """GoutHelper MedHistory model to store medical, family, social history data
     for Patients. value field is a Boolean that is required and defaults to False.
     """
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         constraints = [
             # Check that mhtype is in MHTypes.choices
             models.CheckConstraint(
@@ -84,12 +82,10 @@ class MedHistory(
         default=False,
     )
     patient = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
+        Patient,
         on_delete=models.CASCADE,
         editable=False,
     )
-    history = HistoricalRecords(get_user=get_user_change)
-    objects = models.Manager()
 
     edit_schema = MedHistoryEditSchema
 
@@ -126,7 +122,7 @@ class MedHistory(
 class Angina(MedHistory):
     """Model for history of cardiac chest pain."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -142,7 +138,7 @@ class Anticoagulation(MedHistory):
     """Model for Patient's anticoagulation use. HistoryDetail related object
     AnticoagulationDetail to describe which anticoagulants."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -157,7 +153,7 @@ class Anticoagulation(MedHistory):
 class Bleed(MedHistory):
     """Model for Patient's history of bleeding events."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -172,7 +168,7 @@ class Bleed(MedHistory):
 class Cad(MedHistory):
     """Proxy model for Cad MedHistory objects."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -187,7 +183,7 @@ class Cad(MedHistory):
 class Chf(MedHistory):
     """Describes whether Patient has a history of congestive heart failure."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -202,7 +198,7 @@ class Chf(MedHistory):
 class Ckd(MedHistory):
     """Whether Patient has a history of chronic kidney disease."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -219,7 +215,7 @@ class Colchicineinteraction(MedHistory):
     Details about which medication are stored in HistoryDetail related object
     ColchicineinteractionDetail."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -234,7 +230,7 @@ class Colchicineinteraction(MedHistory):
 class Diabetes(MedHistory):
     """Whether or not a Patient is diabetic."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -249,7 +245,7 @@ class Diabetes(MedHistory):
 class Erosions(MedHistory):
     """Whether or not a Patient has gouty erosions."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -264,7 +260,7 @@ class Erosions(MedHistory):
 class Gastricbypass(MedHistory):
     """Whether or not a Patient has had gastric bypass surgery."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -279,7 +275,7 @@ class Gastricbypass(MedHistory):
 class Gout(MedHistory):
     """Whether or not a Patient has gout."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -294,7 +290,7 @@ class Gout(MedHistory):
 class Heartattack(MedHistory):
     """Whether or not a Patient has had a heart attack."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -309,7 +305,7 @@ class Heartattack(MedHistory):
 class Hepatitis(MedHistory):
     """Whether or not a Patient has hepatitis or cirrhosis of the lvier."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -324,7 +320,7 @@ class Hepatitis(MedHistory):
 class Hypertension(MedHistory):
     """Stores whether or not a Patient has a history of hypertension."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -356,7 +352,7 @@ class Hyperuricemia(MedHistory):
     PMID: 32391934.
     """
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -371,7 +367,7 @@ class Hyperuricemia(MedHistory):
 class Ibd(MedHistory):
     """Records history of a Patient's inflammatory bowel disease."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -387,7 +383,7 @@ class Menopause(MedHistory):
     """Records medical history of menopause. Mostly for figuring out if a
     woman who is having symptoms could be having a gout flare."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -403,7 +399,7 @@ class Organtransplant(MedHistory):
     """Records medical history of an organ transplant. Related
     object OrgantransplantDetail stores details of the transplant."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -418,7 +414,7 @@ class Organtransplant(MedHistory):
 class Osteoporosis(MedHistory):
     """Records medical history of osteoporosis."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -433,7 +429,7 @@ class Osteoporosis(MedHistory):
 class Pud(MedHistory):
     """Records medical history of peptic ulcer disease."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -448,7 +444,7 @@ class Pud(MedHistory):
 class Pad(MedHistory):
     """Records medical history of peripheral vascular disease."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -463,7 +459,7 @@ class Pad(MedHistory):
 class Stroke(MedHistory):
     """Patient's history of stroke."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -478,7 +474,7 @@ class Stroke(MedHistory):
 class Tophi(MedHistory):
     """Patient's history of gouty tophi."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -493,7 +489,7 @@ class Tophi(MedHistory):
 class Uratestones(MedHistory):
     """Patient's history of urate kidney stones."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,
@@ -510,7 +506,7 @@ class Xoiinteraction(MedHistory):
     oxidase inhibitors. These are chiefly azathioprine and mercaptopurine,
     but historically theophylline was also included."""
 
-    class Meta(GoutHelperModel.Meta):
+    class Meta(GoutHelperOneToOne.Meta):
         proxy = True
         rules_permissions = {
             "add": add_object,

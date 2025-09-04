@@ -4,6 +4,7 @@ from django.db.models import Manager
 
 from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.medhistorys.schema import MedHistoryEditSchema
+from gouthelper_ninja.utils.managers import GoutHelperManager
 
 if TYPE_CHECKING:
     from uuid import UUID
@@ -266,7 +267,7 @@ class IbdManager(Manager):
         return self.create(**data.dict(), patient_id=patient_id)
 
 
-class MenopauseManager(Manager):
+class MenopauseManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.MENOPAUSE)
 
@@ -278,8 +279,8 @@ class MenopauseManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
+    def gh_create(self, data: MedHistoryEditSchema | dict | None, patient_id: "UUID"):
+        return super().gh_create(data=data, patient=patient_id)
 
 
 class OrgantransplantManager(Manager):
