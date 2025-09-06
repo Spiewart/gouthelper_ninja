@@ -12,6 +12,7 @@ from gouthelper_ninja.ckddetails.choices import DialysisDurations
 from gouthelper_ninja.ckddetails.choices import Stages
 from gouthelper_ninja.ckddetails.managers import CkdDetailManager
 from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import HeritableHistoryMixin
 
 User = get_user_model()
 
@@ -19,6 +20,7 @@ User = get_user_model()
 class CkdDetail(
     GoutHelperOneToOne,
     TimeStampedModel,
+    HeritableHistoryMixin,
 ):
     """Describes details of a patient's Chronic Kidney Disease (CKD)."""
 

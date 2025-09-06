@@ -15,6 +15,7 @@ from gouthelper_ninja.ults.choices import FlareFreqs
 from gouthelper_ninja.ults.choices import FlareNums
 from gouthelper_ninja.ults.choices import Indications
 from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import HistoryMixin
 
 User = get_user_model()
 
@@ -22,6 +23,7 @@ User = get_user_model()
 class Ult(
     GoutHelperOneToOne,
     TimeStampedModel,
+    HistoryMixin,
 ):
     class Meta:
         constraints = [

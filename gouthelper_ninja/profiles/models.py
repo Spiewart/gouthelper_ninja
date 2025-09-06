@@ -30,6 +30,7 @@ class Profile(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
     )
+    history = HistoricalRecords(get_user=get_user_change, inherit=True)
 
     class Meta:
         rules_permissions = {
@@ -52,8 +53,6 @@ class AdminProfile(Profile):
     not explicitly providers, or contributors to GoutHelper.
     """
 
-    history = HistoricalRecords(get_user=get_user_change)
-
 
 class PatientProfile(Profile):
     """Profile for a real (to be implemented) or hypothetical patient."""
@@ -71,7 +70,6 @@ class PatientProfile(Profile):
         blank=True,
         default=None,
     )
-    history = HistoricalRecords(get_user=get_user_change)
 
     class Meta(Profile.Meta):
         constraints = [
@@ -95,5 +93,3 @@ class ProviderProfile(Profile):
     """Provider User Profile.
     Meant for providers who want to keep track of their patients GoutHelper data.
     """
-
-    history = HistoricalRecords(get_user=get_user_change)

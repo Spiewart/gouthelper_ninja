@@ -1,19 +1,13 @@
 import uuid
 from typing import TYPE_CHECKING
-from typing import Self
 from typing import Union
 
 from django.apps import apps
 from django.contrib.auth.models import AbstractUser
-from django.core.exceptions import FieldDoesNotExist
 from django.db.models import CharField
 from django.db.models import CheckConstraint
-from django.db.models import ForeignKey
 from django.db.models import IntegerField
-from django.db.models import ManyToManyField
 from django.db.models import Model
-from django.db.models import OneToOneField
-from django.db.models import OneToOneRel
 from django.db.models import Q
 from django.db.models import UUIDField
 from django.urls import reverse
@@ -39,6 +33,7 @@ from gouthelper_ninja.users.rules import delete_user
 from gouthelper_ninja.users.rules import view_patient
 from gouthelper_ninja.users.rules import view_user
 from gouthelper_ninja.users.schema import PatientEditSchema
+from gouthelper_ninja.utils.model_mixins import GoutHelperCrudMixin
 
 if TYPE_CHECKING:
     from pydantic import BaseModel as Schema
@@ -64,11 +59,6 @@ class User(
         editable=False,
         unique=True,
     )
-
-    # Flags to indicate if the model needs to be saved or deleted
-    # These are used to track changes in the model and can be set by the service layer
-    save_needed = False
-    delete_needed = False
 
     Roles = Roles
 
@@ -112,27 +102,114 @@ class User(
         # base_role property
         if not self.pk and hasattr(self, "base_role"):
             self.role = self.base_role
-        # Swap the class back to User to trigger saving the
-        # history model correctly (HistoricalUser)
-        # and then change it back to the specific role model
-        self.__class__ = User
+        # Respect historical subclasses by ensuring the class is correct
+        class_for_role = self.get_class()
+        if self.__class__ != class_for_role:
+            self.__class__ = class_for_role
         self.save_needed = False
         super().save(*args, **kwargs)
+
+    def get_class(
+        self,
+    ) -> type["User"] | type["Admin"] | type["Provider"] | type["Patient"]:
+        """Returns the class of the specific user instance."""
         # The Pseudopatient role does not have a separate model,
-        # so we need to change the class to Patient if the role is Pseudopatient.
+        # so we need to change the class to Patient if the role is
+        # Pseudopatient.
         role = (
             Roles.PATIENT.name.lower()
             if self.role == Roles.PSEUDOPATIENT
             else (self.Roles(self.role).name.lower())
         )
-        self.__class__ = apps.get_model(f"users.{role}")
+        return apps.get_model(f"users.{role}")
 
     def delete(self, *args, **kwargs):
         """
         Override delete method to remove the delete_needed flag.
         """
+        # Respect historical subclasses by ensuring the class is correct
+        class_for_role = self.get_class()
+        if self.__class__ != class_for_role:
+            self.__class__ = class_for_role
         self.delete_needed = False
         super().delete(*args, **kwargs)
+
+
+class Admin(User):
+    # This sets the user type to ADMIN during record creation
+    base_role = User.Roles.ADMIN
+
+    # Ensures queries on the ADMIN model return only Providers
+    objects = AdminManager()
+
+    class Meta(User.Meta):
+        proxy = True
+        rules_permissions = {
+            "change": change_user,
+            "delete": delete_user,
+            "view": view_user,
+        }
+
+
+class Patient(GoutHelperCrudMixin, User):
+    # This sets the user type to PSEUDOPATIENT during record creation
+    base_role = User.Roles.PSEUDOPATIENT
+
+    # Ensures queries on the Pseudopatient model return only Pseudopatients
+    objects = PatientManager()
+
+    edit_schema = PatientEditSchema
+
+    class Meta(User.Meta):
+        proxy = True
+        rules_permissions = {
+            "change": change_patient,
+            "delete": delete_patient,
+            "view": view_patient,
+        }
+
+    def process_schema_field(
+        self,
+        field_name: str,
+        field_data: Union["Schema", dict, None],
+    ) -> None:
+        # Check if the Schema is a Patient relationship
+        if field_data and (
+            hasattr(self, field_name) or self.field_is_onetoone(field_name)
+        ):
+            self.update_or_create_relation(field_name, field_data)
+        else:
+            super().process_schema_field(field_name, field_data)
+
+    def update_or_create_relation(
+        self,
+        relation_name: str,
+        relation_data: Union["Schema", dict | None],
+    ) -> Model | None:
+        if hasattr(self, relation_name):
+            obj = getattr(self, relation_name, None)
+            # OneToOne or faux-OneToOne Patient object's will never be
+            # deleted (save for with deletion of the Patient)
+            if obj is not None and relation_data is not None:
+                obj.gh_update(data=relation_data)
+            # MedHistorys getter should return None and True for hasattr
+            # thus should be created if there is data
+            elif relation_data is not None:
+                # TODO: add model to Schema, use to create
+                obj = apps.get_model(
+                    "medhistorys",
+                    f"{relation_name}",
+                ).objects.gh_create(data=relation_data, patient=self)
+        elif relation_data:
+            # If the field is a OneToOne relationship that doesn't exist,
+            # create it
+            obj = apps.get_model(
+                f"{relation_name}s",
+                f"{relation_name}",
+            ).objects.gh_create(data=relation_data, patient=self)
+        else:
+            obj = None
+        return obj
 
     @cached_property
     def creator(self) -> Union["User", None]:
@@ -217,136 +294,6 @@ class User(
                 mhtype,
             )
         )
-
-    def update_or_create_relation(
-        self,
-        field_name: str,
-        field_data: Union["Schema", dict | None],
-    ) -> Model | None:
-        if hasattr(self, field_name):
-            obj = getattr(self, field_name, None)
-            # OneToOne or faux-OneToOne Patient object's will never be
-            # deleted (save for with deletion of the Patient)
-            if obj is not None and field_data is not None:
-                obj.gh_update(data=field_data)
-            # MedHistorys getter should return None and True for hasattr
-            # thus should be created if there is data
-            elif field_data is not None:
-                # TODO: add model to Schema, use to create
-                obj = apps.get_model(
-                    "medhistorys",
-                    f"{field_name}",
-                ).objects.gh_create(data=field_data, patient=self)
-        elif field_data:
-            # If the field is a OneToOne relationship that doesn't exist,
-            # create it
-            obj = apps.get_model(
-                f"{field_name}s",
-                f"{field_name}",
-            ).objects.gh_create(data=field_data, patient=self)
-        else:
-            obj = None
-        return obj
-
-
-class Admin(User):
-    # This sets the user type to ADMIN during record creation
-    base_role = User.Roles.ADMIN
-
-    # Ensures queries on the ADMIN model return only Providers
-    objects = AdminManager()
-
-    class Meta(User.Meta):
-        proxy = True
-        rules_permissions = {
-            "change": change_user,
-            "delete": delete_user,
-            "view": view_user,
-        }
-
-
-class Patient(User):
-    # This sets the user type to PSEUDOPATIENT during record creation
-    base_role = User.Roles.PSEUDOPATIENT
-
-    # Ensures queries on the Pseudopatient model return only Pseudopatients
-    objects = PatientManager()
-
-    edit_schema = PatientEditSchema
-
-    class Meta(User.Meta):
-        proxy = True
-        rules_permissions = {
-            "change": change_patient,
-            "delete": delete_patient,
-            "view": view_patient,
-        }
-
-    def gh_update(self, data: Union["Schema", dict]) -> Self:
-        """Updates the Model instance and related models using
-        data via a Pydantic Schema. Schema fields are Model fields
-        or related models with their respective editing Schema."""
-
-        if not isinstance(data, dict):
-            data = data.model_dump()
-
-        for field_name, field_data in data.items():
-            self.process_schema_field(field_name, field_data)
-        if self.save_needed:
-            self.full_clean()
-            self.save()
-        return self
-
-    def process_schema_field(
-        self,
-        field_name: str,
-        field_data: Union["Schema", dict, None],
-    ) -> None:
-        # Check if the Schema is a Patient relationship
-        if field_data and (
-            hasattr(self, field_name) or self.field_is_onetoone(field_name)
-        ):
-            self.update_or_create_relation(field_name, field_data)
-        else:
-            # Check if the Schema field is a Model or Field
-            attr: Model = getattr(self, field_name)
-            # If it's a Model, update it with the Schema data
-            if isinstance(attr, Model) and field_data is not None:
-                attr.gh_update(data=field_data)
-            # Otherwise, it's a Field, so set the value directly
-            else:
-                attr_val = getattr(self, field_name, None)
-                # If the value is different, set it and mark the model as
-                # needing to be saved
-                if attr_val != field_data:
-                    setattr(self, field_name, field_data)
-                    self.save_needed = True
-
-    @classmethod
-    def field_is_related_model(cls, field_name: str) -> bool:
-        """Check if the field is a OneToOne, ForeignKey, or ManyToMany
-        relationship."""
-        try:
-            field = cls._meta.get_field(field_name)
-        except FieldDoesNotExist:
-            return False
-        return isinstance(
-            field,
-            (
-                OneToOneField,
-                ForeignKey,
-                ManyToManyField,
-            ),
-        )
-
-    @classmethod
-    def field_is_onetoone(cls, field_name: str) -> bool:
-        """Check if the field is a OneToOne relationship."""
-        try:
-            field = cls._meta.get_field(field_name)
-        except FieldDoesNotExist:
-            return False
-        return isinstance(field, (OneToOneField, OneToOneRel))
 
 
 class Provider(User):

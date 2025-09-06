@@ -12,6 +12,7 @@ from django_extensions.db.models import TimeStampedModel
 from gouthelper_ninja.labs.choices import CreatinineLimits
 from gouthelper_ninja.labs.choices import Units
 from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import HeritableHistoryMixin
 
 User = get_user_model()
 
@@ -19,6 +20,7 @@ User = get_user_model()
 class BaselineLab(
     GoutHelperOneToOne,
     TimeStampedModel,
+    HeritableHistoryMixin,
 ):
     class Meta:
         abstract = True

@@ -11,6 +11,7 @@ from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
 from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import HistoryMixin
 
 User = get_user_model()
 
@@ -19,6 +20,7 @@ User = get_user_model()
 class DateOfBirth(
     GoutHelperOneToOne,
     TimeStampedModel,
+    HistoryMixin,
 ):
     """Model definition for DateOfBirth."""
 

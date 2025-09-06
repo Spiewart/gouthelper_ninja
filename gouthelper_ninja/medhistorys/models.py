@@ -37,11 +37,16 @@ from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import HistoryMixin
 
 
 class MedHistory(
     GoutHelperOneToOne,
     TimeStampedModel,
+    # Only 1 historical MedHistory table, rather than one per subclass
+    # This is because MedHistory instances will usually be used
+    # as the parent (MedHistory) class, not the proxy models
+    HistoryMixin,
 ):
     """GoutHelper MedHistory model to store medical, family, social history data
     for Patients. value field is a Boolean that is required and defaults to False.
@@ -86,7 +91,6 @@ class MedHistory(
         on_delete=models.CASCADE,
         editable=False,
     )
-
     edit_schema = MedHistoryEditSchema
 
     def __str__(self):
