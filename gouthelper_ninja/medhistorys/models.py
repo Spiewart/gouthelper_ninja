@@ -3,6 +3,7 @@ from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.medhistorys.managers import AnginaManager
@@ -36,17 +37,13 @@ from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
 from gouthelper_ninja.users.models import Patient
+from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperOneToOne
-from gouthelper_ninja.utils.models import HistoryMixin
 
 
 class MedHistory(
     GoutHelperOneToOne,
     TimeStampedModel,
-    # Only 1 historical MedHistory table, rather than one per subclass
-    # This is because MedHistory instances will usually be used
-    # as the parent (MedHistory) class, not the proxy models
-    HistoryMixin,
 ):
     """GoutHelper MedHistory model to store medical, family, social history data
     for Patients. value field is a Boolean that is required and defaults to False.
@@ -92,6 +89,10 @@ class MedHistory(
         editable=False,
     )
     edit_schema = MedHistoryEditSchema
+    # Only 1 historical MedHistory table, rather than one per subclass
+    # This is because MedHistory instances will usually be used
+    # as the parent (MedHistory) class, not the proxy models
+    history = HistoricalRecords(get_user=get_user_change)
 
     def __str__(self):
         """Returns a string representation of the MedHistory object."""

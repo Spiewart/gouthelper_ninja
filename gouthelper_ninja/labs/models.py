@@ -8,11 +8,12 @@ from django.db.models import Model
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.labs.choices import CreatinineLimits
 from gouthelper_ninja.labs.choices import Units
+from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperOneToOne
-from gouthelper_ninja.utils.models import HeritableHistoryMixin
 
 User = get_user_model()
 
@@ -20,7 +21,6 @@ User = get_user_model()
 class BaselineLab(
     GoutHelperOneToOne,
     TimeStampedModel,
-    HeritableHistoryMixin,
 ):
     class Meta:
         abstract = True
@@ -63,6 +63,8 @@ class CreatinineBase(Model):
 
 
 class BaselineCreatinine(CreatinineBase, BaselineLab):
+    history = HistoricalRecords(get_user=get_user_change)
+
     class Meta:
         constraints = [
             CheckConstraint(

@@ -8,10 +8,8 @@ from django_extensions.db.models import TimeStampedModel
 from pydantic import BaseModel as Schema
 from rules.contrib.models import RulesModelBase
 from rules.contrib.models import RulesModelMixin
-from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.users.models import Patient
-from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.managers import GoutHelperManager
 from gouthelper_ninja.utils.model_mixins import GoutHelperCrudMixin
 
@@ -68,18 +66,6 @@ class GoutHelperOneToOne(
             self.patient.update_or_create_relation(field_name, field_data)
         else:
             super().process_schema_field(field_name, field_data)
-
-
-class HeritableHistoryMixin:
-    """Mixin to add historical tracking to models and their subclasses."""
-
-    history = HistoricalRecords(get_user=get_user_change, inherit=True)
-
-
-class HistoryMixin:
-    """Mixin to add historical tracking to models, but not their subclasses."""
-
-    history = HistoricalRecords(get_user=get_user_change, inherit=False)
 
 
 class GetStrAttrsMixin:

@@ -4,6 +4,7 @@ from django.db.models import Q
 from django.db.models.fields import BooleanField
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.choices import BOOL_CHOICES
 from gouthelper_ninja.goutdetails.schema import GoutDetailEditSchema
@@ -11,8 +12,8 @@ from gouthelper_ninja.rules import add_object
 from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
+from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperOneToOne
-from gouthelper_ninja.utils.models import HistoryMixin
 
 User = get_user_model()
 
@@ -20,7 +21,6 @@ User = get_user_model()
 class GoutDetail(
     GoutHelperOneToOne,
     TimeStampedModel,
-    HistoryMixin,
 ):
     """Describes whether a Patient with a history of gout is actively
     flaring or hyperuricemic (defined as in the past 6 months)."""
@@ -64,8 +64,10 @@ class GoutDetail(
     )
     at_goal_long_term = BooleanField(
         choices=BOOL_CHOICES,
-        help_text="Has the patient been at goal uric acid six months or longer? \
-Goal is typically < 6.0 mg/dL.",
+        help_text=(
+            "Has the patient been at goal uric acid six months or longer? "
+            "Goal is typically < 6.0 mg/dL."
+        ),
         default=False,
     )
     flaring = BooleanField(
@@ -91,11 +93,13 @@ Goal is typically < 6.0 mg/dL.",
         _("Starting Urate-Lowering Therapy (ULT)"),
         choices=BOOL_CHOICES,
         default=False,
-        help_text="Is the patient starting ULT or is he or she still in the initial \
-dose adjustment (titration) phase?",
+        help_text=(
+            "Is the patient starting ULT or is he or she still in the initial "
+            "dose adjustment (titration) phase?"
+        ),
     )
-
     edit_schema = GoutDetailEditSchema
+    history = HistoricalRecords(get_user=get_user_change)
 
     def get_absolute_url(self):
         """Returns the absolute URL for the Ethnicity's patient."""

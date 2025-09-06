@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.genders.choices import Genders
 from gouthelper_ninja.genders.schema import GenderEditSchema
@@ -11,8 +12,8 @@ from gouthelper_ninja.rules import add_object
 from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
+from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperOneToOne
-from gouthelper_ninja.utils.models import HistoryMixin
 
 User = get_user_model()
 
@@ -20,7 +21,6 @@ User = get_user_model()
 class Gender(
     GoutHelperOneToOne,
     TimeStampedModel,
-    HistoryMixin,
 ):
     """Model representing biological gender.
     Gender is stored as an integer in gender field. Male=0, Female=1."""
@@ -32,8 +32,8 @@ class Gender(
         choices=Genders.choices,
         help_text="What is the patient's biological sex?",
     )
-
     edit_schema = GenderEditSchema
+    history = HistoricalRecords(get_user=get_user_change)
 
     class Meta(GoutHelperOneToOne.Meta):
         constraints = [

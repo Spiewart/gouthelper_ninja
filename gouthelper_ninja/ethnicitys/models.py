@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
+from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.ethnicitys.choices import Ethnicitys
 from gouthelper_ninja.ethnicitys.schema import EthnicityEditSchema
@@ -9,8 +10,8 @@ from gouthelper_ninja.rules import add_object
 from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
+from gouthelper_ninja.utils.helpers import get_user_change
 from gouthelper_ninja.utils.models import GoutHelperOneToOne
-from gouthelper_ninja.utils.models import HistoryMixin
 
 User = get_user_model()
 
@@ -18,7 +19,6 @@ User = get_user_model()
 class Ethnicity(
     GoutHelperOneToOne,
     TimeStampedModel,
-    HistoryMixin,
 ):
     Ethnicitys = Ethnicitys
 
@@ -28,8 +28,8 @@ class Ethnicity(
         choices=Ethnicitys.choices,
         help_text="What is the patient's ethnicity or race?",
     )
-
     edit_schema = EthnicityEditSchema
+    history = HistoricalRecords(get_user=get_user_change)
 
     class Meta(GoutHelperOneToOne.Meta):
         constraints = [

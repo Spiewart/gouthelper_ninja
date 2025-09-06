@@ -72,6 +72,7 @@ class User(
     objects: GoutHelperUserManager = GoutHelperUserManager()
     history = HistoricalRecords(
         get_user=get_user_change,
+        inherit=True,
     )
 
     class Meta:

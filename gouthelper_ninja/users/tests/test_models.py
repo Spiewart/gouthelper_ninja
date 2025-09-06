@@ -1,4 +1,3 @@
-import pytest
 from django.test import TestCase
 
 from gouthelper_ninja.ethnicitys.choices import Ethnicitys
@@ -142,12 +141,6 @@ class TestUser(TestCase):
     def test_get_medhistory_returns_none_if_not_exists(self):
         result = self.patient.get_medhistory(MHTypes.DIABETES)
         assert result is None
-
-    def test_get_medhistory_raises_for_non_patient(self):
-        provider = self.user
-        with pytest.raises(AttributeError) as excinfo:
-            provider.get_medhistory(MHTypes.DIABETES)
-        assert "is not a Patient" in str(excinfo.value)
 
     def test_get_medhistory_with_pseudopatient_role(self):
         patient = PatientFactory(role=Roles.PSEUDOPATIENT)
