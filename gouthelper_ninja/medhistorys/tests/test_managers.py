@@ -65,7 +65,7 @@ def test_angina_manager_queryset_and_gh_create():
     # Test create method
     patient = PatientFactory()
     schema = make_schema()
-    created = Angina.objects.gh_create(data=schema, patient_id=patient.id)
+    created = Angina.objects.gh_create(data=schema, patient=patient)
     assert created.mhtype == MHTypes.ANGINA
     assert Angina.objects.filter(pk=created.pk).exists()
 
@@ -77,7 +77,7 @@ def test_anticoagulation_manager_queryset_and_gh_create():
     assert obj.mhtype == MHTypes.ANTICOAGULATION
     patient = PatientFactory()
     schema = make_schema()
-    created = Anticoagulation.objects.gh_create(data=schema, patient_id=patient.id)
+    created = Anticoagulation.objects.gh_create(data=schema, patient=patient)
     assert created.mhtype == MHTypes.ANTICOAGULATION
     assert Anticoagulation.objects.filter(pk=created.pk).exists()
 
@@ -89,7 +89,7 @@ def test_bleed_manager_queryset_and_gh_create():
     assert obj.mhtype == MHTypes.BLEED
     patient = PatientFactory()
     schema = make_schema()
-    created = Bleed.objects.gh_create(data=schema, patient_id=patient.id)
+    created = Bleed.objects.gh_create(data=schema, patient=patient)
     assert created.mhtype == MHTypes.BLEED
     assert Bleed.objects.filter(pk=created.pk).exists()
 
@@ -131,6 +131,6 @@ def test_manager_queryset_and_gh_create(model, factory, mhtype):
     assert obj.mhtype == mhtype
     patient = PatientFactory(gout=None, menopause="OMIT")
     schema = make_schema()
-    created = model.objects.gh_create(data=schema, patient_id=patient.id)
+    created = model.objects.gh_create(data=schema, patient=patient)
     assert created.mhtype == mhtype
     assert model.objects.filter(pk=created.pk).exists()

@@ -259,7 +259,7 @@ class PatientKwargMixin:
         passed in the URL, which is required for creating a Patient."""
         kwargs.update(
             {
-                "patient_id": self.patient.id,
+                "patient": self.patient,
             },
         )
         return super().create_object(schema, **kwargs)

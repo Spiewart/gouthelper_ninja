@@ -1,16 +1,8 @@
-from typing import TYPE_CHECKING
-
-from django.db.models import Manager
-
 from gouthelper_ninja.medhistorys.choices import MHTypes
-from gouthelper_ninja.medhistorys.schema import MedHistoryEditSchema
 from gouthelper_ninja.utils.managers import GoutHelperManager
 
-if TYPE_CHECKING:
-    from uuid import UUID
 
-
-class AnginaManager(Manager):
+class AnginaManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.ANGINA)
 
@@ -23,11 +15,8 @@ class AnginaManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class AnticoagulationManager(Manager):
+class AnticoagulationManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.ANTICOAGULATION)
 
@@ -39,11 +28,8 @@ class AnticoagulationManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class BleedManager(Manager):
+class BleedManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.BLEED)
 
@@ -55,11 +41,8 @@ class BleedManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class CadManager(Manager):
+class CadManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.CAD)
 
@@ -71,11 +54,8 @@ class CadManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class ChfManager(Manager):
+class ChfManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.CHF)
 
@@ -87,11 +67,8 @@ class ChfManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class CkdManager(Manager):
+class CkdManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.CKD)
 
@@ -103,11 +80,8 @@ class CkdManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class ColchicineinteractionManager(Manager):
+class ColchicineinteractionManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.COLCHICINEINTERACTION)
 
@@ -119,11 +93,8 @@ class ColchicineinteractionManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class DiabetesManager(Manager):
+class DiabetesManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.DIABETES)
 
@@ -135,11 +106,8 @@ class DiabetesManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class ErosionsManager(Manager):
+class ErosionsManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.EROSIONS)
 
@@ -151,11 +119,8 @@ class ErosionsManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class GastricbypassManager(Manager):
+class GastricbypassManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.GASTRICBYPASS)
 
@@ -167,11 +132,8 @@ class GastricbypassManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class GoutManager(Manager):
+class GoutManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.GOUT)
 
@@ -183,11 +145,8 @@ class GoutManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class HeartattackManager(Manager):
+class HeartattackManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.HEARTATTACK)
 
@@ -199,11 +158,8 @@ class HeartattackManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class HepatitisManager(Manager):
+class HepatitisManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.HEPATITIS)
 
@@ -215,11 +171,8 @@ class HepatitisManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class HypertensionManager(Manager):
+class HypertensionManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.HYPERTENSION)
 
@@ -231,11 +184,8 @@ class HypertensionManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class HyperuricemiaManager(Manager):
+class HyperuricemiaManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.HYPERURICEMIA)
 
@@ -247,11 +197,8 @@ class HyperuricemiaManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class IbdManager(Manager):
+class IbdManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.IBD)
 
@@ -262,9 +209,6 @@ class IbdManager(Manager):
             },
         )
         return super().create(**kwargs)
-
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
 
 class MenopauseManager(GoutHelperManager):
@@ -279,11 +223,8 @@ class MenopauseManager(GoutHelperManager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema | dict | None, patient_id: "UUID"):
-        return super().gh_create(data=data, patient=patient_id)
 
-
-class OrgantransplantManager(Manager):
+class OrgantransplantManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.ORGANTRANSPLANT)
 
@@ -295,11 +236,8 @@ class OrgantransplantManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class OsteoporosisManager(Manager):
+class OsteoporosisManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.OSTEOPOROSIS)
 
@@ -311,11 +249,8 @@ class OsteoporosisManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class PudManager(Manager):
+class PudManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.PUD)
 
@@ -327,11 +262,8 @@ class PudManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class PadManager(Manager):
+class PadManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.PAD)
 
@@ -343,11 +275,8 @@ class PadManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class StrokeManager(Manager):
+class StrokeManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.STROKE)
 
@@ -359,11 +288,8 @@ class StrokeManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class TophiManager(Manager):
+class TophiManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.TOPHI)
 
@@ -375,11 +301,8 @@ class TophiManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class UratestonesManager(Manager):
+class UratestonesManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.URATESTONES)
 
@@ -391,11 +314,8 @@ class UratestonesManager(Manager):
         )
         return super().create(**kwargs)
 
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)
 
-
-class XoiinteractionManager(Manager):
+class XoiinteractionManager(GoutHelperManager):
     def get_queryset(self):
         return super().get_queryset().filter(mhtype=MHTypes.XOIINTERACTION)
 
@@ -406,6 +326,3 @@ class XoiinteractionManager(Manager):
             },
         )
         return super().create(**kwargs)
-
-    def gh_create(self, data: MedHistoryEditSchema, patient_id: "UUID"):
-        return self.create(**data.dict(), patient_id=patient_id)

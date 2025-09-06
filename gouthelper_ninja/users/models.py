@@ -236,14 +236,14 @@ class User(
                 obj = apps.get_model(
                     "medhistorys",
                     f"{field_name}",
-                ).objects.gh_create(data=field_data, patient_id=self.id)
+                ).objects.gh_create(data=field_data, patient=self)
         elif field_data:
             # If the field is a OneToOne relationship that doesn't exist,
             # create it
             obj = apps.get_model(
                 f"{field_name}s",
                 f"{field_name}",
-            ).objects.gh_create(data=field_data, patient_id=self.id)
+            ).objects.gh_create(data=field_data, patient=self)
         else:
             obj = None
         return obj
