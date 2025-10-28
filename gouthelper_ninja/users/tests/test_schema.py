@@ -21,11 +21,14 @@ def make_patient_data(
     today = datetime.datetime.now(tz=datetime.UTC).date()
     dob = today.replace(year=today.year - dateofbirth_years_ago)
     return {
-        "dateofbirth": DateOfBirthEditSchema(dateofbirth=dob),
-        "ethnicity": EthnicityEditSchema(ethnicity=Ethnicitys.CAUCASIAN),
-        "gender": GenderEditSchema(gender=gender),
-        "gout": MedHistoryEditSchema(history_of=True),
-        "goutdetail": GoutDetailEditSchema(at_goal=True),
+        "dateofbirth": DateOfBirthEditSchema(dateofbirth=dob, patient={"id": None}),
+        "ethnicity": EthnicityEditSchema(
+            ethnicity=Ethnicitys.CAUCASIAN,
+            patient={"id": None},
+        ),
+        "gender": GenderEditSchema(gender=gender, patient={"id": None}),
+        "gout": MedHistoryEditSchema(history_of=True, patient={"id": None}),
+        "goutdetail": GoutDetailEditSchema(at_goal=True, patient={"id": None}),
         "menopause": menopause,
     }
 

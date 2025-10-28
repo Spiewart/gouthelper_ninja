@@ -1,9 +1,10 @@
 from ninja import Schema
 
+from gouthelper_ninja.utils.schema import PatientEditSchema
 from gouthelper_ninja.utils.schema import PatientIdSchema
 
 
-class GoutDetailEditSchema(Schema):
+class GoutDetailEditSchema(PatientEditSchema, Schema):
     at_goal: bool | None = None
     at_goal_long_term: bool = False
     flaring: bool | None = None
@@ -22,7 +23,9 @@ class GoutDetailSchema(PatientIdSchema, GoutDetailEditSchema):
                 "on_ppx": True,
                 "on_ult": False,
                 "starting_ult": False,
-                "patient_id": "patient_id",
+                "patient": {
+                    "id": "patient_id",
+                },
                 "id": "gout_detail_id",
             },
         }

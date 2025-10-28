@@ -4,20 +4,25 @@ from pydantic import model_validator
 from gouthelper_ninja.dateofbirths.schema import DateOfBirthEditSchema
 from gouthelper_ninja.ethnicitys.schema import EthnicityEditSchema
 from gouthelper_ninja.genders.schema import GenderEditSchema
-from gouthelper_ninja.goutdetails.schema import GoutDetailEditSchema
 from gouthelper_ninja.medhistorys.schema import MedHistoryEditSchema
+from gouthelper_ninja.profiles.schema import PatientProfileEditSchema
 from gouthelper_ninja.utils.helpers import menopause_required
 from gouthelper_ninja.utils.schema import IdSchema
+from gouthelper_ninja.utils.schema import OptionalIdSchema
 
 
-class PatientEditSchema(
+class PatientEditSchema(OptionalIdSchema):
+    dateofbirth: DateOfBirthEditSchema | None = None
+    ethnicity: EthnicityEditSchema | None = None
+    gender: GenderEditSchema | None = None
+    patientprofile: PatientProfileEditSchema | None = None
+
+
+class PatientAgeGenderSchema(
     Schema,
 ):
     dateofbirth: DateOfBirthEditSchema
-    ethnicity: EthnicityEditSchema
     gender: GenderEditSchema
-    gout: MedHistoryEditSchema
-    goutdetail: GoutDetailEditSchema
     # Menopause is optional, but will be validated given age and gender
     menopause: MedHistoryEditSchema | None = None
 
@@ -38,5 +43,5 @@ class PatientEditSchema(
         return self
 
 
-class PatientSchema(PatientEditSchema, IdSchema):
+class PatientSchema(IdSchema):
     pass

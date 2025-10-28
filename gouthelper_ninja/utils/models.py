@@ -5,11 +5,12 @@ from django.db.models import Model
 from django.db.models import OneToOneField
 from django.db.models import UUIDField
 from django_extensions.db.models import TimeStampedModel
-from pydantic import BaseModel as Schema
 from rules.contrib.models import RulesModelBase
 from rules.contrib.models import RulesModelMixin
 
+from gouthelper_ninja.users.models import Admin
 from gouthelper_ninja.users.models import Patient
+from gouthelper_ninja.users.models import Provider
 from gouthelper_ninja.utils.managers import GoutHelperManager
 from gouthelper_ninja.utils.model_mixins import GoutHelperCrudMixin
 
@@ -28,10 +29,32 @@ class ModelIDMixin(Model):
         abstract = True
 
 
-class GoutHelperOneToOne(
+class AdminOneToOne(
+    GoutHelperCrudMixin,
     TimeStampedModel,
     RulesModelMixin,
+    ModelIDMixin,
+    metaclass=RulesModelBase,
+):
+    """
+    Model Mixin to add UUID field for objects.
+    """
+
+    admin = OneToOneField(
+        Admin,
+        on_delete=CASCADE,
+        editable=False,
+    )
+    objects = GoutHelperManager()
+
+    class Meta:
+        abstract = True
+
+
+class PatientOneToOne(
     GoutHelperCrudMixin,
+    TimeStampedModel,
+    RulesModelMixin,
     ModelIDMixin,
     metaclass=RulesModelBase,
 ):
@@ -44,28 +67,32 @@ class GoutHelperOneToOne(
         on_delete=CASCADE,
         editable=False,
     )
-    objects = GoutHelperManager()
+    objects: GoutHelperManager = GoutHelperManager()
 
     class Meta:
         abstract = True
 
-    def process_schema_field(
-        self,
-        field_name: str,
-        field_data: Schema | dict | None,
-    ) -> None:
-        # Check if the Schema is a Patient relationship
-        if (
-            field_data
-            and field_name != self.__class__.__name__.lower()
-            and (
-                hasattr(self.patient, field_name)
-                or self.patient.field_is_onetoone(field_name)
-            )
-        ):
-            self.patient.update_or_create_relation(field_name, field_data)
-        else:
-            super().process_schema_field(field_name, field_data)
+
+class ProviderOneToOne(
+    GoutHelperCrudMixin,
+    TimeStampedModel,
+    RulesModelMixin,
+    ModelIDMixin,
+    metaclass=RulesModelBase,
+):
+    """
+    Model Mixin to add UUID field for objects.
+    """
+
+    provider = OneToOneField(
+        Provider,
+        on_delete=CASCADE,
+        editable=False,
+    )
+    objects = GoutHelperManager()
+
+    class Meta:
+        abstract = True
 
 
 class GetStrAttrsMixin:

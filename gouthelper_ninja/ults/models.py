@@ -5,7 +5,6 @@ from django.db.models import CheckConstraint
 from django.db.models import IntegerField
 from django.db.models import Q
 from django.utils.translation import gettext_lazy as _
-from django_extensions.db.models import TimeStampedModel
 from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.rules import add_object
@@ -16,14 +15,13 @@ from gouthelper_ninja.ults.choices import FlareFreqs
 from gouthelper_ninja.ults.choices import FlareNums
 from gouthelper_ninja.ults.choices import Indications
 from gouthelper_ninja.utils.helpers import get_user_change
-from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import PatientOneToOne
 
 User = get_user_model()
 
 
 class Ult(
-    GoutHelperOneToOne,
-    TimeStampedModel,
+    PatientOneToOne,
 ):
     class Meta:
         constraints = [

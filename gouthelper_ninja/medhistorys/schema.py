@@ -1,20 +1,19 @@
-from ninja import Schema
-
-from gouthelper_ninja.ckddetails.schema import CkdDetailEditSchema
-from gouthelper_ninja.labs.schema import BaselineCreatinineEditSchema
+from gouthelper_ninja.ckddetails.schema import PatientCkdDetailEditSchema
+from gouthelper_ninja.utils.schema import PatientEditSchema
 from gouthelper_ninja.utils.schema import PatientIdSchema
 
 
-class MedHistoryEditSchema(Schema):
+class MedHistoryEditSchema(PatientEditSchema):
     history_of: bool
 
 
-class MedHistorySchema(MedHistoryEditSchema, PatientIdSchema):
+class MedHistorySchema(PatientIdSchema, MedHistoryEditSchema):
     class Config:
         json_schema_extra = {
             "example": {
-                "mhtype": "diabetes",
-                "patient_id": "patient_id",
+                "patient": {
+                    "id": "patient_id",
+                },
                 "id": "medhistory_id",
             },
         }
@@ -25,5 +24,4 @@ class CkdEditSchema(MedHistoryEditSchema):
     history, including details about the CKD and any baseline
     creatinine level for the patient."""
 
-    baselinecreatinine: BaselineCreatinineEditSchema | None
-    ckddetail: CkdDetailEditSchema | None
+    patient: PatientCkdDetailEditSchema

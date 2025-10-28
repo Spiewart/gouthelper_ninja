@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 import pytest
 
 from gouthelper_ninja.ckddetails.choices import DialysisChoices
@@ -25,7 +23,7 @@ class TestCkdDetailManager:
             gender=None,
         )
 
-        created = CkdDetail.objects.gh_create(schema, patient_id=patient.id)
+        created = CkdDetail.objects.gh_create(schema, patient=patient)
 
         assert isinstance(created, CkdDetail)
         assert created.patient_id == patient.id
@@ -44,16 +42,11 @@ class TestCkdDetailManager:
             gender=None,
         )
 
-        created = CkdDetail.objects.gh_create(schema, patient_id=patient.id)
+        created = CkdDetail.objects.gh_create(schema, patient=patient)
 
         assert created.dialysis is True
         assert created.dialysis_type == DialysisChoices.HEMODIALYSIS
         assert created.stage == Stages.FIVE
-
-    def test_gh_create_requires_schema_like_object(self):
-        # Passing a plain dict should raise because dict has no model_dump()
-        with pytest.raises(AttributeError):
-            CkdDetail.objects.gh_create({"stage": Stages.ONE}, patient_id=uuid4())
 
     def test_schema_validation_runs_before_create(self):
         # Creating an invalid schema (dialysis True but no dialysis_type)

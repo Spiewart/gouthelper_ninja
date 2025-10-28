@@ -12,14 +12,15 @@ from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.labs.choices import CreatinineLimits
 from gouthelper_ninja.labs.choices import Units
+from gouthelper_ninja.labs.managers import BaselineCreatinineManager
 from gouthelper_ninja.utils.helpers import get_user_change
-from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import PatientOneToOne
 
 User = get_user_model()
 
 
 class BaselineLab(
-    GoutHelperOneToOne,
+    PatientOneToOne,
     TimeStampedModel,
 ):
     class Meta:
@@ -50,6 +51,7 @@ class CreatinineBase(Model):
         max_digits=4,
         decimal_places=2,
     )
+    objects = BaselineCreatinineManager()
 
     class Meta:
         abstract = True
@@ -62,7 +64,7 @@ class CreatinineBase(Model):
         return f"{self.value.quantize(Decimal('1.00'))} {self.get_units_display()}"
 
 
-class BaselineCreatinine(CreatinineBase, BaselineLab):
+class BaselineCreatinine(BaselineLab, CreatinineBase):
     history = HistoricalRecords(get_user=get_user_change)
 
     class Meta:

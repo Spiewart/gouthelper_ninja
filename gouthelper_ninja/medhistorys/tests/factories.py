@@ -1,6 +1,5 @@
 from factory import LazyAttribute
 from factory import SubFactory
-from factory import fuzzy
 from factory.django import DjangoModelFactory
 from factory.faker import faker
 
@@ -21,7 +20,6 @@ from gouthelper_ninja.medhistorys.models import Hepatitis
 from gouthelper_ninja.medhistorys.models import Hypertension
 from gouthelper_ninja.medhistorys.models import Hyperuricemia
 from gouthelper_ninja.medhistorys.models import Ibd
-from gouthelper_ninja.medhistorys.models import MedHistory
 from gouthelper_ninja.medhistorys.models import Menopause
 from gouthelper_ninja.medhistorys.models import Organtransplant
 from gouthelper_ninja.medhistorys.models import Osteoporosis
@@ -37,9 +35,8 @@ fake = faker.Faker()
 
 class MedHistoryFactory(DjangoModelFactory):
     class Meta:
-        model = MedHistory
+        abstract = True
 
-    mhtype = fuzzy.FuzzyChoice(MHTypes.values)
     history_of = fake.boolean()
     patient = SubFactory(
         "gouthelper_ninja.users.tests.factories.PatientFactory",

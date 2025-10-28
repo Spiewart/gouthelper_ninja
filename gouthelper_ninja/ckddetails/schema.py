@@ -1,10 +1,8 @@
-from typing import Any
 from typing import Self
 
-from ninja import Schema
 from pydantic import computed_field
+from pydantic import field_serializer
 from pydantic import field_validator
-from pydantic import model_serializer
 from pydantic import model_validator
 
 from gouthelper_ninja.ckddetails.choices import DialysisChoices
@@ -15,10 +13,12 @@ from gouthelper_ninja.genders.schema import GenderEditSchema
 from gouthelper_ninja.labs.helpers import egfr_calculator
 from gouthelper_ninja.labs.helpers import stage_calculator
 from gouthelper_ninja.labs.schema import BaselineCreatinineEditSchema
-from gouthelper_ninja.utils.schema import PatientIdSchema
+from gouthelper_ninja.utils.schema import IdSchema
+from gouthelper_ninja.utils.schema import OptionalIdSchema
+from gouthelper_ninja.utils.schema import PatientEditSchema
 
 
-class CkdDetailEditSchema(Schema):
+class CkdDetailEditSchema(OptionalIdSchema):
     """Schema for editing CkdDetail instances. Includes dateofbirth,
     gender, and baseline creatinine schema, which are not part of the
     CkdDetail model but are required to edit or create a CkdDetail."""
@@ -26,10 +26,8 @@ class CkdDetailEditSchema(Schema):
     dialysis: bool = False
     dialysis_duration: DialysisDurations | None = None
     dialysis_type: DialysisChoices | None = None
-    dateofbirth: DateOfBirthEditSchema | None = None
-    baselinecreatinine: BaselineCreatinineEditSchema | None = None
-    gender: GenderEditSchema | None = None
     stage: Stages | None = None
+    patient: PatientEditSchema
 
     # There shouldn't be any dialysis_duration info if not on dialysis
     @field_validator("dialysis_duration", mode="after")
@@ -73,20 +71,24 @@ class CkdDetailEditSchema(Schema):
     def calculated_stage(self) -> Stages | None:
         """Stage calculated based on age, creatinine, and gender. Returns None
         if the stage cannot be calculated."""
-        # Need nested schema values: dateofbirth.age, baselinecreatinine.value,
-        # and gender.gender (GenderEditSchema stores the enum in `gender`).
+
         if (
-            self.dateofbirth
-            and self.baselinecreatinine
-            and getattr(self.baselinecreatinine, "value", None) is not None
-            and self.gender is not None
-            and getattr(self.gender, "gender", None) is not None
+            self.patient.dateofbirth
+            and self.patient.baselinecreatinine
+            and getattr(
+                self.patient.baselinecreatinine,
+                "value",
+                None,
+            )
+            is not None
+            and self.patient.gender is not None
+            and getattr(self.patient.gender, "gender", None) is not None
         ):
             return stage_calculator(
                 egfr_calculator(
-                    creatinine=self.baselinecreatinine.value,
-                    age=self.dateofbirth.age,
-                    gender=self.gender.gender,
+                    creatinine=self.patient.baselinecreatinine.value,
+                    age=self.patient.dateofbirth.age,
+                    gender=self.patient.gender.gender,
                 ),
             )
         return None
@@ -141,26 +143,26 @@ class CkdDetailEditSchema(Schema):
                 raise ValueError(msg)
         return self
 
-    @model_serializer
-    def serialize_ckddetail(self) -> dict[str, Any]:
-        """Returns only the fields relevant for editing a
-        CkdDetail instance."""
-
-        return {
-            "dialysis": self.dialysis,
-            "dialysis_duration": self.dialysis_duration,
-            "dialysis_type": self.dialysis_type,
-            "stage": (
-                Stages.FIVE
-                if self.dialysis
-                else self.stage
-                if self.stage
-                else self.calculated_stage
-            ),
-        }
+    @field_serializer("stage")
+    def serialize_stage(self, stage: Stages | None) -> Stages:
+        """Returns the stage as a string."""
+        return (
+            Stages.FIVE if self.dialysis else stage if stage else self.calculated_stage
+        )
 
 
-class CkdDetailSchema(PatientIdSchema, CkdDetailEditSchema):
+class PatientCkdDetailEditSchema(OptionalIdSchema):
+    dateofbirth: DateOfBirthEditSchema | None = None
+    baselinecreatinine: BaselineCreatinineEditSchema | None = None
+    gender: GenderEditSchema | None = None
+    ckddetail: CkdDetailEditSchema | None = None
+
+
+class PatientCkdDetailSchema(IdSchema, PatientCkdDetailEditSchema):
+    pass
+
+
+class CkdDetailSchema(CkdDetailEditSchema):
     class Config:
         json_schema_extra = {
             "example": {
@@ -171,14 +173,4 @@ class CkdDetailSchema(PatientIdSchema, CkdDetailEditSchema):
                 "dialysis_type": DialysisChoices.HEMODIALYSIS,
                 "stage": Stages.FIVE,
             },
-        }
-
-    @model_serializer
-    def serialize_ckddetail(self) -> dict[str, Any]:
-        """Returns all fields for serialization of a CkdDetail instance."""
-        serialized = super().serialize_ckddetail()
-        return {
-            **serialized,
-            "id": str(self.patient_id),
-            "patient_id": str(self.patient_id),
         }

@@ -7,5 +7,13 @@ class IdSchema(Schema):
     id: UUID
 
 
+class OptionalIdSchema(Schema):
+    id: UUID | None
+
+
+class PatientEditSchema(Schema):
+    patient: OptionalIdSchema
+
+
 class PatientIdSchema(IdSchema):
-    patient_id: UUID
+    patient: IdSchema

@@ -9,7 +9,7 @@ class PatientProfileFactory(DjangoModelFactory):
     class Meta:
         model = PatientProfile
 
-    user = SubFactory("gouthelper_ninja.users.tests.factories.PatientFactory")
+    patient = SubFactory("gouthelper_ninja.users.tests.factories.PatientFactory")
 
 
 class ProviderProfileFactory(DjangoModelFactory):

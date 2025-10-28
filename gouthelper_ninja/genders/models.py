@@ -13,13 +13,13 @@ from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
 from gouthelper_ninja.utils.helpers import get_user_change
-from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import PatientOneToOne
 
 User = get_user_model()
 
 
 class Gender(
-    GoutHelperOneToOne,
+    PatientOneToOne,
     TimeStampedModel,
 ):
     """Model representing biological gender.
@@ -35,7 +35,7 @@ class Gender(
     edit_schema = GenderEditSchema
     history = HistoricalRecords(get_user=get_user_change)
 
-    class Meta(GoutHelperOneToOne.Meta):
+    class Meta(PatientOneToOne.Meta):
         constraints = [
             models.CheckConstraint(
                 name="gender_valid",

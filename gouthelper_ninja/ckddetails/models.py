@@ -14,13 +14,13 @@ from gouthelper_ninja.ckddetails.choices import Stages
 from gouthelper_ninja.ckddetails.managers import CkdDetailManager
 from gouthelper_ninja.ckddetails.schema import CkdDetailEditSchema
 from gouthelper_ninja.utils.helpers import get_user_change
-from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import PatientOneToOne
 
 User = get_user_model()
 
 
 class CkdDetail(
-    GoutHelperOneToOne,
+    PatientOneToOne,
     TimeStampedModel,
 ):
     """Describes details of a patient's Chronic Kidney Disease (CKD)."""

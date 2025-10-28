@@ -18,11 +18,34 @@ from gouthelper_ninja.genders.tests.factories import GenderFactory
 from gouthelper_ninja.goutdetails.tests.factories import GoutDetailFactory
 from gouthelper_ninja.labs.helpers import BaselineCreatinineCalc
 from gouthelper_ninja.labs.tests.factories import BaselineCreatinineFactory
-from gouthelper_ninja.medhistorys.choices import MHTypes
 from gouthelper_ninja.medhistorys.helpers import menopause_required
-from gouthelper_ninja.medhistorys.tests.factories import MedHistoryFactory
-from gouthelper_ninja.profiles.helpers import get_provider_alias
+from gouthelper_ninja.medhistorys.tests.factories import AnginaFactory
+from gouthelper_ninja.medhistorys.tests.factories import AnticoagulationFactory
+from gouthelper_ninja.medhistorys.tests.factories import BleedFactory
+from gouthelper_ninja.medhistorys.tests.factories import CadFactory
+from gouthelper_ninja.medhistorys.tests.factories import ChfFactory
+from gouthelper_ninja.medhistorys.tests.factories import CkdFactory
+from gouthelper_ninja.medhistorys.tests.factories import ColchicineinteractionFactory
+from gouthelper_ninja.medhistorys.tests.factories import DiabetesFactory
+from gouthelper_ninja.medhistorys.tests.factories import ErosionsFactory
+from gouthelper_ninja.medhistorys.tests.factories import GastricbypassFactory
+from gouthelper_ninja.medhistorys.tests.factories import GoutFactory
+from gouthelper_ninja.medhistorys.tests.factories import HeartattackFactory
+from gouthelper_ninja.medhistorys.tests.factories import HepatitisFactory
+from gouthelper_ninja.medhistorys.tests.factories import HypertensionFactory
+from gouthelper_ninja.medhistorys.tests.factories import HyperuricemiaFactory
+from gouthelper_ninja.medhistorys.tests.factories import IbdFactory
+from gouthelper_ninja.medhistorys.tests.factories import MenopauseFactory
+from gouthelper_ninja.medhistorys.tests.factories import OrgantransplantFactory
+from gouthelper_ninja.medhistorys.tests.factories import OsteoporosisFactory
+from gouthelper_ninja.medhistorys.tests.factories import PadFactory
+from gouthelper_ninja.medhistorys.tests.factories import PudFactory
+from gouthelper_ninja.medhistorys.tests.factories import StrokeFactory
+from gouthelper_ninja.medhistorys.tests.factories import TophiFactory
+from gouthelper_ninja.medhistorys.tests.factories import UratestonesFactory
+from gouthelper_ninja.medhistorys.tests.factories import XoiinteractionFactory
 from gouthelper_ninja.profiles.tests.factories import PatientProfileFactory
+from gouthelper_ninja.ults.tests.factories import UltFactory
 from gouthelper_ninja.users.models import User
 from gouthelper_ninja.utils.helpers import age_calc
 
@@ -89,9 +112,8 @@ class PatientFactory(UserFactory):
         factory_related_name="patient",
     )
     gout = RelatedFactory(
-        MedHistoryFactory,
+        GoutFactory,
         factory_related_name="patient",
-        mhtype=MHTypes.GOUT,
         history_of=True,
     )
     goutdetail = RelatedFactory(
@@ -125,9 +147,8 @@ class PatientFactory(UserFactory):
             ):
                 if extracted is not None:
                     kwargs["history_of"] = extracted
-                MedHistoryFactory(
+                MenopauseFactory(
                     patient=self,
-                    mhtype=MHTypes.MENOPAUSE,
                     **kwargs,
                 )
 
@@ -145,15 +166,7 @@ class PatientFactory(UserFactory):
                     if isinstance(extracted, User)
                     else User.objects.get(username=extracted)
                 )
-                kwargs["provider_alias"] = get_provider_alias(
-                    provider_id=kwargs["provider"].id,
-                    age=kwargs.get(
-                        "dateofbirth",
-                        age_calc(self.dateofbirth.dateofbirth),
-                    ),
-                    gender=kwargs.get("gender", self.gender.gender),
-                )
-            PatientProfileFactory(user=self, **kwargs)
+            PatientProfileFactory(patient=self, **kwargs)
 
     @post_generation
     def creator(
@@ -186,9 +199,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            AnginaFactory(
                 patient=self,
-                mhtype=MHTypes.ANGINA,
                 history_of=extracted,
             )
 
@@ -199,9 +211,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            AnticoagulationFactory(
                 patient=self,
-                mhtype=MHTypes.ANTICOAGULATION,
                 history_of=extracted,
             )
 
@@ -212,9 +223,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            BleedFactory(
                 patient=self,
-                mhtype=MHTypes.BLEED,
                 history_of=extracted,
             )
 
@@ -225,9 +235,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            CadFactory(
                 patient=self,
-                mhtype=MHTypes.CAD,
                 history_of=extracted,
             )
 
@@ -238,9 +247,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            ChfFactory(
                 patient=self,
-                mhtype=MHTypes.CHF,
                 history_of=extracted,
             )
 
@@ -251,9 +259,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            CkdFactory(
                 patient=self,
-                mhtype=MHTypes.CKD,
                 history_of=extracted,
             )
 
@@ -269,10 +276,9 @@ class PatientFactory(UserFactory):
         if create and extracted is not None:
             # If a CkdDetail is being created, the Patient
             # should have CKD
-            if self.ckd is None:
-                MedHistoryFactory(
+            if not hasattr(self, "ckd"):
+                CkdFactory(
                     patient=self,
-                    mhtype=MHTypes.CKD,
                     history_of=True,
                 )
             kwargs = {}
@@ -298,9 +304,8 @@ class PatientFactory(UserFactory):
             # If a BaselineCreatinine is being created, the Patient
             # should have CKD
             if self.ckd is None:
-                MedHistoryFactory(
+                CkdFactory(
                     patient=self,
-                    mhtype=MHTypes.CKD,
                     history_of=True,
                 )
             kwargs = {}
@@ -333,9 +338,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            ColchicineinteractionFactory(
                 patient=self,
-                mhtype=MHTypes.COLCHICINEINTERACTION,
                 history_of=extracted,
             )
 
@@ -348,10 +352,9 @@ class PatientFactory(UserFactory):
         """Post-generation hook to create a Diabetes MedHistory for the patient.
         Defaults to creating a Diabetes MedHistory with history_of=True."""
         if create and extracted is not None:
-            MedHistoryFactory(
+            DiabetesFactory(
                 patient=self,
-                mhtype=MHTypes.DIABETES,
-                history_of=extracted,  # True or False
+                history_of=extracted,
             )
 
     @post_generation
@@ -361,9 +364,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            ErosionsFactory(
                 patient=self,
-                mhtype=MHTypes.EROSIONS,
                 history_of=extracted,
             )
 
@@ -374,9 +376,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            GastricbypassFactory(
                 patient=self,
-                mhtype=MHTypes.GASTRICBYPASS,
                 history_of=extracted,
             )
 
@@ -387,9 +388,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            HeartattackFactory(
                 patient=self,
-                mhtype=MHTypes.HEARTATTACK,
                 history_of=extracted,
             )
 
@@ -400,9 +400,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            HepatitisFactory(
                 patient=self,
-                mhtype=MHTypes.HEPATITIS,
                 history_of=extracted,
             )
 
@@ -413,9 +412,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            HypertensionFactory(
                 patient=self,
-                mhtype=MHTypes.HYPERTENSION,
                 history_of=extracted,
             )
 
@@ -426,9 +424,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            HyperuricemiaFactory(
                 patient=self,
-                mhtype=MHTypes.HYPERURICEMIA,
                 history_of=extracted,
             )
 
@@ -439,9 +436,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            IbdFactory(
                 patient=self,
-                mhtype=MHTypes.IBD,
                 history_of=extracted,
             )
 
@@ -452,9 +448,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            OrgantransplantFactory(
                 patient=self,
-                mhtype=MHTypes.ORGANTRANSPLANT,
                 history_of=extracted,
             )
 
@@ -465,9 +460,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            OsteoporosisFactory(
                 patient=self,
-                mhtype=MHTypes.OSTEOPOROSIS,
                 history_of=extracted,
             )
 
@@ -478,9 +472,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            PadFactory(
                 patient=self,
-                mhtype=MHTypes.PAD,
                 history_of=extracted,
             )
 
@@ -491,9 +484,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            PudFactory(
                 patient=self,
-                mhtype=MHTypes.PUD,
                 history_of=extracted,
             )
 
@@ -504,9 +496,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            StrokeFactory(
                 patient=self,
-                mhtype=MHTypes.STROKE,
                 history_of=extracted,
             )
 
@@ -517,11 +508,19 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            TophiFactory(
                 patient=self,
-                mhtype=MHTypes.TOPHI,
                 history_of=extracted,
             )
+
+    @post_generation
+    def ult(
+        self,
+        create: Literal[True, False],
+        extracted: Literal[True, False] | None,
+    ) -> None:
+        if create and extracted is not None:
+            UltFactory(patient=self)
 
     @post_generation
     def uratestones(
@@ -530,9 +529,8 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            UratestonesFactory(
                 patient=self,
-                mhtype=MHTypes.URATESTONES,
                 history_of=extracted,
             )
 
@@ -543,8 +541,7 @@ class PatientFactory(UserFactory):
         extracted: Literal[True, False] | None,
     ) -> None:
         if create and extracted is not None:
-            MedHistoryFactory(
+            XoiinteractionFactory(
                 patient=self,
-                mhtype=MHTypes.XOIINTERACTION,
                 history_of=extracted,
             )

@@ -13,13 +13,13 @@ from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
 from gouthelper_ninja.utils.helpers import get_user_change
-from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import PatientOneToOne
 
 User = get_user_model()
 
 
 class GoutDetail(
-    GoutHelperOneToOne,
+    PatientOneToOne,
     TimeStampedModel,
 ):
     """Describes whether a Patient with a history of gout is actively

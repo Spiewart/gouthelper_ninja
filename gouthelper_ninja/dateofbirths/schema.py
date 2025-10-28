@@ -1,12 +1,11 @@
 from datetime import date
 
-from ninja import Schema
-
 from gouthelper_ninja.utils.helpers import age_calc
+from gouthelper_ninja.utils.schema import PatientEditSchema
 from gouthelper_ninja.utils.schema import PatientIdSchema
 
 
-class DateOfBirthEditSchema(Schema):
+class DateOfBirthEditSchema(PatientEditSchema):
     dateofbirth: date
 
     @property
@@ -14,7 +13,7 @@ class DateOfBirthEditSchema(Schema):
         return age_calc(self.dateofbirth)
 
 
-class DateOfBirthSchema(DateOfBirthEditSchema, PatientIdSchema):
+class DateOfBirthSchema(PatientIdSchema, DateOfBirthEditSchema):
     class Config:
         json_schema_extra = {
             "example": {

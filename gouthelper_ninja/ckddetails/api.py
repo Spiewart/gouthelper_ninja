@@ -48,7 +48,7 @@ def create_ckddetail(
             status_code=403,
             message=msg,
         )
-    return CkdDetail.objects.gh_create(data=data, patient_id=patient_id)
+    return CkdDetail.objects.gh_create(data=data, patient=patient)
 
 
 @router.post(

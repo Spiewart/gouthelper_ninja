@@ -19,7 +19,6 @@ from rules.contrib.models import RulesModelMixin
 from simple_history.models import HistoricalRecords
 
 from gouthelper_ninja.medhistorys.choices import MHTypes
-from gouthelper_ninja.medhistorys.helpers import search_medhistorys_by_mhtype
 from gouthelper_ninja.users.choices import Roles
 from gouthelper_ninja.users.helpers import get_user_change
 from gouthelper_ninja.users.managers import AdminManager
@@ -37,8 +36,6 @@ from gouthelper_ninja.utils.model_mixins import GoutHelperCrudMixin
 
 if TYPE_CHECKING:
     from pydantic import BaseModel as Schema
-
-    from gouthelper_ninja.medhistorys.models import MedHistory
 
 
 class User(
@@ -169,47 +166,50 @@ class Patient(GoutHelperCrudMixin, User):
             "view": view_patient,
         }
 
-    def process_schema_field(
+    @classmethod
+    def get_related_model_field(cls, field_name: str):
+        """If the parent method does not return a Field, check if the
+        field_name is in MedHistorys and return that Field if so."""
+        field = super().get_related_model_field(field_name)
+        if field is None:
+            mhtype = next(iter(MHTypes), None)
+            if mhtype:
+                field = apps.get_model(
+                    "medhistorys",
+                    f"{field_name.lower()}",
+                )
+        return field
+
+    def process_null_related_model_field_data(
         self,
         field_name: str,
-        field_data: Union["Schema", dict, None],
     ) -> None:
-        # Check if the Schema is a Patient relationship
-        if field_data and (
-            hasattr(self, field_name) or self.field_is_onetoone(field_name)
-        ):
-            self.update_or_create_relation(field_name, field_data)
-        else:
-            super().process_schema_field(field_name, field_data)
+        """Processes null data for an exising related model field instance."""
+        # For Patient, we do not want to delete related model instances
+        # (i.e. MedHistorys) when null data is provided. Instead, we
+        # simply ignore the null data.
 
     def update_or_create_relation(
         self,
         relation_name: str,
-        relation_data: Union["Schema", dict | None],
+        relation_data: Union["Schema", dict],
     ) -> Model | None:
-        if hasattr(self, relation_name):
-            obj = getattr(self, relation_name, None)
-            # OneToOne or faux-OneToOne Patient object's will never be
-            # deleted (save for with deletion of the Patient)
-            if obj is not None and relation_data is not None:
-                obj.gh_update(data=relation_data)
-            # MedHistorys getter should return None and True for hasattr
-            # thus should be created if there is data
-            elif relation_data is not None:
-                # TODO: add model to Schema, use to create
-                obj = apps.get_model(
-                    "medhistorys",
-                    f"{relation_name}",
-                ).objects.gh_create(data=relation_data, patient=self)
-        elif relation_data:
-            # If the field is a OneToOne relationship that doesn't exist,
-            # create it
+        obj = getattr(self, relation_name, None)
+        if obj is not None:
+            return obj.gh_update(data=relation_data)
+        field = self.get_related_model_field(relation_name)
+        if field:
+            if self.schema_field_is_onetoone(relation_name):
+                obj = field.related_model.objects.gh_create(
+                    data=relation_data,
+                    patient=self,
+                )
+        else:
+            # Otherwise, the relation is a MedHistory
             obj = apps.get_model(
-                f"{relation_name}s",
+                "medhistorys",
                 f"{relation_name}",
             ).objects.gh_create(data=relation_data, patient=self)
-        else:
-            obj = None
         return obj
 
     @cached_property
@@ -223,77 +223,6 @@ class Patient(GoutHelperCrudMixin, User):
             .order_by("history_date")
             .first()
             .history_user
-        )
-
-    @cached_property
-    def ckd(self) -> Union["MedHistory", None]:
-        """The Patient's CKD MedHistory or None if
-        it does not exist."""
-        return self.get_medhistory(MHTypes.CKD)
-
-    @cached_property
-    def diabetes(self) -> Union["MedHistory", None]:
-        """The Patient's diabetes MedHistory or None if
-        it does not exist."""
-        return self.get_medhistory(MHTypes.DIABETES)
-
-    @cached_property
-    def erosions(self) -> Union["MedHistory", None]:
-        """The Patient's erosions MedHistory or None if
-        it does not exist."""
-        return self.get_medhistory(MHTypes.EROSIONS)
-
-    @cached_property
-    def gout(self) -> Union["MedHistory", None]:
-        """The Patient's gout MedHistory or None if
-        it does not exist."""
-        return self.get_medhistory(MHTypes.GOUT)
-
-    @cached_property
-    def hyperuricemia(self) -> Union["MedHistory", None]:
-        """The Patient's hyperuricemia MedHistory or None if
-        it does not exist."""
-        return self.get_medhistory(MHTypes.HYPERURICEMIA)
-
-    @cached_property
-    def menopause(self) -> Union["MedHistory", None]:
-        """The Patient's menopause MedHistory or None if
-        it does not exist."""
-        return self.get_medhistory(MHTypes.MENOPAUSE)
-
-    @cached_property
-    def tophi(self) -> Union["MedHistory", None]:
-        """The Patient's tophi MedHistory or None if
-        it does not exist."""
-        return self.get_medhistory(MHTypes.TOPHI)
-
-    @cached_property
-    def uratestones(self) -> Union["MedHistory", None]:
-        """The Patient's uratestones MedHistory or None if
-        it does not exist."""
-        return self.get_medhistory(MHTypes.URATESTONES)
-
-    def get_medhistory(self, mhtype: "MHTypes") -> Union["MedHistory", None]:
-        """Returns the instance's MedHistory of the given type,
-        if it exists. Raises AttributeError if the User is not a Patient."""
-        if self.role not in [self.Roles.PATIENT, self.Roles.PSEUDOPATIENT]:
-            msg = _(
-                f"User {self} is not a Patient, cannot get "  # noqa: INT001
-                f"MedHistory of type {mhtype}.",
-            )
-            raise AttributeError(
-                msg,
-            )
-        return (
-            search_medhistorys_by_mhtype(
-                self.medhistorys_qs,
-                mhtype,
-            )
-            if hasattr(self, "medhistorys_qs")
-            else search_medhistorys_by_mhtype(
-                self.medhistory_set.all(),
-                mhtype,
-            )
         )
 
 

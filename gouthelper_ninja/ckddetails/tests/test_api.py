@@ -22,11 +22,24 @@ class TestCreateCkdDetail(TestCase):
             "dialysis_duration": None,
             "dialysis_type": None,
             "stage": Stages.THREE,
-            "dateofbirth": {
-                "dateofbirth": self.patient.dateofbirth.dateofbirth,
+            "patient": {
+                "id": None,
+                "dateofbirth": {
+                    "id": None,
+                    "dateofbirth": self.patient.dateofbirth.dateofbirth,
+                    "patient": {"id": None},
+                },
+                "gender": {
+                    "id": None,
+                    "gender": Genders.MALE,
+                    "patient": {"id": None},
+                },
+                "baselinecreatinine": {
+                    "id": None,
+                    "value": Decimal("1.9"),
+                    "patient": {"id": None},
+                },
             },
-            "gender": {"gender": Genders.MALE},
-            "baselinecreatinine": {"value": Decimal("1.9")},
         }
 
     def test__successful_create(self):
@@ -46,7 +59,7 @@ class TestCreateCkdDetail(TestCase):
         # Assert that the json keys match the newly created CkdDetail
         assert set(response.json().keys()) == {
             "id",
-            "patient_id",
+            "patient",
             "stage",
             "dialysis",
             "dialysis_duration",
@@ -122,6 +135,12 @@ class TestCkdDetailUpdate(TestCase):
             "dialysis": True,
             "dialysis_duration": DialysisDurations.LESSTHANSIX,
             "dialysis_type": DialysisChoices.PERITONEAL,
+            "patient": {
+                "id": self.patient.id,
+                "dateofbirth": None,
+                "gender": None,
+                "baselinecreatinine": None,
+            },
         }
 
     def test__successful_update(self):
@@ -132,7 +151,7 @@ class TestCkdDetailUpdate(TestCase):
         )
 
         assert response.status_code == HTTPStatus.OK
-        assert str(self.patient.id) == response.json()["patient_id"]
+        assert str(self.patient.id) == response.json()["patient"]["id"]
         self.patient.ckddetail.refresh_from_db()
         assert self.patient.ckddetail
         assert self.patient.ckddetail.stage == Stages.FIVE

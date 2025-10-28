@@ -7,10 +7,11 @@ from pydantic import model_serializer
 
 from gouthelper_ninja.labs.choices import CreatinineLimits
 from gouthelper_ninja.labs.choices import Units
+from gouthelper_ninja.utils.schema import PatientEditSchema
 from gouthelper_ninja.utils.schema import PatientIdSchema
 
 
-class BaselineCreatinineEditSchema(Schema):
+class BaselineCreatinineEditSchema(PatientEditSchema, Schema):
     """Schema for editing BaselineCreatinine instances."""
 
     lower_limit: CreatinineLimits = CreatinineLimits.LOWERMGDL
@@ -39,7 +40,9 @@ class BaselineCreatinineSchema(PatientIdSchema, BaselineCreatinineEditSchema):
     class Config:
         json_schema_extra = {
             "example": {
-                "patient_id": "patient_id",
+                "patient": {
+                    "id": "patient_id",
+                },
                 "id": "baseline_creatinine_id",
                 "value": 1.20,
             },
@@ -53,5 +56,7 @@ class BaselineCreatinineSchema(PatientIdSchema, BaselineCreatinineEditSchema):
         return {
             **serialized,
             "id": str(self.id),
-            "patient_id": str(self.patient_id),
+            "patient": {
+                "id": str(self.patient.id),
+            },
         }

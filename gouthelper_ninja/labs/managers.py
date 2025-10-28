@@ -1,5 +1,5 @@
 from gouthelper_ninja.utils.managers import GoutHelperManager
 
 
-class CkdDetailManager(GoutHelperManager):
+class BaselineCreatinineManager(GoutHelperManager):
     pass

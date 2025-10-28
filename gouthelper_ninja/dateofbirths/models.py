@@ -12,14 +12,14 @@ from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
 from gouthelper_ninja.utils.helpers import get_user_change
-from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import PatientOneToOne
 
 User = get_user_model()
 
 
 # Create your models here.
 class DateOfBirth(
-    GoutHelperOneToOne,
+    PatientOneToOne,
     TimeStampedModel,
 ):
     """Model definition for DateOfBirth."""
@@ -32,7 +32,7 @@ class DateOfBirth(
     edit_schema = DateOfBirthEditSchema
     history = HistoricalRecords(get_user=get_user_change)
 
-    class Meta(GoutHelperOneToOne.Meta):
+    class Meta(PatientOneToOne.Meta):
         # GoutHelper is for adults only
         # Date of birth cannot be any year before 18 years ago from now
         constraints = [

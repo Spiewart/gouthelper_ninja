@@ -1,17 +1,1 @@
-from django.contrib import admin
-from simple_history.admin import SimpleHistoryAdmin
-
-from .models import MedHistory
-
-
-@admin.register(MedHistory)
-class MedHistoryHistoryAdmin(SimpleHistoryAdmin):
-    list_display = (
-        "mhtype",
-        "history_of",
-        "patient",
-        "modified",
-        "created",
-        "pk",
-    )
-    history_list_display = ["history_of"]
+# TODO: Add MedHistory models to admin

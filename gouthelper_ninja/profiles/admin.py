@@ -7,17 +7,17 @@ from .models import ProviderProfile
 
 @admin.register(AdminProfile)
 class AdminProfileAdmin(admin.ModelAdmin):
-    list_display = ("user",)
+    list_display = ("admin",)
 
 
 @admin.register(ProviderProfile)
 class ProviderProfileAdmin(admin.ModelAdmin):
-    list_display = ("user",)
+    list_display = ("provider",)
 
 
 @admin.register(PatientProfile)
 class PatientProfileAdmin(admin.ModelAdmin):
     list_display = (
-        "user",
+        "patient",
         "provider",
     )

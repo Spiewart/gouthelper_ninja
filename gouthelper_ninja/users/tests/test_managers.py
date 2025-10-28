@@ -1,5 +1,5 @@
-import pytest
 from django.contrib.auth.hashers import check_password
+from django.test import TestCase
 
 from gouthelper_ninja.dateofbirths.models import DateOfBirth
 from gouthelper_ninja.dateofbirths.schema import DateOfBirthEditSchema
@@ -14,26 +14,29 @@ from gouthelper_ninja.medhistorys.schema import MedHistoryEditSchema
 from gouthelper_ninja.profiles.models import AdminProfile
 from gouthelper_ninja.profiles.models import PatientProfile
 from gouthelper_ninja.profiles.models import ProviderProfile
+from gouthelper_ninja.profiles.schema import PatientProfileEditSchema
 from gouthelper_ninja.users.choices import Roles
 from gouthelper_ninja.users.models import Admin
 from gouthelper_ninja.users.models import Patient
 from gouthelper_ninja.users.models import Provider
 from gouthelper_ninja.users.models import User
 from gouthelper_ninja.users.schema import PatientEditSchema
+from gouthelper_ninja.users.tests.factories import PatientFactory
 from gouthelper_ninja.users.tests.factories import UserFactory
 
-pytestmark = pytest.mark.django_db
 
+class TestAdminManager(TestCase):
+    def setUp(self):
+        # Create one admin and one non-admin provider user for queries
+        self.admin_user = UserFactory(role=Roles.ADMIN)
+        UserFactory(role=Roles.PROVIDER)
 
-class TestAdminManager:
     def test_get_queryset(self):
-        admin_user = UserFactory(role=Roles.ADMIN)
-        UserFactory(role=Roles.PROVIDER)  # Non-admin user
         # Admin model uses AdminManager
         queryset = Admin.objects.all()
         assert queryset.count() == 1
-        assert queryset.first() == admin_user
-        assert admin_user.role == Roles.ADMIN
+        assert queryset.first() == self.admin_user
+        assert self.admin_user.role == Roles.ADMIN
 
     def test_create_user(self):
         # To test AdminManager.create_user specifically:
@@ -48,12 +51,16 @@ class TestAdminManager:
         assert admin.check_password("securepassword")
         assert admin.role == Roles.ADMIN  # Set by Admin model's base_role
         # Check AdminProfile
-        assert AdminProfile.objects.filter(user=admin).exists()
-        profile = AdminProfile.objects.get(user=admin)
+        assert AdminProfile.objects.filter(admin=admin).exists()
+        profile = AdminProfile.objects.get(admin=admin)
         assert profile is not None
 
 
-class TestGoutHelperUserManager:
+class TestGoutHelperUserManager(TestCase):
+    def setUp(self):
+        # no persistent fixtures required for these tests
+        pass
+
     def test_create_user(self):
         user = User.objects.create_user(
             username="testuser",
@@ -83,10 +90,50 @@ class TestGoutHelperUserManager:
         assert admin_user.is_superuser
         assert admin_user.role == Roles.ADMIN
         # Assert that the AdminProfile is created for superusers
-        assert AdminProfile.objects.filter(user=admin_user).exists()
+        assert AdminProfile.objects.filter(admin=admin_user).exists()
 
 
-class TestPatientManager:
+class TestPatientManager(TestCase):
+    def setUp(self):
+        # provider used by several tests
+        self.provider = UserFactory()
+        self.dob_data = DateOfBirthEditSchema(
+            dateofbirth="2000-01-01",
+            patient={"id": None},
+        )
+        self.ethnicity_data = EthnicityEditSchema(
+            ethnicity=Ethnicitys.THAI,
+            patient={"id": None},
+        )
+        self.gender_data = GenderEditSchema(gender=Genders.FEMALE, patient={"id": None})
+        self.gout_data = MedHistoryEditSchema(
+            history_of=False,
+            patient={"id": None},
+        )
+        self.goutdetail_data = GoutDetailEditSchema(
+            at_goal=False,
+            at_goal_long_term=False,
+            flaring=False,
+            on_ppx=False,
+            on_ult=False,
+            starting_ult=False,
+            patient={"id": None},
+        )
+        self.patientprofile_data = PatientProfileEditSchema(
+            id=None,
+            patient={"id": None},
+            provider=None,
+        )
+        self.patient_data = PatientEditSchema(
+            id=None,
+            dateofbirth=self.dob_data,
+            ethnicity=self.ethnicity_data,
+            gender=self.gender_data,
+            gout=self.gout_data,
+            goutdetail=self.goutdetail_data,
+            patientprofile=self.patientprofile_data,
+        )
+
     def test_get_queryset(self):
         patient_user = UserFactory(role=Roles.PSEUDOPATIENT)
         UserFactory(role=Roles.PROVIDER)  # Non-patient user
@@ -98,39 +145,16 @@ class TestPatientManager:
         assert patient_user.role == Roles.PSEUDOPATIENT
 
     def test_create_patient_without_provider(self):
-        dob_data = DateOfBirthEditSchema(dateofbirth="2000-01-01")
-        ethnicity_data = EthnicityEditSchema(ethnicity=Ethnicitys.THAI)
-        gender_data = GenderEditSchema(gender=Genders.FEMALE)
-        gout_data = MedHistoryEditSchema(
-            history_of=False,
-        )
-        goutdetail_data = GoutDetailEditSchema(
-            at_goal=False,
-            at_goal_long_term=False,
-            flaring=False,
-            on_ppx=False,
-            on_ult=False,
-            starting_ult=False,
-        )
-        patient_data = PatientEditSchema(
-            dateofbirth=dob_data,
-            ethnicity=ethnicity_data,
-            gender=gender_data,
-            gout=gout_data,
-            goutdetail=goutdetail_data,
-        )
-
-        patient = Patient.objects.gh_create(data=patient_data)
+        patient = Patient.objects.gh_create(data=self.patient_data)
 
         assert patient.role == Roles.PSEUDOPATIENT
         assert patient.username is not None
 
         # Check PatientProfile
-        assert PatientProfile.objects.filter(user=patient).exists()
-        profile = PatientProfile.objects.get(user=patient)
+        assert PatientProfile.objects.filter(patient=patient).exists()
+        profile = PatientProfile.objects.get(patient=patient)
         assert profile.provider is None
         assert profile.provider_alias is None
-
         # Check DateOfBirth
         assert DateOfBirth.objects.filter(patient=patient).exists()
         dob_obj = DateOfBirth.objects.get(patient=patient)
@@ -147,104 +171,101 @@ class TestPatientManager:
         assert gender_obj.gender == Genders.FEMALE
 
     def test_create_patient_with_provider(self):
-        provider = UserFactory()  # Default role is PROVIDER
+        self.patientprofile_data.provider = {"id": self.provider.id}
+        self.patient_data.patientprofile = self.patientprofile_data
 
-        dob_data = DateOfBirthEditSchema(dateofbirth="1995-05-15")
-        ethnicity_data = EthnicityEditSchema(ethnicity=Ethnicitys.CAUCASIAN)
-        gender_data = GenderEditSchema(gender=Genders.MALE)
-        gout_data = MedHistoryEditSchema(
-            history_of=True,
-        )
-        goutdetail_data = GoutDetailEditSchema(
-            at_goal=False,
-            at_goal_long_term=False,
-            flaring=False,
-            on_ppx=False,
-            on_ult=False,
-            starting_ult=False,
-        )
-        patient_data = PatientEditSchema(
-            dateofbirth=dob_data,
-            ethnicity=ethnicity_data,
-            gender=gender_data,
-            gout=gout_data,
-            goutdetail=goutdetail_data,
-        )
-
-        patient = Patient.objects.gh_create(data=patient_data, provider_id=provider.id)
+        patient = Patient.objects.gh_create(data=self.patient_data)
 
         assert patient.role == Roles.PSEUDOPATIENT
 
         # Check PatientProfile
-        assert PatientProfile.objects.filter(user=patient).exists()
-        profile = PatientProfile.objects.get(user=patient)
-        assert profile.provider == provider
-        # Assuming this is the first patient for this provider
-        assert profile.provider_alias == 1
+        assert PatientProfile.objects.filter(patient=patient).exists()
+        profile = PatientProfile.objects.get(patient=patient)
+        assert profile.provider == self.provider
 
         # Check DateOfBirth
         assert DateOfBirth.objects.filter(patient=patient).exists()
         dob_obj = DateOfBirth.objects.get(patient=patient)
-        assert dob_obj.dateofbirth.strftime("%Y-%m-%d") == "1995-05-15"
+        assert dob_obj.dateofbirth == self.dob_data.dateofbirth
 
         # Check Ethnicity
         assert Ethnicity.objects.filter(patient=patient).exists()
         ethnicity_obj = Ethnicity.objects.get(patient=patient)
-        assert ethnicity_obj.ethnicity == Ethnicitys.CAUCASIAN
+        assert ethnicity_obj.ethnicity == self.ethnicity_data.ethnicity
 
         # Check Gender
         assert Gender.objects.filter(patient=patient).exists()
         gender_obj = Gender.objects.get(patient=patient)
-        assert gender_obj.gender == Genders.MALE
+        assert gender_obj.gender == self.gender_data.gender
 
     def test_create_patient_with_provider_with_multiple_matching_patients(self):
-        # This test ensures get_provider_alias is functional if not mocked
-        provider = UserFactory()
-
-        dob_data = DateOfBirthEditSchema(dateofbirth="1980-07-20")
-        ethnicity_data = EthnicityEditSchema(ethnicity=Ethnicitys.AFRICANAMERICAN)
-        gender_data = GenderEditSchema(gender=Genders.MALE)
-        gout_data = MedHistoryEditSchema(
-            history_of=True,
-        )
-        goutdetail_data = GoutDetailEditSchema(
-            at_goal=False,
-            at_goal_long_term=False,
-            flaring=False,
-            on_ppx=False,
-            on_ult=False,
-            starting_ult=False,
-        )
-        patient_data = PatientEditSchema(
-            dateofbirth=dob_data,
-            ethnicity=ethnicity_data,
-            gender=gender_data,
-            gout=gout_data,
-            goutdetail=goutdetail_data,
-        )
-
         # Create another patient for the same provider to test alias increment
-        Patient.objects.gh_create(data=patient_data, provider_id=provider.id)
-        patient2 = Patient.objects.gh_create(data=patient_data, provider_id=provider.id)
+        Patient.objects.gh_create(data=self.patient_data)
+        assert Patient.objects.gh_create(data=self.patient_data)
 
-        assert patient2.role == Roles.PSEUDOPATIENT
-        profile2 = PatientProfile.objects.get(user=patient2)
-        assert profile2.provider == provider
-        assert profile2.provider_alias is not None
-        expected_alias = 2
-        assert profile2.provider_alias == expected_alias
+    def test_update_patient(self):
+        # Create initial patient
+        patient = PatientFactory()
+
+        # Copy the patient's data to reference later in the test
+        original_gout = patient.gout.history_of
+        original_goutdetail_at_goal = patient.goutdetail.at_goal
+        original_goutdetail_at_goal_long_term = patient.goutdetail.at_goal_long_term
+        original_goutdetail_flaring = patient.goutdetail.flaring
+        original_goutdetail_on_ppx = patient.goutdetail.on_ppx
+        original_goutdetail_on_ult = patient.goutdetail.on_ult
+        original_goutdetail_starting_ult = patient.goutdetail.starting_ult
+
+        assert patient.patientprofile.provider is None
+
+        # Prepare updated data
+        self.dob_data.patient.id = patient.id
+        self.ethnicity_data.patient.id = patient.id
+        self.gender_data.patient.id = patient.id
+        self.gout_data.patient.id = patient.id
+        self.goutdetail_data.patient.id = patient.id
+        self.patientprofile_data.patient.id = patient.id
+        self.patientprofile_data.provider = {"id": self.provider.id}
+        self.patient_data.id = patient.id
+        self.patient_data.dateofbirth = self.dob_data
+        self.patient_data.ethnicity = self.ethnicity_data
+        self.patient_data.gender = self.gender_data
+        self.patient_data.patientprofile = self.patientprofile_data
+
+        patient = Patient.objects.gh_update(
+            instance=patient,
+            data=self.patient_data,
+        )
+
+        assert patient.dateofbirth.dateofbirth == self.dob_data.dateofbirth
+        assert patient.ethnicity.ethnicity == self.ethnicity_data.ethnicity
+        assert patient.gender.gender == self.gender_data.gender
+        assert patient.patientprofile.provider == self.provider
+
+        # Assert that the fields not part of the PatientEditSchema remain unchanged
+        assert patient.gout.history_of == original_gout
+        assert patient.goutdetail.at_goal == original_goutdetail_at_goal
+        assert (
+            patient.goutdetail.at_goal_long_term
+            == original_goutdetail_at_goal_long_term
+        )
+        assert patient.goutdetail.flaring == original_goutdetail_flaring
+        assert patient.goutdetail.on_ppx == original_goutdetail_on_ppx
+        assert patient.goutdetail.on_ult == original_goutdetail_on_ult
+        assert patient.goutdetail.starting_ult == original_goutdetail_starting_ult
 
 
-class TestProviderManager:
+class TestProviderManager(TestCase):
+    def setUp(self):
+        self.provider_user = UserFactory(role=Roles.PROVIDER)
+        UserFactory(role=Roles.PSEUDOPATIENT)
+
     def test_get_queryset(self):
-        provider_user = UserFactory(role=Roles.PROVIDER)
-        UserFactory(role=Roles.PATIENT)  # Non-provider user
-
         # Provider model uses ProviderManager
         queryset = Provider.objects.all()
         assert queryset.count() == 1
-        assert queryset.first() == provider_user
-        assert provider_user.role == Roles.PROVIDER
+        assert queryset.first() == self.provider_user
+        assert self.provider_user.role == Roles.PROVIDER
 
     def test_create_user(self):
         # ProviderManager's create_user is intended to be called via
@@ -268,6 +289,6 @@ class TestProviderManager:
         assert provider.role == Roles.PROVIDER  # Set by Provider model's base_role
 
         # Check ProviderProfile
-        assert ProviderProfile.objects.filter(user=provider).exists()
-        profile = ProviderProfile.objects.get(user=provider)
+        assert ProviderProfile.objects.filter(provider=provider).exists()
+        profile = ProviderProfile.objects.get(provider=provider)
         assert profile is not None

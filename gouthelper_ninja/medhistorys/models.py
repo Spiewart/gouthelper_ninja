@@ -1,218 +1,115 @@
-from django.apps import apps
 from django.db import models
 from django.urls import reverse
 from django.utils.translation import gettext_lazy as _
 from django_extensions.db.models import TimeStampedModel
 from simple_history.models import HistoricalRecords
 
-from gouthelper_ninja.medhistorys.choices import MHTypes
-from gouthelper_ninja.medhistorys.managers import AnginaManager
-from gouthelper_ninja.medhistorys.managers import AnticoagulationManager
-from gouthelper_ninja.medhistorys.managers import BleedManager
-from gouthelper_ninja.medhistorys.managers import CadManager
-from gouthelper_ninja.medhistorys.managers import ChfManager
-from gouthelper_ninja.medhistorys.managers import CkdManager
-from gouthelper_ninja.medhistorys.managers import ColchicineinteractionManager
-from gouthelper_ninja.medhistorys.managers import DiabetesManager
-from gouthelper_ninja.medhistorys.managers import ErosionsManager
-from gouthelper_ninja.medhistorys.managers import GastricbypassManager
-from gouthelper_ninja.medhistorys.managers import GoutManager
-from gouthelper_ninja.medhistorys.managers import HeartattackManager
-from gouthelper_ninja.medhistorys.managers import HepatitisManager
-from gouthelper_ninja.medhistorys.managers import HypertensionManager
-from gouthelper_ninja.medhistorys.managers import HyperuricemiaManager
-from gouthelper_ninja.medhistorys.managers import IbdManager
-from gouthelper_ninja.medhistorys.managers import MenopauseManager
-from gouthelper_ninja.medhistorys.managers import OrgantransplantManager
-from gouthelper_ninja.medhistorys.managers import OsteoporosisManager
-from gouthelper_ninja.medhistorys.managers import PadManager
-from gouthelper_ninja.medhistorys.managers import PudManager
-from gouthelper_ninja.medhistorys.managers import StrokeManager
-from gouthelper_ninja.medhistorys.managers import TophiManager
-from gouthelper_ninja.medhistorys.managers import UratestonesManager
-from gouthelper_ninja.medhistorys.managers import XoiinteractionManager
 from gouthelper_ninja.medhistorys.schema import MedHistoryEditSchema
 from gouthelper_ninja.rules import add_object
 from gouthelper_ninja.rules import change_object
 from gouthelper_ninja.rules import delete_object
 from gouthelper_ninja.rules import view_object
-from gouthelper_ninja.users.models import Patient
-from gouthelper_ninja.utils.helpers import get_user_change
-from gouthelper_ninja.utils.models import GoutHelperOneToOne
+from gouthelper_ninja.utils.models import PatientOneToOne
 
 
 class MedHistory(
-    GoutHelperOneToOne,
+    PatientOneToOne,
     TimeStampedModel,
 ):
     """GoutHelper MedHistory model to store medical, family, social history data
     for Patients. value field is a Boolean that is required and defaults to False.
     """
 
-    class Meta(GoutHelperOneToOne.Meta):
-        constraints = [
-            # Check that mhtype is in MHTypes.choices
-            models.CheckConstraint(
-                name="%(app_label)s_%(class)s_mhtype_valid",
-                condition=models.Q(mhtype__in=MHTypes.values),
-            ),
-            # A Patient can only have one of each type of MedHistory
-            models.UniqueConstraint(
-                fields=["patient", "mhtype"],
-                name="%(app_label)s_%(class)s_unique_patient",
-            ),
-        ]
-        # rules_permissions is NOT heritable, must be defined in child classes
-        rules_permissions = {
-            "add": add_object,
-            "change": change_object,
-            "delete": delete_object,
-            "view": view_object,
-        }
+    class Meta(PatientOneToOne.Meta):
+        abstract = True
 
-    MHTypes = MHTypes
-
-    mhtype = models.CharField(
-        _("Type of medical history"),
-        max_length=50,
-        choices=MHTypes.choices,
-        editable=False,
-    )
     history_of = models.BooleanField(
         _("History of"),
         help_text="Does the patient have this medical history?",
         default=False,
     )
-    patient = models.ForeignKey(
-        Patient,
-        on_delete=models.CASCADE,
-        editable=False,
-    )
     edit_schema = MedHistoryEditSchema
-    # Only 1 historical MedHistory table, rather than one per subclass
-    # This is because MedHistory instances will usually be used
-    # as the parent (MedHistory) class, not the proxy models
-    history = HistoricalRecords(get_user=get_user_change)
+    history = HistoricalRecords(inherit=True)
 
     def __str__(self):
         """Returns a string representation of the MedHistory object."""
-        return f"{self.patient} - {self.get_mhtype_display()}: {self.history_of}"
-
-    def delete(
-        self,
-        *args,
-        **kwargs,
-    ):
-        """Overwritten to change class before and after calling super().save()
-        so Django-Simple-History updates the HistoricalMedHistory table."""
-        self.__class__ = MedHistory
-        super().delete(*args, **kwargs)
-        self.__class__ = apps.get_model(f"medhistorys.{self.mhtype}")
+        return f"{self.patient} - {self.__class__.__name__.lower()}: {self.history_of}"
 
     def get_absolute_url(self):
         return reverse("users:patient-detail", kwargs={"patient": self.patient.id})
-
-    def save(
-        self,
-        *args,
-        **kwargs,
-    ):
-        """Overwritten to change class before and after calling super().save()
-        so Django-Simple-History updates the HistoricalMedHistory table."""
-        self.__class__ = MedHistory
-        super().save(*args, **kwargs)
-        self.__class__ = apps.get_model(f"medhistorys.{self.mhtype}")
 
 
 class Angina(MedHistory):
     """Model for history of cardiac chest pain."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = AnginaManager()
 
 
 class Anticoagulation(MedHistory):
     """Model for Patient's anticoagulation use. HistoryDetail related object
     AnticoagulationDetail to describe which anticoagulants."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = AnticoagulationManager()
 
 
 class Bleed(MedHistory):
     """Model for Patient's history of bleeding events."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = BleedManager()
 
 
 class Cad(MedHistory):
     """Proxy model for Cad MedHistory objects."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = CadManager()
 
 
 class Chf(MedHistory):
     """Describes whether Patient has a history of congestive heart failure."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = ChfManager()
 
 
 class Ckd(MedHistory):
     """Whether Patient has a history of chronic kidney disease."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = CkdManager()
 
 
 class Colchicineinteraction(MedHistory):
@@ -220,121 +117,97 @@ class Colchicineinteraction(MedHistory):
     Details about which medication are stored in HistoryDetail related object
     ColchicineinteractionDetail."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = ColchicineinteractionManager()
 
 
 class Diabetes(MedHistory):
     """Whether or not a Patient is diabetic."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = DiabetesManager()
 
 
 class Erosions(MedHistory):
     """Whether or not a Patient has gouty erosions."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = ErosionsManager()
 
 
 class Gastricbypass(MedHistory):
     """Whether or not a Patient has had gastric bypass surgery."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = GastricbypassManager()
 
 
 class Gout(MedHistory):
     """Whether or not a Patient has gout."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = GoutManager()
 
 
 class Heartattack(MedHistory):
     """Whether or not a Patient has had a heart attack."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = HeartattackManager()
 
 
 class Hepatitis(MedHistory):
     """Whether or not a Patient has hepatitis or cirrhosis of the lvier."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = HepatitisManager()
 
 
 class Hypertension(MedHistory):
     """Stores whether or not a Patient has a history of hypertension."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = HypertensionManager()
 
 
 class Hyperuricemia(MedHistory):
@@ -357,153 +230,123 @@ class Hyperuricemia(MedHistory):
     PMID: 32391934.
     """
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = HyperuricemiaManager()
 
 
 class Ibd(MedHistory):
     """Records history of a Patient's inflammatory bowel disease."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = IbdManager()
 
 
 class Menopause(MedHistory):
     """Records medical history of menopause. Mostly for figuring out if a
     woman who is having symptoms could be having a gout flare."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = MenopauseManager()
 
 
 class Organtransplant(MedHistory):
     """Records medical history of an organ transplant. Related
     object OrgantransplantDetail stores details of the transplant."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = OrgantransplantManager()
 
 
 class Osteoporosis(MedHistory):
     """Records medical history of osteoporosis."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = OsteoporosisManager()
 
 
 class Pud(MedHistory):
     """Records medical history of peptic ulcer disease."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = PudManager()
 
 
 class Pad(MedHistory):
     """Records medical history of peripheral vascular disease."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = PadManager()
 
 
 class Stroke(MedHistory):
     """Patient's history of stroke."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = StrokeManager()
 
 
 class Tophi(MedHistory):
     """Patient's history of gouty tophi."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = TophiManager()
 
 
 class Uratestones(MedHistory):
     """Patient's history of urate kidney stones."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = UratestonesManager()
 
 
 class Xoiinteraction(MedHistory):
@@ -511,13 +354,10 @@ class Xoiinteraction(MedHistory):
     oxidase inhibitors. These are chiefly azathioprine and mercaptopurine,
     but historically theophylline was also included."""
 
-    class Meta(GoutHelperOneToOne.Meta):
-        proxy = True
+    class Meta(PatientOneToOne.Meta):
         rules_permissions = {
             "add": add_object,
             "change": change_object,
             "delete": delete_object,
             "view": view_object,
         }
-
-    objects = XoiinteractionManager()

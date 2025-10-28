@@ -1,10 +1,9 @@
-from ninja import Schema
-
 from gouthelper_ninja.ethnicitys.choices import Ethnicitys
+from gouthelper_ninja.utils.schema import PatientEditSchema
 from gouthelper_ninja.utils.schema import PatientIdSchema
 
 
-class EthnicityEditSchema(Schema):
+class EthnicityEditSchema(PatientEditSchema):
     ethnicity: Ethnicitys
 
 

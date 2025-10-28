@@ -1,4 +1,5 @@
 from typing import TYPE_CHECKING
+from typing import Union
 
 from django.apps import apps
 from django.urls import reverse
@@ -13,6 +14,9 @@ if TYPE_CHECKING:
     from django.config.auth import get_user_model
 
     from gouthelper_ninja.genders.choices import Genders
+    from gouthelper_ninja.profiles.models import AdminProfile
+    from gouthelper_ninja.profiles.models import PatientProfile
+    from gouthelper_ninja.profiles.models import ProviderProfile
 
     User = get_user_model()
 
@@ -45,7 +49,11 @@ def get_provider_alias(
     return alias_conflicts + 1
 
 
-def get_user_change(instance, request, **kwargs):  # pylint:disable=W0613
+def get_user_change(
+    instance: Union["AdminProfile", "PatientProfile", "ProviderProfile"],
+    request,
+    **kwargs,
+):  # pylint:disable=W0613
     # https://django-simple-history.readthedocs.io/en/latest/user_tracking.html
     """Method for django-simple-history to assign the user who made the change
     to the History history_user field. Deals with the case where
